@@ -10,6 +10,7 @@ import evaluate
 import numpy as np
 import transformers
 from datasets import load_dataset
+from fire import Fire
 
 from src.constants import HF_TOKEN, NEW_TOKENS
 from transformers import (
@@ -201,16 +202,18 @@ def get_label_list(raw_dataset, split="train") -> List[str]:
 
 
 def main(
-    batch_size: int = 32,
-    gradient_accumulation_steps: int = 8,
+    model_name: str = "HuggingFaceTB/SmolLM2-360M",
+    batch_size: int = 8,
+    gradient_accumulation_steps: int = 32,
     num_train_epochs: int = 30,
 ):
     model_args = ModelArguments(
-        model_name_or_path="HuggingFaceTB/SmolLM-135M",
+        model_name_or_path=model_name,
         token=HF_TOKEN,
         trust_remote_code=True,
     )
 
+    model_stem = model_name.split("/")[-1]
     data_args = DataTrainingArguments(
         dataset_name="hugosousa/TemporalQuestions",
         dataset_config_name="default",
@@ -224,7 +227,7 @@ def main(
     )
 
     training_args = TrainingArguments(
-        output_dir="models/SmolLM-135M-TemporalQuestions",
+        output_dir=f"models/{model_stem}-TemporalQuestions",
         eval_strategy="epoch",
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
@@ -251,7 +254,7 @@ def main(
         seed=42,
         bf16=True,
         push_to_hub=True,
-        hub_model_id="hugosousa/SmolLM-135M-TemporalQuestions",
+        hub_model_id=f"hugosousa/{model_stem}-TemporalQuestions",
         hub_strategy="every_save",
         hub_token=HF_TOKEN,
         do_train=True,
@@ -547,4 +550,4 @@ def main(
 
 
 if __name__ == "__main__":
-    main()
+    Fire(main)

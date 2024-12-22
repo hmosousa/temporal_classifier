@@ -23,6 +23,8 @@ RELATIONS2ID = {
     "-": 3,
 }
 
+ENDPOINT_TYPES = ["start", "end"]
+
 ID2RELATIONS = {v: k for k, v in RELATIONS2ID.items()}
 
 
