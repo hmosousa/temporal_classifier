@@ -7,6 +7,7 @@ from src.closure import compute_temporal_closure
 
 RELATIONS = ["<", ">", "=", "-"]
 
+
 N_RELATIONS = len(RELATIONS)
 
 INVERT_RELATION = {

@@ -14,23 +14,14 @@ logging.basicConfig(
 )
 
 
-PROMPT_TEMPLATE = """I will provide a pair of entities that is tagged with xml tags. 
-Your task is to generate a relation between the two entities.
-The relation can be one of the following: {RELATIONS}.
-The entities can be one of the following: {ENDPOINT_TYPES}.
-
-{text}
-"""
-
-
 def add_relation_type(example: dict) -> dict:
     entity_map = get_entity_mapping(example["text"])
     for key, value in entity_map.items():
         if "source" in key:
-            example["source"] = value
+            example["source_text"] = value
             example["source_type"] = key.split("_")[0]
         elif "target" in key:
-            example["target"] = value
+            example["target_text"] = value
             example["target_type"] = key.split("_")[0]
     return example
 
@@ -49,7 +40,7 @@ def main():
 
     source_dataset = source_dataset.map(add_relation_type)
     pairs = [
-        tuple(sorted([example["source"], example["target"]]))
+        tuple(sorted([example["source_text"], example["target_text"]]))
         for example in source_dataset
     ]
     pairs = list(set(pairs))
