@@ -40,8 +40,7 @@ Text:
 _OUTPUT_TEMPLATE = """Relation:
 {source_type} of {source_text} {relation_text} {target_type} of {target_text}
 
-Text:
-"""
+Text:"""
 
 
 class GenerationPrompter:

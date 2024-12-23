@@ -103,7 +103,7 @@ def main():
     if not output_dir.exists():
         output_dir.parent.mkdir(parents=True, exist_ok=True)
         prompts = generate_prompts(dataset)
-        prompts_dataset = datasets.Dataset.from_list(prompts)
+        prompts_dataset = datasets.Dataset.from_dict({"prompt": prompts})
         prompts_dataset.save_to_disk(output_dir)
     else:
         prompts_dataset = datasets.load_from_disk(output_dir)
