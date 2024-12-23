@@ -45,24 +45,24 @@ Text:
 
 
 class GenerationPrompter:
-    def __call__(self, relation: dict, examples: list[dict]) -> str:
+    def __call__(self, new_example: dict, examples: list[dict]) -> str:
         examples_str = ""
         for example in examples:
             examples_str += _EXAMPLE_TEMPLATE.format(
                 source_type=example["source_type"],
                 source_text=example["source_text"],
-                relation_text=RELATIONS2STR[example["relation"]],
+                relation_text=RELATIONS2STR[example["label"]],
                 target_type=example["target_type"],
                 target_text=example["target_text"],
                 text=example["text"],
             )
 
         new_example_str = _OUTPUT_TEMPLATE.format(
-            source_type=relation["source_type"],
-            source_text=relation["source_text"],
-            relation_text=RELATIONS2STR[relation["relation"]],
-            target_type=relation["target_type"],
-            target_text=relation["target_text"],
+            source_type=new_example["source_type"],
+            source_text=new_example["source_text"],
+            relation_text=RELATIONS2STR[new_example["label"]],
+            target_type=new_example["target_type"],
+            target_text=new_example["target_text"],
         )
 
         prompt = _GENERATION_PROMPT_INSTRUCTION.format(

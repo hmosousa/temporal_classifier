@@ -9,7 +9,7 @@ class TestPrompts:
             "source_type": "start",
             "target_text": "opened",
             "target_type": "end",
-            "relation": "<",
+            "label": "<",
         }
         examples = [
             {
@@ -18,7 +18,7 @@ class TestPrompts:
                 "source_type": "start",
                 "target_text": "opened",
                 "target_type": "end",
-                "relation": "<",
+                "label": "<",
             },
             {
                 "text": "The men run after he stopped.",
@@ -26,8 +26,8 @@ class TestPrompts:
                 "source_type": "end",
                 "target_text": "run",
                 "target_type": "start",
-                "relation": ">",
+                "label": ">",
             },
         ]
         prompt = prompter(example, examples)
-        print(prompt)
+        assert isinstance(prompt, str)
