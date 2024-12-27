@@ -17,7 +17,7 @@ os.environ["GLOG_minloglevel"] = "2"
 
 
 class GeminiAPI:
-    QUOTA_LIMIT_PER_MINUTE = 2_000
+    QUOTA_LIMIT_PER_MINUTE = 1_000
     SLEEP_SECONDS = 60
     MODEL_NAME = "gemini-1.5-flash"
     INPUT_PRICE_M_TOKENS = 0.075

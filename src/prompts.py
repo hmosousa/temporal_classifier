@@ -21,26 +21,38 @@ RELATIONS2STR = {
     "-": "is not related",
 }
 
-_GENERATION_PROMPT_INSTRUCTION = """I will provide a pair of temporal entities and their relation.
-Your task is to generate a context where the relation between the two entities is the one provided.
+
+_GENERATION_PROMPT_INSTRUCTION = """You will receive a pair of temporal entities and their temporal relation. 
+Your task is to generate a coherent and natural-sounding text that accurately reflects the provided temporal relation and explicitly has the two entities. 
+
+The possible relations are:
+- "occurs before": The start/end of the first entity happens before the start/end of the second entity.
+- "occurs after": The start/end of the first entity happens after the start/end of the second entity.
+- "occurs at the same time": The start/end of the first entity coincides with the start/end of the second entity.
+- "is not related": There is no temporal connection between the start/end of the first entity and the start/end of the second entity.
+
+When generating the text:
+- Use language that sounds natural and fluent, adapting temporal verbs as needed.
+- Do not ask for more context, just generate the text.
 {examples}
 {new_example}
 """
 
 
 _EXAMPLE_TEMPLATE = """
-Relation:
+Input:
 {source_type} of {source_text} {relation_text} {target_type} of {target_text}
 
-Text:
+Output:
 {text}
 """
 
 
-_OUTPUT_TEMPLATE = """Relation:
+_OUTPUT_TEMPLATE = """Input:
 {source_type} of {source_text} {relation_text} {target_type} of {target_text}
 
-Text:"""
+Output:
+"""
 
 
 class GenerationPrompter:

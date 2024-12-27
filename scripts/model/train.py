@@ -202,9 +202,9 @@ def get_label_list(raw_dataset, split="train") -> List[str]:
 
 
 def main(
-    model_name: str = "HuggingFaceTB/SmolLM2-1.7B",
-    batch_size: int = 4,
-    gradient_accumulation_steps: int = 128,
+    model_name: str = "HuggingFaceTB/SmolLM2-135M",
+    batch_size: int = 32,
+    gradient_accumulation_steps: int = 4,
     num_train_epochs: int = 30,
 ):
     model_args = ModelArguments(

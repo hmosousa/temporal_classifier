@@ -1,5 +1,6 @@
 """Generate synthetic data."""
 
+import asyncio
 import logging
 import random
 
@@ -8,6 +9,7 @@ import datasets
 from src.base import ENDPOINT_TYPES, RELATIONS
 from src.constants import CACHE_DIR
 from src.data.utils import get_entity_mapping
+from src.model.gemini import GeminiAPI
 from src.prompts import GenerationPrompter
 from tqdm import tqdm
 
@@ -87,20 +89,19 @@ def generate_prompts(dataset: datasets.Dataset) -> list[str]:
     return prompts
 
 
-def main():
-    dataset = datasets.concatenate_datasets(
-        [
-            datasets.load_dataset(
-                "hugosousa/TemporalQuestions", "default", split="train"
-            ),
-            datasets.load_dataset(
-                "hugosousa/TemporalQuestions", "default", split="valid"
-            ),
-        ]
-    )
-
+async def main(use_cache: bool = True):
     output_dir = CACHE_DIR / "synthetic" / "prompts"
-    if not output_dir.exists():
+    if not output_dir.exists() or not use_cache:
+        dataset = datasets.concatenate_datasets(
+            [
+                datasets.load_dataset(
+                    "hugosousa/TemporalQuestions", "default", split="train"
+                ),
+                datasets.load_dataset(
+                    "hugosousa/TemporalQuestions", "default", split="valid"
+                ),
+            ]
+        )
         output_dir.parent.mkdir(parents=True, exist_ok=True)
         prompts = generate_prompts(dataset)
         prompts_dataset = datasets.Dataset.from_dict({"prompt": prompts})
@@ -108,20 +109,23 @@ def main():
     else:
         prompts_dataset = datasets.load_from_disk(output_dir)
 
-    # num_examples_to_generate = len(prompts)
-    # logging.info(f"Generating {num_examples_to_generate} examples")
+    num_examples_to_generate = len(prompts_dataset)
+    logging.info(f"Generating {num_examples_to_generate} examples")
 
-    # model = GeminiAPI()
-    # estimated_time = num_examples_to_generate // model.QUOTA_LIMIT_PER_MINUTE
-    # logging.info(
-    #     f"Estimated time: {estimated_time} minutes aka {estimated_time // 60} hours"
-    # )
+    model = GeminiAPI()
+    estimated_time = num_examples_to_generate // model.QUOTA_LIMIT_PER_MINUTE
+    logging.info(
+        f"Estimated time: {estimated_time} minutes aka {estimated_time // 60} hours"
+    )
 
-    # logging.info("Generating answers")
-    # answers = model.generate(prompts)
+    logging.info("Generating answers")
+    answers = await model(
+        prompts_dataset["prompt"], CACHE_DIR / "synthetic" / "gemini" / "answers"
+    )
 
-    # dataset = datasets.Dataset.from_list(answers)
+    prompt_answers = prompts_dataset.add_column("answer", answers)
+    prompt_answers.save_to_disk(CACHE_DIR / "synthetic" / "answers")
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
