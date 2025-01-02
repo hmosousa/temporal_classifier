@@ -5,7 +5,7 @@ import logging
 import random
 
 import datasets
-
+import numpy as np
 from src.base import ENDPOINT_TYPES, RELATIONS
 from src.constants import CACHE_DIR, DATA_DIR
 from src.data.utils import get_entity_mapping
@@ -206,7 +206,21 @@ async def main():
     # Verify the answers
     output_dir = DATA_DIR / "synthetic" / "clean"
     if not output_dir.exists():
+        # drop examples that do not have the expected tags
         prompt_answers = prompt_answers.filter(simple_answer_check)
+
+        # drop examples that are outliers in length
+        # this are usually hallucinations
+        lens = [len(example["answer"]) for example in prompt_answers]
+        q3 = np.quantile(lens, 0.75)
+        q1 = np.quantile(lens, 0.25)
+        iqr = q3 - q1
+        lower_bound = q1 - 1.5 * iqr
+        upper_bound = q3 + 1.5 * iqr
+        prompt_answers = prompt_answers.filter(
+            lambda x: lower_bound <= len(x["answer"]) <= upper_bound
+        )
+
         prompt_answers.save_to_disk(output_dir)
 
         # push synthetic temporal questions to hub
