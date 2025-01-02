@@ -151,10 +151,10 @@ def strict_answer_check(example: dict) -> bool:
     return all(tag in example["answer"] for tag in expected_tags)
 
 
-async def main(use_cache: bool = True):
+async def main():
     # Generate all the prompts
     output_dir = CACHE_DIR / "synthetic" / "prompts"
-    if not output_dir.exists() or not use_cache:
+    if not output_dir.exists():
         dataset = datasets.concatenate_datasets(
             [
                 datasets.load_dataset(
@@ -177,7 +177,7 @@ async def main(use_cache: bool = True):
 
     # Call the Gemini API to generate the answers
     raw_output_dir = DATA_DIR / "synthetic" / "raw"
-    if not raw_output_dir.exists() or not use_cache:
+    if not raw_output_dir.exists():
         raw_output_dir.mkdir(parents=True, exist_ok=True)
 
         model = GeminiAPI()
@@ -193,45 +193,47 @@ async def main(use_cache: bool = True):
 
         prompt_answers = prompts_dataset.add_column("answer", answers)
         prompt_answers.save_to_disk(raw_output_dir)
-        prompt_answers.push_to_hub("hugosousa/tmp", "raw")  # TODO: Remove this
+
+        # push synthetic temporal questions to hub
+        syntetic_temporal_questions = prompt_answers.select_columns(["answer", "label"])
+        syntetic_temporal_questions.rename_column("answer", "text")
+        syntetic_temporal_questions.push_to_hub(
+            "hugosousa/SyntheticTemporalQuestions", "raw"
+        )
     else:
         prompt_answers = datasets.load_from_disk(raw_output_dir)
 
-    syntetic_temporal_questions = prompt_answers.select_columns(["answer", "label"])
-    syntetic_temporal_questions.rename_column("answer", "text")
-    syntetic_temporal_questions.push_to_hub(
-        "hugosousa/SyntheticTemporalQuestions", "raw"
-    )
-
     # Verify the answers
     output_dir = DATA_DIR / "synthetic" / "clean"
-    if not output_dir.exists() or not use_cache:
+    if not output_dir.exists():
         prompt_answers = prompt_answers.filter(simple_answer_check)
         prompt_answers.save_to_disk(output_dir)
-        prompt_answers.push_to_hub("hugosousa/tmp", "clean")  # TODO: Remove this
+
+        # push synthetic temporal questions to hub
+        syntetic_temporal_questions = prompt_answers.select_columns(["answer", "label"])
+        syntetic_temporal_questions.rename_column("answer", "text")
+        syntetic_temporal_questions.push_to_hub(
+            "hugosousa/SyntheticTemporalQuestions", "clean"
+        )
     else:
         prompt_answers = datasets.load_from_disk(output_dir)
-
-    syntetic_temporal_questions = prompt_answers.select_columns(["answer", "label"])
-    syntetic_temporal_questions.rename_column("answer", "text")
-    syntetic_temporal_questions.push_to_hub(
-        "hugosousa/SyntheticTemporalQuestions", "clean"
-    )
 
     # Deep answer check
     output_dir = DATA_DIR / "synthetic" / "super_clean"
-    if not output_dir.exists() or not use_cache:
-        prompt_answers = prompt_answers.filter(strict_answer_check)
+    if not output_dir.exists():
+        prompt_answers = prompt_answers.filter(
+            strict_answer_check, load_from_cache_file=False
+        )
         prompt_answers.save_to_disk(output_dir)
-        prompt_answers.push_to_hub("hugosousa/tmp", "super_clean")  # TODO: Remove this
+
+        # push synthetic data to hub
+        syntetic_temporal_questions = prompt_answers.select_columns(["answer", "label"])
+        syntetic_temporal_questions.rename_column("answer", "text")
+        syntetic_temporal_questions.push_to_hub(
+            "hugosousa/SyntheticTemporalQuestions", "super_clean"
+        )
     else:
         prompt_answers = datasets.load_from_disk(output_dir)
-
-    syntetic_temporal_questions = prompt_answers.select_columns(["answer", "label"])
-    syntetic_temporal_questions.rename_column("answer", "text")
-    syntetic_temporal_questions.push_to_hub(
-        "hugosousa/SyntheticTemporalQuestions", "super_clean"
-    )
 
 
 if __name__ == "__main__":
