@@ -1,4 +1,5 @@
 import logging
+import multiprocessing as mp
 import random
 import sys
 from dataclasses import dataclass, field
@@ -25,8 +26,6 @@ from transformers import (
     TrainingArguments,
 )
 from transformers.utils import send_example_telemetry
-
-DEBUG = False
 
 logger = logging.getLogger(__name__)
 
@@ -217,12 +216,11 @@ def main(
     model_stem = model_name.split("/")[-1]
     data_args = DataTrainingArguments(
         dataset_name=dataset_name,
-        max_seq_length=2048,  # TODO: Get from model
+        max_seq_length=1024,  # TODO: Get from model
         pad_to_max_length=False,  # To pad each batch at runtime
         shuffle_train_dataset=True,
         shuffle_seed=42,
-        max_train_samples=100 if DEBUG else None,
-        max_eval_samples=100 if DEBUG else None,
+        preprocessing_num_workers=mp.cpu_count(),
     )
 
     run_id = generate_run_id()
