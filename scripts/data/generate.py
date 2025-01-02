@@ -163,22 +163,18 @@ def transform_corpus(documents, split: str = "train"):
     return examples
 
 
-def validate_dataset(dataset: datasets.Dataset):
-    """Check if the dataset is valid."""
-
-    # Drop any relation that appears more than once
-    # Most likely a mistake in the dataset
-    text_counter = Counter(dataset["text"])
+def validate_dataset(examples: list[dict]):
+    """Drop any relation that appears more than once.
+    Most likely a mistake in the dataset."""
+    text_counter = Counter([example["text"] for example in examples])
     duplicates = [text for text, count in text_counter.items() if count > 1]
-    dataset = dataset.filter(lambda x: x["text"] not in duplicates)
+    examples = [example for example in examples if example["text"] not in duplicates]
+    return examples
 
-    return dataset
 
-
-def drop_long_texts(dataset: datasets.Dataset):
+def drop_long_texts(examples: list[dict]):
     """Drop texts that are longer than 512 words."""
-    dataset = dataset.filter(lambda x: len(x["text"].split()) <= 512)
-    return dataset
+    return [example for example in examples if len(example["text"].split()) <= 512]
 
 
 def main(dataset_name: str = "tempeval_3", n_valid_samples: int = 5_000):
@@ -186,6 +182,11 @@ def main(dataset_name: str = "tempeval_3", n_valid_samples: int = 5_000):
 
     test_examples = transform_corpus(corpus.test, split="test")
     dev_examples = transform_corpus(corpus.train, split="train")
+
+    dev_examples = drop_long_texts(
+        dev_examples
+    )  # TODO: This is just to iterate fast. Should be removed.
+    dev_examples = validate_dataset(dev_examples)
 
     # Stratified split into train and validation
     train_examples, valid_examples = train_test_split(
@@ -200,12 +201,6 @@ def main(dataset_name: str = "tempeval_3", n_valid_samples: int = 5_000):
     trainset = datasets.Dataset.from_list(train_examples)
     validset = datasets.Dataset.from_list(valid_examples)
     testset = datasets.Dataset.from_list(test_examples)
-
-    trainset = validate_dataset(trainset)
-    validset = validate_dataset(validset)
-
-    # TODO: This is just to iterate fast. Should be removed.
-    trainset = drop_long_texts(trainset)
 
     trainset.push_to_hub("hugosousa/TemporalQuestions", split="train", token=HF_TOKEN)
     validset.push_to_hub("hugosousa/TemporalQuestions", split="valid", token=HF_TOKEN)

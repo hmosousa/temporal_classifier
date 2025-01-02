@@ -6,8 +6,10 @@ import random
 
 import datasets
 import numpy as np
+from sklearn.model_selection import train_test_split
+
 from src.base import ENDPOINT_TYPES, RELATIONS
-from src.constants import CACHE_DIR, DATA_DIR
+from src.constants import CACHE_DIR, DATA_DIR, HF_TOKEN
 from src.data.utils import get_entity_mapping
 from src.model.gemini import GeminiAPI
 from src.prompts import GenerationPrompter
@@ -151,7 +153,44 @@ def strict_answer_check(example: dict) -> bool:
     return all(tag in example["answer"] for tag in expected_tags)
 
 
-async def main():
+async def generate_raw_synthetic_temporal_questions(dataset: datasets.Dataset):
+    model = GeminiAPI()
+    estimated_time = len(dataset) // model.QUOTA_LIMIT_PER_MINUTE
+    logging.info(
+        f"Estimated time: {estimated_time} minutes aka {estimated_time // 60} hours"
+    )
+
+    logging.info("Generating answers")
+    answers = await model(
+        dataset["prompt"], CACHE_DIR / "synthetic" / "gemini" / "answers"
+    )
+
+    prompt_answers = dataset.add_column("answer", answers)
+    return prompt_answers
+
+
+def make_clean_synthetic_temporal_questions(raw: datasets.Dataset):
+    # drop examples that do not have the expected tags
+    clean = raw.filter(simple_answer_check)
+
+    # drop examples that are outliers in length
+    # this are usually hallucinations
+    lens = [len(example["answer"]) for example in clean]
+    q3 = np.quantile(lens, 0.75)
+    q1 = np.quantile(lens, 0.25)
+    iqr = q3 - q1
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+    clean = clean.filter(lambda x: lower_bound <= len(x["answer"]) <= upper_bound)
+
+    return clean
+
+
+def make_super_clean_synthetic_temporal_questions(clean: datasets.Dataset):
+    return clean.filter(strict_answer_check)
+
+
+async def make_data():
     # Generate all the prompts
     output_dir = CACHE_DIR / "synthetic" / "prompts"
     if not output_dir.exists():
@@ -179,75 +218,73 @@ async def main():
     raw_output_dir = DATA_DIR / "synthetic" / "raw"
     if not raw_output_dir.exists():
         raw_output_dir.mkdir(parents=True, exist_ok=True)
-
-        model = GeminiAPI()
-        estimated_time = num_examples_to_generate // model.QUOTA_LIMIT_PER_MINUTE
-        logging.info(
-            f"Estimated time: {estimated_time} minutes aka {estimated_time // 60} hours"
-        )
-
-        logging.info("Generating answers")
-        answers = await model(
-            prompts_dataset["prompt"], CACHE_DIR / "synthetic" / "gemini" / "answers"
-        )
-
-        prompt_answers = prompts_dataset.add_column("answer", answers)
-        prompt_answers.save_to_disk(raw_output_dir)
-
-        # push synthetic temporal questions to hub
-        syntetic_temporal_questions = prompt_answers.select_columns(["answer", "label"])
-        syntetic_temporal_questions.rename_column("answer", "text")
-        syntetic_temporal_questions.push_to_hub(
-            "hugosousa/SyntheticTemporalQuestions", "raw"
-        )
+        raw = await generate_raw_synthetic_temporal_questions(prompts_dataset)
+        raw.save_to_disk(raw_output_dir)
     else:
-        prompt_answers = datasets.load_from_disk(raw_output_dir)
+        raw = datasets.load_from_disk(raw_output_dir)
 
     # Verify the answers
     output_dir = DATA_DIR / "synthetic" / "clean"
     if not output_dir.exists():
-        # drop examples that do not have the expected tags
-        prompt_answers = prompt_answers.filter(simple_answer_check)
+        clean = make_clean_synthetic_temporal_questions(raw)
+        clean.save_to_disk(output_dir)
 
-        # drop examples that are outliers in length
-        # this are usually hallucinations
-        lens = [len(example["answer"]) for example in prompt_answers]
-        q3 = np.quantile(lens, 0.75)
-        q1 = np.quantile(lens, 0.25)
-        iqr = q3 - q1
-        lower_bound = q1 - 1.5 * iqr
-        upper_bound = q3 + 1.5 * iqr
-        prompt_answers = prompt_answers.filter(
-            lambda x: lower_bound <= len(x["answer"]) <= upper_bound
-        )
-
-        prompt_answers.save_to_disk(output_dir)
-
-        # push synthetic temporal questions to hub
-        syntetic_temporal_questions = prompt_answers.select_columns(["answer", "label"])
-        syntetic_temporal_questions.rename_column("answer", "text")
-        syntetic_temporal_questions.push_to_hub(
-            "hugosousa/SyntheticTemporalQuestions", "clean"
-        )
     else:
-        prompt_answers = datasets.load_from_disk(output_dir)
+        clean = datasets.load_from_disk(output_dir)
 
     # Deep answer check
     output_dir = DATA_DIR / "synthetic" / "super_clean"
     if not output_dir.exists():
-        prompt_answers = prompt_answers.filter(
-            strict_answer_check, load_from_cache_file=False
-        )
-        prompt_answers.save_to_disk(output_dir)
+        super_clean = make_super_clean_synthetic_temporal_questions(clean)
+        super_clean.save_to_disk(output_dir)
 
-        # push synthetic data to hub
-        syntetic_temporal_questions = prompt_answers.select_columns(["answer", "label"])
-        syntetic_temporal_questions.rename_column("answer", "text")
-        syntetic_temporal_questions.push_to_hub(
-            "hugosousa/SyntheticTemporalQuestions", "super_clean"
-        )
     else:
-        prompt_answers = datasets.load_from_disk(output_dir)
+        super_clean = datasets.load_from_disk(output_dir)
+
+    return {
+        "raw": raw,
+        "clean": clean,
+        "super_clean": super_clean,
+    }
+
+
+async def main(n_valid_samples: int = 5_000):
+    data = await make_data()
+
+    for name, dataset in data.items():
+        dataset = dataset.select_columns(["answer", "label"])
+        dataset = dataset.rename_column("answer", "text")
+
+        if len(dataset) > n_valid_samples:
+            # split into train and valid
+            train, valid = train_test_split(
+                dataset.to_list(),
+                test_size=n_valid_samples,
+                random_state=42,
+                shuffle=True,
+                stratify=dataset["label"],
+            )
+
+            train_dataset = datasets.Dataset.from_list(train)
+            valid_dataset = datasets.Dataset.from_list(valid)
+
+            # push data to hub
+            train_dataset.push_to_hub(
+                "hugosousa/SyntheticTemporalQuestions",
+                name,
+                split="train",
+                token=HF_TOKEN,
+            )
+            valid_dataset.push_to_hub(
+                "hugosousa/SyntheticTemporalQuestions",
+                name,
+                split="valid",
+                token=HF_TOKEN,
+            )
+        else:
+            logging.info(
+                f"Skipping {name} because it has less than {n_valid_samples} samples"
+            )
 
 
 if __name__ == "__main__":

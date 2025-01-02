@@ -9,10 +9,10 @@ import datasets
 import evaluate
 import numpy as np
 import transformers
-from datasets import load_dataset
 from fire import Fire
 
 from src.constants import HF_TOKEN, NEW_TOKENS
+from src.utils import generate_run_id
 from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
@@ -203,6 +203,7 @@ def get_label_list(raw_dataset, split="train") -> List[str]:
 
 def main(
     model_name: str = "HuggingFaceTB/SmolLM2-135M",
+    dataset_name: str = "hugosousa/TemporalQuestions",
     batch_size: int = 32,
     gradient_accumulation_steps: int = 4,
     num_train_epochs: int = 30,
@@ -215,7 +216,7 @@ def main(
 
     model_stem = model_name.split("/")[-1]
     data_args = DataTrainingArguments(
-        dataset_name="hugosousa/TemporalQuestions",
+        dataset_name=dataset_name,
         dataset_config_name="default",
         max_seq_length=2048,  # TODO: Get from model
         pad_to_max_length=False,  # To pad each batch at runtime
@@ -226,8 +227,10 @@ def main(
         max_predict_samples=100 if DEBUG else None,
     )
 
+    run_id = generate_run_id()
+
     training_args = TrainingArguments(
-        output_dir=f"models/{model_stem}-TemporalQuestions",
+        output_dir=f"models/{model_stem}-{dataset_name}-{run_id}",
         eval_strategy="epoch",
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
@@ -254,7 +257,7 @@ def main(
         seed=42,
         bf16=True,
         push_to_hub=True,
-        hub_model_id=f"hugosousa/{model_stem}-TemporalQuestions",
+        hub_model_id=f"hugosousa/{model_stem}-{dataset_name}-{run_id}",
         hub_strategy="every_save",
         hub_token=HF_TOKEN,
         do_train=True,
@@ -296,7 +299,7 @@ def main(
     set_seed(training_args.seed)
 
     # Downloading and loading a dataset from the hub.
-    raw_datasets = load_dataset(
+    raw_datasets = datasets.load_dataset(
         data_args.dataset_name,
         data_args.dataset_config_name,
         cache_dir=model_args.cache_dir,
