@@ -93,6 +93,64 @@ def generate_prompts(dataset: datasets.Dataset) -> list[str]:
     return examples
 
 
+def simple_answer_check(example: dict) -> bool:
+    """Just require the right tags in the answer."""
+    if example["source_type"] == "start" and example["target_type"] == "start":
+        expected_tags = [
+            "<start_source>",
+            "</start_source>",
+            "<start_target>",
+            "</start_target>",
+        ]
+    elif example["source_type"] == "end" and example["target_type"] == "end":
+        expected_tags = [
+            "<end_source>",
+            "</end_source>",
+            "<end_target>",
+            "</end_target>",
+        ]
+    elif example["source_type"] == "start" and example["target_type"] == "end":
+        expected_tags = [
+            "<start_source>",
+            "</start_source>",
+            "<end_target>",
+            "</end_target>",
+        ]
+    else:
+        expected_tags = [
+            "<end_source>",
+            "</end_source>",
+            "<start_target>",
+            "</start_target>",
+        ]
+    return all(tag in example["answer"] for tag in expected_tags)
+
+
+def strict_answer_check(example: dict) -> bool:
+    """Require the right tags and the right text in the answer."""
+    if example["source_type"] == "start" and example["target_type"] == "start":
+        expected_tags = [
+            f"<start_source>{example['source_text']}</start_source>",
+            f"<start_target>{example['target_text']}</start_target>",
+        ]
+    elif example["source_type"] == "end" and example["target_type"] == "end":
+        expected_tags = [
+            f"<end_source>{example['source_text']}</end_source>",
+            f"<end_target>{example['target_text']}</end_target>",
+        ]
+    elif example["source_type"] == "start" and example["target_type"] == "end":
+        expected_tags = [
+            f"<start_source>{example['source_text']}</start_source>",
+            f"<end_target>{example['target_text']}</end_target>",
+        ]
+    else:
+        expected_tags = [
+            f"<end_source>{example['source_text']}</end_source>",
+            f"<start_target>{example['target_text']}</start_target>",
+        ]
+    return all(tag in example["answer"] for tag in expected_tags)
+
+
 async def main(use_cache: bool = True):
     # Generate all the prompts
     output_dir = CACHE_DIR / "synthetic" / "prompts"
@@ -135,35 +193,45 @@ async def main(use_cache: bool = True):
 
         prompt_answers = prompts_dataset.add_column("answer", answers)
         prompt_answers.save_to_disk(raw_output_dir)
+        prompt_answers.push_to_hub("hugosousa/tmp", "raw")  # TODO: Remove this
     else:
         prompt_answers = datasets.load_from_disk(raw_output_dir)
 
+    syntetic_temporal_questions = prompt_answers.select_columns(["answer", "label"])
+    syntetic_temporal_questions.rename_column("answer", "text")
+    syntetic_temporal_questions.push_to_hub(
+        "hugosousa/SyntheticTemporalQuestions", "raw"
+    )
+
     # Verify the answers
+    output_dir = DATA_DIR / "synthetic" / "clean"
+    if not output_dir.exists() or not use_cache:
+        prompt_answers = prompt_answers.filter(simple_answer_check)
+        prompt_answers.save_to_disk(output_dir)
+        prompt_answers.push_to_hub("hugosousa/tmp", "clean")  # TODO: Remove this
+    else:
+        prompt_answers = datasets.load_from_disk(output_dir)
 
-    # TODO: Remove this
-    # infos = prompt_answers["prompt"]
-    # data = datasets.Dataset.from_list(infos)
-    # data = data.add_column("answer", prompt_answers["answer"])
-    # prompt_answers = data
+    syntetic_temporal_questions = prompt_answers.select_columns(["answer", "label"])
+    syntetic_temporal_questions.rename_column("answer", "text")
+    syntetic_temporal_questions.push_to_hub(
+        "hugosousa/SyntheticTemporalQuestions", "clean"
+    )
 
-    # def check_answer(example: dict) -> bool:
-    #     if example["source_type"] == "start" and example["target_type"] == "start":
-    #         if "<start_source>" in example["answer"] and "</start_source>" in example["answer"] and "<start_target>" in example["answer"] and "</start_target>" in example["answer"]:
-    #             return True
-    #     elif example["source_type"] == "end" and example["target_type"] == "end":
-    #         if "<end_source>" in example["answer"] and "</end_source>" in example["answer"] and "<end_target>" in example["answer"] and "</end_target>" in example["answer"]:
-    #             return True
-    #     elif example["source_type"] == "start" and example["target_type"] == "end":
-    #         if "<start_source>" in example["answer"] and "</start_source>" in example["answer"] and "<end_target>" in example["answer"] and "</end_target>" in example["answer"]:
-    #             return True
-    #     elif example["source_type"] == "end" and example["target_type"] == "start":
-    #         if "<end_source>" in example["answer"] and "</end_source>" in example["answer"] and "<start_target>" in example["answer"] and "</start_target>" in example["answer"]:
-    #             return True
-    #     return False
+    # Deep answer check
+    output_dir = DATA_DIR / "synthetic" / "super_clean"
+    if not output_dir.exists() or not use_cache:
+        prompt_answers = prompt_answers.filter(strict_answer_check)
+        prompt_answers.save_to_disk(output_dir)
+        prompt_answers.push_to_hub("hugosousa/tmp", "super_clean")  # TODO: Remove this
+    else:
+        prompt_answers = datasets.load_from_disk(output_dir)
 
-    # prompt_answers = prompt_answers.filter(check_answer)
-    # prompt_answers.save_to_disk(DATA_DIR / "synthetic" / "clean")
-    # prompt_answers.push_to_hub("hugosousa/tmp")
+    syntetic_temporal_questions = prompt_answers.select_columns(["answer", "label"])
+    syntetic_temporal_questions.rename_column("answer", "text")
+    syntetic_temporal_questions.push_to_hub(
+        "hugosousa/SyntheticTemporalQuestions", "super_clean"
+    )
 
 
 if __name__ == "__main__":
