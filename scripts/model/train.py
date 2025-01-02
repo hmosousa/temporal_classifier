@@ -1,5 +1,4 @@
 import logging
-import os
 import random
 import sys
 from dataclasses import dataclass, field
@@ -12,6 +11,7 @@ import transformers
 from fire import Fire
 
 from src.constants import HF_TOKEN, NEW_TOKENS
+from src.data import load_dataset
 from src.utils import generate_run_id
 from transformers import (
     AutoConfig,
@@ -203,7 +203,7 @@ def get_label_list(raw_dataset, split="train") -> List[str]:
 
 def main(
     model_name: str = "HuggingFaceTB/SmolLM2-135M",
-    dataset_name: str = "hugosousa/TemporalQuestions",
+    dataset_name: str = "temporal_questions",
     batch_size: int = 32,
     gradient_accumulation_steps: int = 4,
     num_train_epochs: int = 30,
@@ -217,14 +217,12 @@ def main(
     model_stem = model_name.split("/")[-1]
     data_args = DataTrainingArguments(
         dataset_name=dataset_name,
-        dataset_config_name="default",
         max_seq_length=2048,  # TODO: Get from model
         pad_to_max_length=False,  # To pad each batch at runtime
         shuffle_train_dataset=True,
         shuffle_seed=42,
         max_train_samples=100 if DEBUG else None,
         max_eval_samples=100 if DEBUG else None,
-        max_predict_samples=100 if DEBUG else None,
     )
 
     run_id = generate_run_id()
@@ -262,7 +260,6 @@ def main(
         hub_token=HF_TOKEN,
         do_train=True,
         do_eval=True,
-        do_predict=False,
         report_to="wandb",
     )
 
@@ -299,13 +296,16 @@ def main(
     set_seed(training_args.seed)
 
     # Downloading and loading a dataset from the hub.
-    raw_datasets = datasets.load_dataset(
-        data_args.dataset_name,
-        data_args.dataset_config_name,
-        cache_dir=model_args.cache_dir,
-        token=model_args.token,
-        trust_remote_code=model_args.trust_remote_code,
+    trainset = load_dataset(data_args.dataset_name, "train")
+    validset = load_dataset(data_args.dataset_name, "valid")
+
+    raw_datasets = datasets.DatasetDict(
+        {
+            "train": trainset,
+            "valid": validset,
+        }
     )
+
     # Print some info about the dataset
     logger.info(f"Dataset loaded: {raw_datasets}")
     logger.info(raw_datasets)
@@ -416,16 +416,6 @@ def main(
             eval_dataset = eval_dataset.select(range(max_eval_samples))
         raw_datasets["valid"] = eval_dataset
 
-    if training_args.do_predict:
-        predict_dataset = raw_datasets["test"]
-        # remove label column if it exists
-        if data_args.max_predict_samples is not None:
-            max_predict_samples = min(
-                len(predict_dataset), data_args.max_predict_samples
-            )
-            predict_dataset = predict_dataset.select(range(max_predict_samples))
-        raw_datasets["test"] = predict_dataset
-
     # Running the preprocessing pipeline on all the datasets
     with training_args.main_process_first(desc="dataset map pre-processing"):
         raw_datasets = raw_datasets.map(
@@ -437,7 +427,6 @@ def main(
         )
         train_dataset = raw_datasets["train"]
         eval_dataset = raw_datasets["valid"]
-        predict_dataset = raw_datasets["test"]
 
     # Log a few random samples from the training set:
     if training_args.do_train:
@@ -514,33 +503,6 @@ def main(
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
 
-    if training_args.do_predict:
-        logger.info("*** Predict ***")
-        # Removing the `label` columns if exists because it might contains -1 and Trainer won't like that.
-        if "label" in predict_dataset.features:
-            predict_dataset = predict_dataset.remove_columns("label")
-        predictions = trainer.predict(
-            predict_dataset, metric_key_prefix="predict"
-        ).predictions
-
-        # Convert logits to multi-hot encoding. We compare the logits to 0 instead of 0.5, because the sigmoid is not applied.
-        # You can also pass `preprocess_logits_for_metrics=lambda logits, labels: nn.functional.sigmoid(logits)` to the Trainer
-        # and set p > 0.5 below (less efficient in this case)
-        predictions = np.array([np.where(p > 0, 1, 0) for p in predictions])
-
-        output_predict_file = os.path.join(
-            training_args.output_dir, "predict_results.txt"
-        )
-        if trainer.is_world_process_zero():
-            with open(output_predict_file, "w") as writer:
-                logger.info("***** Predict results *****")
-                writer.write("index\tprediction\n")
-                for index, item in enumerate(predictions):
-                    # recover from multi-hot encoding
-                    item = [label_list[i] for i in range(len(item)) if item[i] == 1]
-                    writer.write(f"{index}\t{item}\n")
-
-        logger.info("Predict results saved at {}".format(output_predict_file))
     kwargs = {
         "finetuned_from": model_args.model_name_or_path,
         "tasks": "text-classification",
