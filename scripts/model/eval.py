@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 
 def main(
     model_name: str,
-    dataset_name: Literal["q_timelines", "timeset", "levels"],
+    dataset_name: Literal["temporal_questions", "timeset"],
     verbose: bool = False,
 ):
     """Evaluate a model with a given configuration.
@@ -48,7 +48,7 @@ def main(
 
     logging.info("Saving results")
     model_id = model_name.split("/")[-1]
-    outpath = RESULTS_DIR / "classifier" / dataset_name / f"{model_id}.json"
+    outpath = RESULTS_DIR / dataset_name / f"{model_id}.json"
     outpath.parent.mkdir(parents=True, exist_ok=True)
     with open(outpath, "w") as f:
         json.dump(results, f, indent=4)
