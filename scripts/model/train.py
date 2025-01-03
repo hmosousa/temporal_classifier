@@ -10,11 +10,10 @@ import evaluate
 import numpy as np
 import transformers
 from fire import Fire
-from src.base import ID2RELATIONS, RELATIONS, RELATIONS2ID
 
+from src.base import ID2RELATIONS, RELATIONS, RELATIONS2ID
 from src.constants import HF_TOKEN, NEW_TOKENS
 from src.data import load_dataset
-from src.utils import generate_run_id
 from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
@@ -181,21 +180,6 @@ class ModelArguments:
     )
 
 
-def get_label_list(raw_dataset, split="train") -> List[str]:
-    """Get the list of labels from a multi-label dataset"""
-
-    if isinstance(raw_dataset[split]["label"][0], list):
-        label_list = [
-            label for sample in raw_dataset[split]["label"] for label in sample
-        ]
-        label_list = list(set(label_list))
-    else:
-        label_list = raw_dataset[split].unique("label")
-    # we will treat the label list as a list of string instead of int, consistent with model.config.label2id
-    label_list = [str(label) for label in label_list]
-    return label_list
-
-
 def main(
     model_name: str = "HuggingFaceTB/SmolLM2-135M",
     dataset_name: str = "temporal_questions",
@@ -223,10 +207,8 @@ def main(
         preprocessing_num_workers=mp.cpu_count(),
     )
 
-    run_id = generate_run_id()
-
     training_args = TrainingArguments(
-        output_dir=f"models/{model_stem}-{dataset_name}-{run_id}",
+        output_dir=f"models/{model_stem}-{dataset_name}",
         eval_strategy="epoch",
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
@@ -253,7 +235,7 @@ def main(
         seed=42,
         bf16=True,
         push_to_hub=push_to_hub,
-        hub_model_id=f"hugosousa/{model_stem}-{dataset_name}-{run_id}",
+        hub_model_id=f"hugosousa/{model_stem}-{dataset_name}",
         hub_strategy="every_save",
         hub_token=HF_TOKEN,
         do_train=do_train,
