@@ -8,14 +8,16 @@ from sklearn.metrics import classification_report
 
 from src.constants import RESULTS_DIR
 from src.data import load_dataset
+from src.model.majority import MajorityClassifier
+from src.model.random import RandomClassifier
 from transformers import pipeline
 
 logging.basicConfig(level=logging.INFO)
 
 
 def main(
-    model_name: str,
-    dataset_name: Literal["temporal_questions", "timeset"],
+    model_name: str = "random",
+    dataset_name: Literal["temporal_questions", "timeset"] = "temporal_questions",
     verbose: bool = False,
 ):
     """Evaluate a model with a given configuration.
@@ -24,17 +26,21 @@ def main(
         model_name: The HuggingFace name of the model to evaluate.
         dataset_name: The name of the dataset to evaluate on.
     """
-
-    logging.info(f"Loading model {model_name}")
-    classifier = pipeline(
-        "text-classification",
-        model=model_name,
-        torch_dtype=torch.bfloat16,
-        device_map="auto",
-    )
-
     logging.info(f"Loading dataset {dataset_name}")
     dataset = load_dataset(dataset_name, split="test")
+
+    logging.info(f"Loading model {model_name}")
+    if model_name == "random":
+        classifier = RandomClassifier(dataset["label"])
+    elif model_name == "majority":
+        classifier = MajorityClassifier(dataset["label"])
+    else:
+        classifier = pipeline(
+            "text-classification",
+            model=model_name,
+            torch_dtype=torch.bfloat16,
+            device_map="auto",
+        )
 
     logging.info("Getting predictions")
     preds = classifier(dataset["text"], batch_size=32)

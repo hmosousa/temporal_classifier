@@ -16,10 +16,14 @@ accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/trai
 accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/train.py --model_name HuggingFaceTB/SmolLM2-1.7B --dataset_name all_temporal_questions --batch_size 4 --gradient_accumulation_steps 32 --num_train_epochs 30
 
 # Evaluate the classifiers
+python scripts/model/eval.py -m random -d temporal_questions
+python scripts/model/eval.py -m majority -d temporal_questions
 python scripts/model/eval.py -m hugosousa/SmolLM2-135M-TemporalQuestions -d temporal_questions
 python scripts/model/eval.py -m hugosousa/SmolLM2-360M-TemporalQuestions -d temporal_questions
 python scripts/model/eval.py -m hugosousa/SmolLM2-1.7B-TemporalQuestions -d temporal_questions
 
+python scripts/model/eval.py -m random -d timeset
+python scripts/model/eval.py -m majority -d timeset
 python scripts/model/eval.py -m hugosousa/SmolLM2-135M-TemporalQuestions -d timeset
 python scripts/model/eval.py -m hugosousa/SmolLM2-360M-TemporalQuestions -d timeset
 python scripts/model/eval.py -m hugosousa/SmolLM2-1.7B-TemporalQuestions -d timeset
