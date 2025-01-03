@@ -20,6 +20,7 @@ from transformers import (
     AutoTokenizer,
     DataCollatorWithPadding,
     default_data_collator,
+    EarlyStoppingCallback,
     EvalPrediction,
     set_seed,
     Trainer,
@@ -190,6 +191,7 @@ def main(
     do_eval: bool = True,
     push_to_hub: bool = True,
     debug: bool = False,
+    early_stopping_patience: int = 3,
 ):
     model_args = ModelArguments(
         model_name_or_path=model_name,
@@ -339,10 +341,10 @@ def main(
         model.config.pad_token_id = model.config.eos_token_id
 
     # Add new tokens to the tokenizer
-    tokenizer.add_tokens(NEW_TOKENS)
-    model.resize_token_embeddings(
-        len(tokenizer)
-    )  # This is slow because it creates a new embedding layer
+    if not debug:
+        # This is slow because it creates a new embedding layer
+        tokenizer.add_tokens(NEW_TOKENS)
+        model.resize_token_embeddings(len(tokenizer))
 
     # Padding strategy
     if data_args.pad_to_max_length:
@@ -454,6 +456,9 @@ def main(
         compute_metrics=compute_metrics,
         processing_class=tokenizer,
         data_collator=data_collator,
+        callbacks=[
+            EarlyStoppingCallback(early_stopping_patience=early_stopping_patience)
+        ],
     )
 
     # Training
