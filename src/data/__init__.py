@@ -7,7 +7,7 @@ from src.data.all_temporal_questions import load_all_temporal_questions
 from src.data.synthetic_temporal_questions import load_synthetic_temporal_questions
 from src.data.temporal_questions import load_temporal_questions
 from src.data.timeset import load_timeset
-from src.data.utils import balance_dataset_classes
+from src.data.utils import augment_dataset, balance_dataset_classes
 
 DATASETS = {
     "timeset": load_timeset,
@@ -34,4 +34,5 @@ __all__ = [
     "load_synthetic_temporal_questions",
     "load_all_temporal_questions",
     "balance_dataset_classes",
+    "augment_dataset",
 ]

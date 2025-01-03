@@ -5,6 +5,11 @@ accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/trai
 accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/train.py --model_name HuggingFaceTB/SmolLM2-360M --dataset_name temporal_questions --batch_size 16 --gradient_accumulation_steps 8 --num_train_epochs 30
 accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/train.py --model_name HuggingFaceTB/SmolLM2-1.7B --dataset_name temporal_questions --batch_size 4 --gradient_accumulation_steps 32 --num_train_epochs 30
 
+# Train on augmented temporal questions
+accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/train.py --model_name HuggingFaceTB/SmolLM2-135M --dataset_name temporal_questions --batch_size 32 --gradient_accumulation_steps 4 --num_train_epochs 30 --augment True
+accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/train.py --model_name HuggingFaceTB/SmolLM2-360M --dataset_name temporal_questions --batch_size 16 --gradient_accumulation_steps 8 --num_train_epochs 30 --augment True
+accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/train.py --model_name HuggingFaceTB/SmolLM2-1.7B --dataset_name temporal_questions --batch_size 4 --gradient_accumulation_steps 32 --num_train_epochs 30 --augment True
+
 # Train on synthetic temporal questions
 accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/train.py --model_name HuggingFaceTB/SmolLM2-135M --dataset_name synthetic_temporal_questions --batch_size 32 --gradient_accumulation_steps 4 --num_train_epochs 30
 accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/train.py --model_name HuggingFaceTB/SmolLM2-360M --dataset_name synthetic_temporal_questions --batch_size 16 --gradient_accumulation_steps 8 --num_train_epochs 30

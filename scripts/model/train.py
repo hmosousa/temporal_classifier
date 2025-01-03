@@ -13,7 +13,7 @@ from fire import Fire
 
 from src.base import ID2RELATIONS, RELATIONS, RELATIONS2ID
 from src.constants import HF_TOKEN, NEW_TOKENS
-from src.data import load_dataset
+from src.data import augment_dataset, load_dataset
 from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
@@ -116,6 +116,9 @@ class DataTrainingArguments:
     metric_name: Optional[str] = field(
         default=None, metadata={"help": "The metric to use for evaluation."}
     )
+    augment: bool = field(
+        default=False, metadata={"help": "Whether to augment the dataset or not."}
+    )
 
 
 @dataclass
@@ -185,6 +188,7 @@ def main(
     model_name: str = "HuggingFaceTB/SmolLM2-135M",
     dataset_name: str = "temporal_questions",
     batch_size: int = 32,
+    augment: bool = False,
     gradient_accumulation_steps: int = 4,
     num_train_epochs: int = 30,
     do_train: bool = True,
@@ -207,6 +211,7 @@ def main(
         shuffle_train_dataset=True,
         shuffle_seed=42,
         preprocessing_num_workers=mp.cpu_count(),
+        augment=augment,
     )
 
     training_args = TrainingArguments(
@@ -386,6 +391,9 @@ def main(
         if data_args.max_train_samples is not None:
             max_train_samples = min(len(train_dataset), data_args.max_train_samples)
             train_dataset = train_dataset.select(range(max_train_samples))
+        if data_args.augment:
+            logger.info("Augmenting the training dataset")
+            train_dataset = augment_dataset(train_dataset)
         if data_args.shuffle_train_dataset:
             logger.info("Shuffling the training dataset")
             train_dataset = train_dataset.shuffle(seed=data_args.shuffle_seed)
@@ -396,6 +404,9 @@ def main(
         if data_args.max_eval_samples is not None:
             max_eval_samples = min(len(eval_dataset), data_args.max_eval_samples)
             eval_dataset = eval_dataset.select(range(max_eval_samples))
+        if data_args.augment:
+            logger.info("Augmenting the evaluation dataset")
+            eval_dataset = augment_dataset(eval_dataset)
         raw_datasets["valid"] = eval_dataset
 
     # Running the preprocessing pipeline on all the datasets
