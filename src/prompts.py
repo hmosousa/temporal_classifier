@@ -41,7 +41,7 @@ When generating the text:
 
 _EXAMPLE_TEMPLATE = """
 Input:
-{source_type} of {source_text} {relation_text} {target_type} of {target_text}
+<{source_tag}>{source_text}</{source_tag}> {relation_text} <{target_tag}>{target_text}</{target_tag}>
 
 Output:
 {text}
@@ -49,7 +49,7 @@ Output:
 
 
 _OUTPUT_TEMPLATE = """Input:
-{source_type} of {source_text} {relation_text} {target_type} of {target_text}
+<{source_tag}>{source_text}</{source_tag}> {relation_text} <{target_tag}>{target_text}</{target_tag}>
 
 Output:
 """
@@ -60,19 +60,19 @@ class GenerationPrompter:
         examples_str = ""
         for example in examples:
             examples_str += _EXAMPLE_TEMPLATE.format(
-                source_type=example["source_type"],
+                source_tag=f"{example['source_type']}_source",
                 source_text=example["source_text"],
                 relation_text=RELATIONS2STR[example["label"]],
-                target_type=example["target_type"],
+                target_tag=f"{example['target_type']}_target",
                 target_text=example["target_text"],
                 text=example["text"],
             )
 
         new_example_str = _OUTPUT_TEMPLATE.format(
-            source_type=new_example["source_type"],
+            source_tag=f"{new_example['source_type']}_source",
             source_text=new_example["source_text"],
             relation_text=RELATIONS2STR[new_example["label"]],
-            target_type=new_example["target_type"],
+            target_tag=f"{new_example['target_type']}_target",
             target_text=new_example["target_text"],
         )
 

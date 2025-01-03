@@ -10,6 +10,7 @@ import evaluate
 import numpy as np
 import transformers
 from fire import Fire
+from src.base import ID2RELATIONS, RELATIONS, RELATIONS2ID
 
 from src.constants import HF_TOKEN, NEW_TOKENS
 from src.data import load_dataset
@@ -134,18 +135,13 @@ class ModelArguments:
             "help": "Pretrained config name or path if not the same as model_name"
         },
     )
-    tokenizer_name: Optional[str] = field(
-        default=None,
-        metadata={
-            "help": "Pretrained tokenizer name or path if not the same as model_name"
-        },
-    )
     cache_dir: Optional[str] = field(
         default=None,
         metadata={
             "help": "Where do you want to store the pretrained models downloaded from huggingface.co"
         },
     )
+
     use_fast_tokenizer: bool = field(
         default=True,
         metadata={
@@ -206,6 +202,10 @@ def main(
     batch_size: int = 32,
     gradient_accumulation_steps: int = 4,
     num_train_epochs: int = 30,
+    do_train: bool = True,
+    do_eval: bool = True,
+    push_to_hub: bool = True,
+    debug: bool = False,
 ):
     model_args = ModelArguments(
         model_name_or_path=model_name,
@@ -216,7 +216,7 @@ def main(
     model_stem = model_name.split("/")[-1]
     data_args = DataTrainingArguments(
         dataset_name=dataset_name,
-        max_seq_length=1024,  # TODO: Get from model
+        max_seq_length=1024,
         pad_to_max_length=False,  # To pad each batch at runtime
         shuffle_train_dataset=True,
         shuffle_seed=42,
@@ -252,12 +252,12 @@ def main(
         greater_is_better=False,
         seed=42,
         bf16=True,
-        push_to_hub=True,
+        push_to_hub=push_to_hub,
         hub_model_id=f"hugosousa/{model_stem}-{dataset_name}-{run_id}",
         hub_strategy="every_save",
         hub_token=HF_TOKEN,
-        do_train=True,
-        do_eval=True,
+        do_train=do_train,
+        do_eval=do_eval,
         report_to="wandb",
     )
 
@@ -297,6 +297,11 @@ def main(
     trainset = load_dataset(data_args.dataset_name, "train")
     validset = load_dataset(data_args.dataset_name, "valid")
 
+    if debug:
+        sample_size = batch_size * gradient_accumulation_steps * 8
+        trainset = trainset.select(range(sample_size))
+        validset = validset.select(range(sample_size))
+
     raw_datasets = datasets.DatasetDict(
         {
             "train": trainset,
@@ -308,35 +313,28 @@ def main(
     logger.info(f"Dataset loaded: {raw_datasets}")
     logger.info(raw_datasets)
 
-    label_list = ["<", ">", "=", "-"]
-    label2id = {label: i for i, label in enumerate(label_list)}
-    id2label = {i: label for label, i in label2id.items()}
-    num_labels = len(label_list)
+    num_labels = len(RELATIONS)
 
     # Load pretrained model and tokenizer
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
     config = AutoConfig.from_pretrained(
-        model_args.config_name
-        if model_args.config_name
-        else model_args.model_name_or_path,
+        model_args.model_name_or_path,
         num_labels=num_labels,
         finetuning_task="text-classification",
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         token=model_args.token,
         trust_remote_code=model_args.trust_remote_code,
-        label2id=label2id,
-        id2label=id2label,
+        label2id=RELATIONS2ID,
+        id2label=ID2RELATIONS,
     )
 
     logger.info("setting problem type to multi label classification")
     config.problem_type = "multi_label_classification"
 
     tokenizer = AutoTokenizer.from_pretrained(
-        model_args.tokenizer_name
-        if model_args.tokenizer_name
-        else model_args.model_name_or_path,
+        model_args.model_name_or_path,
         cache_dir=model_args.cache_dir,
         use_fast=model_args.use_fast_tokenizer,
         revision=model_args.model_revision,
@@ -360,7 +358,9 @@ def main(
 
     # Add new tokens to the tokenizer
     tokenizer.add_tokens(NEW_TOKENS)
-    model.resize_token_embeddings(len(tokenizer))
+    model.resize_token_embeddings(
+        len(tokenizer)
+    )  # This is slow because it creates a new embedding layer
 
     # Padding strategy
     if data_args.pad_to_max_length:
@@ -377,9 +377,9 @@ def main(
     max_seq_length = min(data_args.max_seq_length, tokenizer.model_max_length)
 
     def multi_labels_to_ids(labels: List[str]) -> List[float]:
-        ids = [0.0] * len(label2id)  # BCELoss requires float as target type
+        ids = [0.0] * len(RELATIONS2ID)  # BCELoss requires float as target type
         for label in labels:
-            ids[label2id[label]] = 1.0
+            ids[RELATIONS2ID[label]] = 1.0
         return ids
 
     def preprocess_function(examples):
@@ -389,7 +389,7 @@ def main(
             max_length=max_seq_length,
             truncation=True,
         )
-        if label2id is not None and "label" in examples:
+        if RELATIONS2ID is not None and "label" in examples:
             result["label"] = [
                 multi_labels_to_ids(labels) for labels in examples["label"]
             ]
@@ -434,6 +434,7 @@ def main(
     metric = evaluate.load(
         "f1", config_name="multilabel", cache_dir=model_args.cache_dir
     )
+
     logger.info(
         "Using multilabel F1 for multi-label classification task, you can use --metric_name to overwrite."
     )

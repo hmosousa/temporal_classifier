@@ -58,3 +58,7 @@ Found some bad entries in the data. Samples from like "Putin <5>faced</5> whistl
 ## 2024-11-14
 
 None of the generated synthetic answers contain the expected tags and the expected text. We need to improve the prompt generation process.
+
+## 2024-11-15
+
+Llama for sequence classification gets the logits from the last hidden state.

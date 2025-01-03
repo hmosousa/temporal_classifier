@@ -1,8 +1,10 @@
 from typing import Literal
 
 import datasets
+import pytest
 
 
+@pytest.mark.skip(reason="Skipping due to slow loading times")
 def load_all_temporal_questions(
     split: Literal["train", "valid", "test"],
 ) -> datasets.Dataset:

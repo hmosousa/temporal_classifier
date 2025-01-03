@@ -270,13 +270,13 @@ async def main(n_valid_samples: int = 5_000):
 
             # push data to hub
             train_dataset.push_to_hub(
-                "hugosousa/SyntheticTemporalQuestions",
+                "hugosousa/NewSyntheticTemporalQuestions",
                 name,
                 split="train",
                 token=HF_TOKEN,
             )
             valid_dataset.push_to_hub(
-                "hugosousa/SyntheticTemporalQuestions",
+                "hugosousa/NewSyntheticTemporalQuestions",
                 name,
                 split="valid",
                 token=HF_TOKEN,
