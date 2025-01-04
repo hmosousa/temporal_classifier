@@ -195,7 +195,7 @@ def main(
     do_eval: bool = True,
     push_to_hub: bool = True,
     debug: bool = False,
-    early_stopping_patience: int = 3,
+    early_stopping_patience: int = 4,
 ):
     model_args = ModelArguments(
         model_name_or_path=model_name,
@@ -215,7 +215,7 @@ def main(
     )
 
     training_args = TrainingArguments(
-        output_dir=f"models/{model_stem}-{dataset_name}",
+        output_dir=f"models/{model_stem}-{dataset_name}-{augment}",
         eval_strategy="epoch",
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
@@ -223,9 +223,10 @@ def main(
         gradient_accumulation_steps=gradient_accumulation_steps,
         learning_rate=1e-3,
         max_grad_norm=1.0,
-        lr_scheduler_type="cosine_with_restarts",
+        lr_scheduler_type="reduce_lr_on_plateau",
         lr_scheduler_kwargs={
-            "num_cycles": 1,
+            "factor": 0.5,
+            "patience": 1,
         },
         warmup_ratio=0.05,  # set here instead on the scheduler
         weight_decay=0.01,
@@ -242,7 +243,7 @@ def main(
         seed=42,
         bf16=True,
         push_to_hub=push_to_hub,
-        hub_model_id=f"hugosousa/{model_stem}-{dataset_name}",
+        hub_model_id=f"hugosousa/{model_stem}-{dataset_name}-{augment}",
         hub_strategy="every_save",
         hub_token=HF_TOKEN,
         do_train=do_train,

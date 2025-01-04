@@ -13,7 +13,7 @@ def load_all_temporal_questions(
 
     if split != "test":  # Synthetic dataset is only available for train and valid
         synthetic = datasets.load_dataset(
-            "hugosousa/SyntheticTemporalQuestions", "clean", split=split
+            "hugosousa/SyntheticTemporalQuestions", "super_clean", split=split
         )
 
         dataset = datasets.concatenate_datasets([manual, synthetic])

@@ -62,3 +62,7 @@ None of the generated synthetic answers contain the expected tags and the expect
 ## 2024-11-15
 
 Llama for sequence classification gets the logits from the last hidden state.
+
+## 2024-11-16
+
+The current prompt to generate synthetic data is able to generate text that contains the expected tags and text for the entities. Moving the training to this new data.

@@ -8,6 +8,6 @@ def load_synthetic_temporal_questions(
 ) -> datasets.Dataset:
     """Used to train classification models."""
     dataset = datasets.load_dataset(
-        "hugosousa/SyntheticTemporalQuestions", "clean", split=split
+        "hugosousa/SyntheticTemporalQuestions", "super_clean", split=split
     )
     return dataset
