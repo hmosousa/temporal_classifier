@@ -43,7 +43,7 @@ def main(
         )
 
     logging.info("Getting predictions")
-    preds = classifier(dataset["text"], batch_size=32)
+    preds = classifier(dataset["text"], batch_size=512)
     preds = [p["label"] for p in preds]
     labels = dataset["label"]
 
