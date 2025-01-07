@@ -10,10 +10,11 @@ from typing import List, Optional
 import datasets
 import transformers
 from fire import Fire
+from omegaconf import OmegaConf
 from sklearn.metrics import classification_report
 
 from src.base import ID2RELATIONS, RELATIONS, RELATIONS2ID
-from src.constants import HF_TOKEN, NEW_TOKENS
+from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
 from src.data import augment_dataset, load_dataset
 
 # from src.trainer import Trainer
@@ -189,82 +190,22 @@ class ModelArguments:
 
 
 def main(
-    model_name: str = "HuggingFaceTB/SmolLM2-135M",
-    dataset_name: str = "temporal_questions",
-    batch_size: int = 2,
-    augment: bool = False,
-    gradient_accumulation_steps: int = 1,
-    num_train_epochs: int = 5,
-    do_train: bool = True,
-    do_eval: bool = True,
-    push_to_hub: bool = True,
-    debug: bool = True,
-    early_stopping_patience: int = 8,
-    label_smoothing_factor: float = 0.0,
-    resume_from_checkpoint: bool = False,
-    torch_compile: bool = False,
-    use_liger_kernel: bool = True,
-    skip_memory_metrics: bool = False,
+    config_path: str = CONFIGS_DIR / "classifier" / "debug.yaml",
 ):
-    model_args = ModelArguments(
-        model_name_or_path=model_name,
-        token=HF_TOKEN,
-        trust_remote_code=True,
-    )
+    config = OmegaConf.load(config_path)
 
-    model_stem = model_name.split("/")[-1]
-    data_args = DataTrainingArguments(
-        dataset_name=dataset_name,
-        max_seq_length=1024,
-        pad_to_max_length=False,  # To pad each batch at runtime
-        shuffle_train_dataset=True,
-        shuffle_seed=42,
-        preprocessing_num_workers=mp.cpu_count(),
-        augment=augment,
-    )
+    if "debug" in config:
+        debug = config.debug
+    else:
+        debug = False
 
-    training_args = TrainingArguments(
-        output_dir=f"models/{model_stem}-{dataset_name}-{augment}",
-        eval_strategy="epoch",
-        per_device_train_batch_size=batch_size,
-        per_device_eval_batch_size=batch_size,
-        num_train_epochs=num_train_epochs,
-        gradient_accumulation_steps=gradient_accumulation_steps,
-        learning_rate=1e-3,
-        max_grad_norm=1.0,
-        lr_scheduler_type="reduce_lr_on_plateau",
-        lr_scheduler_kwargs={
-            "factor": 0.5,
-            "patience": 1,
-        },
-        warmup_ratio=0.05,  # set here instead on the scheduler
-        weight_decay=0.01,
-        adam_beta1=0.9,
-        adam_beta2=0.999,
-        adam_epsilon=1e-8,
-        logging_dir="logs",
-        logging_steps=1,
-        save_total_limit=2,
-        save_strategy="epoch",
-        load_best_model_at_end=True,
-        metric_for_best_model="eval_loss",
-        greater_is_better=False,
-        seed=42,
-        bf16=True,
-        push_to_hub=push_to_hub,
-        hub_model_id=f"hugosousa/{model_stem}-{dataset_name}-{augment}",
-        hub_strategy="every_save",
-        hub_token=HF_TOKEN,
-        do_train=do_train,
-        do_eval=do_eval,
-        report_to="wandb",
-        full_determinism=debug,  # Only used for debugging
-        skip_memory_metrics=skip_memory_metrics,
-        use_liger_kernel=use_liger_kernel,
-        label_smoothing_factor=label_smoothing_factor,
-        overwrite_output_dir=True if not resume_from_checkpoint else False,
-        torch_compile=torch_compile,
-    )
+    config.model["token"] = HF_TOKEN
+    model_args = ModelArguments(**config.model)
+
+    config.data["preprocessing_num_workers"] = mp.cpu_count()
+    data_args = DataTrainingArguments(**config.data)
+
+    training_args = TrainingArguments(**config.trainer)
 
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
     # information sent is the one passed as arguments along with your Python/PyTorch versions.
@@ -323,11 +264,6 @@ def main(
     trainset = load_dataset(data_args.dataset_name, "train")
     validset = load_dataset(data_args.dataset_name, "valid")
 
-    if debug:
-        sample_size = batch_size * gradient_accumulation_steps * 2
-        trainset = trainset.select(range(sample_size))
-        validset = validset.select(range(sample_size))
-
     raw_datasets = datasets.DatasetDict(
         {
             "train": trainset,
@@ -344,7 +280,7 @@ def main(
     # Load pretrained model and tokenizer
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
-    config = AutoConfig.from_pretrained(
+    model_config = AutoConfig.from_pretrained(
         model_args.model_name_or_path,
         num_labels=num_labels,
         finetuning_task="text-classification",
@@ -357,7 +293,7 @@ def main(
     )
 
     logger.info("setting problem type to multi label classification")
-    config.problem_type = "multi_label_classification"
+    model_config.problem_type = "multi_label_classification"
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
@@ -370,7 +306,7 @@ def main(
     model = AutoModelForSequenceClassification.from_pretrained(
         model_args.model_name_or_path,
         from_tf=bool(".ckpt" in model_args.model_name_or_path),
-        config=config,
+        config=model_config,
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         token=model_args.token,
@@ -496,6 +432,15 @@ def main(
     else:
         data_collator = None
 
+    if "early_stopping_patience" in config.trainer:
+        callbacks = [
+            EarlyStoppingCallback(
+                early_stopping_patience=config.trainer.early_stopping_patience
+            )
+        ]
+    else:
+        callbacks = []
+
     # Initialize our Trainer
     trainer = Trainer(
         model=model,
@@ -505,9 +450,7 @@ def main(
         compute_metrics=compute_metrics,
         processing_class=tokenizer,
         data_collator=data_collator,
-        callbacks=[
-            EarlyStoppingCallback(early_stopping_patience=early_stopping_patience)
-        ],
+        callbacks=callbacks,
     )
 
     # Training
@@ -543,8 +486,17 @@ def main(
             else len(eval_dataset)
         )
         metrics["eval_samples"] = min(max_eval_samples, len(eval_dataset))
-        trainer.log_metrics("eval", metrics)
-        trainer.save_metrics("eval", metrics)
+
+        formatted_metrics = {}
+        for metric, value in metrics.items():
+            if isinstance(value, dict):
+                for k, v in value.items():
+                    formatted_metrics[f"{metric}_{k}"] = v
+            else:
+                formatted_metrics[metric] = value
+
+        trainer.log_metrics("eval", formatted_metrics)
+        trainer.save_metrics("eval", formatted_metrics)
 
     kwargs = {
         "finetuned_from": model_args.model_name_or_path,

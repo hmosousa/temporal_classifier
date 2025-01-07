@@ -1,0 +1,41 @@
+debug: True
+
+model:
+    model_name_or_path: HuggingFaceTB/SmolLM2-135M
+    trust_remote_code: True
+
+data:
+    dataset_name: temporal_questions
+    max_seq_length: 1024
+    augment: False
+    pad_to_max_length: False # To pad each batch at runtime
+    shuffle_train_dataset: True
+    shuffle_seed: 42
+    max_train_samples: 16
+    max_eval_samples: 16
+
+trainer:
+    output_dir: models/debug
+    overwrite_output_dir: True # To not resume training from checkpoint
+    eval_strategy: epoch
+    per_device_train_batch_size: 2
+    per_device_eval_batch_size: 2
+    num_train_epochs: 5
+    learning_rate: 1e-3
+    max_grad_norm: 1.0
+    lr_scheduler_type: linear
+    logging_dir: logs
+    logging_steps: 1
+    load_best_model_at_end: True
+    metric_for_best_model: eval_loss
+    greater_is_better: False
+    seed: 42
+    bf16: True
+    push_to_hub: False
+    do_train: True
+    do_eval: True
+    skip_memory_metrics: True
+    use_liger_kernel: False
+    label_smoothing_factor: 0.0
+    torch_compile: False
+    save_strategy: epoch
