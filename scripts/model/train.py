@@ -190,7 +190,7 @@ class ModelArguments:
 
 
 def main(
-    config_file: str = CONFIGS_DIR / "classifier" / "smol-135.yaml",
+    config_file: str = CONFIGS_DIR / "classifier" / "debug.yaml",
 ):
     config = OmegaConf.load(config_file)
 
