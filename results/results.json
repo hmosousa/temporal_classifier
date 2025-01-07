@@ -6,9 +6,9 @@
             "augmented": false,
             "synthetic": false,
             "accuracy": 41.32,
-            "precision": 35.52,
-            "recall": 35.26,
-            "f1-score": 34.63
+            "precision": 26.64,
+            "recall": 26.45,
+            "f1-score": 25.98
         },
         {
             "model": "majority",
@@ -56,19 +56,19 @@
             "augmented": true,
             "synthetic": false,
             "accuracy": 34.05,
-            "precision": 32.31,
-            "recall": 31.54,
-            "f1-score": 31.46
+            "precision": 24.23,
+            "recall": 23.66,
+            "f1-score": 23.6
         },
         {
             "model": "SmolLM2-135M",
             "raw": true,
             "augmented": true,
             "synthetic": true,
-            "accuracy": 41.77,
-            "precision": 37.22,
-            "recall": 37.22,
-            "f1-score": 37.21
+            "accuracy": 40.5,
+            "precision": 29.34,
+            "recall": 29.67,
+            "f1-score": 29.01
         },
         {
             "model": "SmolLM2-135M",
@@ -86,9 +86,9 @@
             "augmented": false,
             "synthetic": true,
             "accuracy": 41.94,
-            "precision": 37.82,
-            "recall": 37.8,
-            "f1-score": 37.61
+            "precision": 28.37,
+            "recall": 28.35,
+            "f1-score": 28.21
         },
         {
             "model": "SmolLM2-135M",
@@ -108,9 +108,9 @@
             "augmented": false,
             "synthetic": false,
             "accuracy": 66.33,
-            "precision": 53.29,
-            "recall": 54.32,
-            "f1-score": 53.66
+            "precision": 39.97,
+            "recall": 40.74,
+            "f1-score": 40.25
         },
         {
             "model": "majority",
@@ -167,20 +167,20 @@
             "raw": true,
             "augmented": true,
             "synthetic": true,
-            "accuracy": 67.71,
-            "precision": 40.28,
-            "recall": 40.42,
-            "f1-score": 40.34
+            "accuracy": 66.39,
+            "precision": 41.3,
+            "recall": 42.96,
+            "f1-score": 41.83
         },
         {
             "model": "SmolLM2-135M",
             "raw": false,
             "augmented": false,
             "synthetic": true,
-            "accuracy": 43.22,
-            "precision": 29.51,
-            "recall": 27.42,
-            "f1-score": 27.29
+            "accuracy": 43.19,
+            "precision": 29.53,
+            "recall": 27.49,
+            "f1-score": 27.32
         },
         {
             "model": "SmolLM2-135M",
@@ -198,9 +198,9 @@
             "augmented": true,
             "synthetic": true,
             "accuracy": 34.58,
-            "precision": 27.89,
+            "precision": 27.9,
             "recall": 24.23,
-            "f1-score": 23.54
+            "f1-score": 23.55
         }
     ]
 }

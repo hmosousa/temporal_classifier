@@ -1579,6 +1579,27 @@ files = [
 ]
 
 [[package]]
+name = "liger-kernel"
+version = "0.5.2"
+description = "Efficient Triton kernels for LLM Training"
+optional = false
+python-versions = "*"
+files = [
+    {file = "liger_kernel-0.5.2-py3-none-any.whl", hash = "sha256:31a7409ac9db20fc77e7caf8ab146f56d37d4a1d22e3cefd08661560a99d0c46"},
+    {file = "liger_kernel-0.5.2.tar.gz", hash = "sha256:784b5e74848d6802f52e38766bdc0241bf723040f8bf82b153485dd2c9ba0054"},
+]
+
+[package.dependencies]
+torch = ">=2.1.2"
+triton = ">=2.3.1"
+
+[package.extras]
+amd = ["setuptools-scm (>=8)", "torch (>=2.6.0.dev)", "torchvision (>=0.20.0.dev)", "triton (>=3.0.0)"]
+dev = ["black (>=24.4.2)", "datasets (>=2.19.2)", "flake8 (>=4.0.1.1)", "isort (>=5.13.2)", "matplotlib (>=3.7.2)", "pytest (>=7.1.2)", "pytest-rerunfailures", "pytest-xdist", "seaborn", "torchvision (>=0.16.2)", "transformers (>=4.44.2)"]
+transformers = ["transformers (>=4.0,<5.0)"]
+trl = ["trl (>=0.11.0)"]
+
+[[package]]
 name = "markdown-it-py"
 version = "3.0.0"
 description = "Python port of markdown-it. Markdown parsing, done right!"
@@ -4353,4 +4374,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "84b999bea9a637e2b975378dbc675995020fc2c0fca765a19d9a1ca3d34d7703"
+content-hash = "4827613b30173b4ab0fad24b161bb0326daaaf7d4a779565736ab4cb6b93cee8"

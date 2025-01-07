@@ -37,6 +37,7 @@ def add_text_type(example: dict):
 
 def main(
     model_name: str = "random",
+    revision: str = "main",
     dataset_name: Literal["temporal_questions", "timeset"] = "temporal_questions",
     verbose: bool = False,
 ):
@@ -61,6 +62,7 @@ def main(
             model=model_name,
             torch_dtype=torch.bfloat16,
             device_map="auto",
+            revision=revision,
         )
 
     logging.info("Getting predictions")

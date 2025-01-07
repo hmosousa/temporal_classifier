@@ -1,3 +1,4 @@
+import json
 import logging
 import multiprocessing as mp
 import os
@@ -7,14 +8,15 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 import datasets
-import evaluate
-import numpy as np
 import transformers
 from fire import Fire
+from sklearn.metrics import classification_report
 
 from src.base import ID2RELATIONS, RELATIONS, RELATIONS2ID
 from src.constants import HF_TOKEN, NEW_TOKENS
 from src.data import augment_dataset, load_dataset
+
+# from src.trainer import Trainer
 from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
@@ -189,15 +191,20 @@ class ModelArguments:
 def main(
     model_name: str = "HuggingFaceTB/SmolLM2-135M",
     dataset_name: str = "temporal_questions",
-    batch_size: int = 32,
+    batch_size: int = 2,
     augment: bool = False,
-    gradient_accumulation_steps: int = 4,
-    num_train_epochs: int = 30,
+    gradient_accumulation_steps: int = 1,
+    num_train_epochs: int = 5,
     do_train: bool = True,
     do_eval: bool = True,
     push_to_hub: bool = True,
-    debug: bool = False,
-    early_stopping_patience: int = 4,
+    debug: bool = True,
+    early_stopping_patience: int = 8,
+    label_smoothing_factor: float = 0.0,
+    resume_from_checkpoint: bool = False,
+    torch_compile: bool = False,
+    use_liger_kernel: bool = True,
+    skip_memory_metrics: bool = False,
 ):
     model_args = ModelArguments(
         model_name_or_path=model_name,
@@ -251,6 +258,12 @@ def main(
         do_train=do_train,
         do_eval=do_eval,
         report_to="wandb",
+        full_determinism=debug,  # Only used for debugging
+        skip_memory_metrics=skip_memory_metrics,
+        use_liger_kernel=use_liger_kernel,
+        label_smoothing_factor=label_smoothing_factor,
+        overwrite_output_dir=True if not resume_from_checkpoint else False,
+        torch_compile=torch_compile,
     )
 
     # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
@@ -311,7 +324,7 @@ def main(
     validset = load_dataset(data_args.dataset_name, "valid")
 
     if debug:
-        sample_size = batch_size * gradient_accumulation_steps * 8
+        sample_size = batch_size * gradient_accumulation_steps * 2
         trainset = trainset.select(range(sample_size))
         validset = validset.select(range(sample_size))
 
@@ -450,27 +463,28 @@ def main(
         for index in random.sample(range(len(train_dataset)), 3):
             logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
 
-    metric = evaluate.load(
-        "f1", config_name="multilabel", cache_dir=model_args.cache_dir
-    )
-
     logger.info(
         "Using multilabel F1 for multi-label classification task, you can use --metric_name to overwrite."
     )
 
     def compute_metrics(p: EvalPrediction):
-        preds = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
+        logits = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
+        y_preds = logits.argmax(axis=1)
+        preds = [ID2RELATIONS[int(y_pred)] for y_pred in y_preds.tolist()]
 
-        preds = np.array(
-            [np.where(p > 0, 1, 0) for p in preds]
-        )  # convert logits to multi-hot encoding
-        # Micro F1 is commonly used in multi-label classification
-        result = metric.compute(
-            predictions=preds, references=p.label_ids, average="micro"
+        y_labels = p.label_ids.argmax(axis=1)
+        labels = [ID2RELATIONS[int(y_label)] for y_label in y_labels.tolist()]
+
+        result = classification_report(
+            y_true=labels,
+            y_pred=preds,
+            output_dict=True,
+            zero_division=0.0,
+            labels=RELATIONS,
         )
 
-        if len(result) > 1:
-            result["combined_score"] = np.mean(list(result.values())).item()
+        logger.info(json.dumps(result, indent=4))
+
         return result
 
     # Data collator will default to DataCollatorWithPadding when the tokenizer is passed to Trainer, so we change it if
@@ -499,7 +513,9 @@ def main(
     # Training
     if training_args.do_train:
         checkpoint = None
-        if training_args.resume_from_checkpoint is not None:
+        if debug:
+            checkpoint = None
+        elif training_args.resume_from_checkpoint is not None:
             checkpoint = training_args.resume_from_checkpoint
         elif last_checkpoint is not None:
             checkpoint = last_checkpoint
