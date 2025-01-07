@@ -1,5 +1,6 @@
 import logging
 import multiprocessing as mp
+import os
 import random
 import sys
 from dataclasses import dataclass, field
@@ -26,6 +27,7 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
+from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import send_example_telemetry
 
 logger = logging.getLogger(__name__)
@@ -280,6 +282,27 @@ def main(
     )
     logger.info(f"Training/evaluation parameters {training_args}")
 
+    # Detecting last checkpoint.
+    last_checkpoint = None
+    if (
+        os.path.isdir(training_args.output_dir)
+        and training_args.do_train
+        and not training_args.overwrite_output_dir
+    ):
+        last_checkpoint = get_last_checkpoint(training_args.output_dir)
+        if last_checkpoint is None and len(os.listdir(training_args.output_dir)) > 0:
+            raise ValueError(
+                f"Output directory ({training_args.output_dir}) already exists and is not empty. "
+                "Use --overwrite_output_dir to overcome."
+            )
+        elif (
+            last_checkpoint is not None and training_args.resume_from_checkpoint is None
+        ):
+            logger.info(
+                f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
+                "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
+            )
+
     # Set seed before initializing model.
     set_seed(training_args.seed)
 
@@ -475,7 +498,13 @@ def main(
 
     # Training
     if training_args.do_train:
-        train_result = trainer.train()
+        checkpoint = None
+        if training_args.resume_from_checkpoint is not None:
+            checkpoint = training_args.resume_from_checkpoint
+        elif last_checkpoint is not None:
+            checkpoint = last_checkpoint
+        train_result = trainer.train(resume_from_checkpoint=checkpoint)
+
         metrics = train_result.metrics
         max_train_samples = (
             data_args.max_train_samples

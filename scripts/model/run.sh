@@ -49,7 +49,7 @@ accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/trai
 accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/train.py --model_name HuggingFaceTB/SmolLM2-135M --dataset_name all_temporal_questions --batch_size 32 --gradient_accumulation_steps 4 --num_train_epochs 30
 
 # train on temporal questions augmented
-accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/train.py --model_name HuggingFaceTB/SmolLM2-135M --dataset_name all_temporal_questions --batch_size 32 --gradient_accumulation_steps 4 --num_train_epochs 30 --augment True
+accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/train.py --model_name HuggingFaceTB/SmolLM2-135M --dataset_name all_temporal_questions --batch_size 32 --gradient_accumulation_steps 4 --num_train_epochs 30 --augment True --early_stopping_patience 8
 
 # Train on synthetic temporal questions
 accelerate launch --config_file configs/accelerate/zero2.yaml scripts/model/train.py --model_name HuggingFaceTB/SmolLM2-135M --dataset_name synthetic_temporal_questions --batch_size 32 --gradient_accumulation_steps 4 --num_train_epochs 30 --early_stopping_patience 8
@@ -63,3 +63,10 @@ python scripts/model/eval.py -m hugosousa/SmolLM2-135M-synthetic_temporal_questi
 python scripts/model/eval.py -m hugosousa/SmolLM2-135M-synthetic_temporal_questions-False -d temporal_questions
 python scripts/model/eval.py -m hugosousa/SmolLM2-135M-all_temporal_questions-True -d temporal_questions
 python scripts/model/eval.py -m hugosousa/SmolLM2-135M-all_temporal_questions-False -d temporal_questions
+
+python scripts/model/eval.py -m hugosousa/SmolLM2-135M-temporal_questions-True -d timeset
+python scripts/model/eval.py -m hugosousa/SmolLM2-135M-temporal_questions-False -d timeset
+python scripts/model/eval.py -m hugosousa/SmolLM2-135M-synthetic_temporal_questions-True -d timeset
+python scripts/model/eval.py -m hugosousa/SmolLM2-135M-synthetic_temporal_questions-False -d timeset
+python scripts/model/eval.py -m hugosousa/SmolLM2-135M-all_temporal_questions-True -d timeset
+python scripts/model/eval.py -m hugosousa/SmolLM2-135M-all_temporal_questions-False -d timeset
