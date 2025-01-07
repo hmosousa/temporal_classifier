@@ -190,9 +190,9 @@ class ModelArguments:
 
 
 def main(
-    config_path: str = CONFIGS_DIR / "classifier" / "debug.yaml",
+    config_file: str = CONFIGS_DIR / "classifier" / "smol-135.yaml",
 ):
-    config = OmegaConf.load(config_path)
+    config = OmegaConf.load(config_file)
 
     if "debug" in config:
         debug = config.debug
@@ -320,7 +320,7 @@ def main(
 
     # Add new tokens to the tokenizer
     if not debug:
-        # This is slow because it creates a new embedding layer
+        # This is slow when running in parallel because it creates a new embedding layer
         tokenizer.add_tokens(NEW_TOKENS)
         model.resize_token_embeddings(len(tokenizer))
 
@@ -419,9 +419,17 @@ def main(
             labels=RELATIONS,
         )
 
-        logger.info(json.dumps(result, indent=4))
+        formatted_result = {}
+        for metric, value in result.items():
+            if isinstance(value, dict):
+                for k, v in value.items():
+                    formatted_result[f"{metric}_{k}".replace(" ", "_")] = v
+            else:
+                formatted_result[metric] = value
 
-        return result
+        logger.info(json.dumps(formatted_result, indent=4))
+
+        return formatted_result
 
     # Data collator will default to DataCollatorWithPadding when the tokenizer is passed to Trainer, so we change it if
     # we already did the padding.
@@ -487,16 +495,8 @@ def main(
         )
         metrics["eval_samples"] = min(max_eval_samples, len(eval_dataset))
 
-        formatted_metrics = {}
-        for metric, value in metrics.items():
-            if isinstance(value, dict):
-                for k, v in value.items():
-                    formatted_metrics[f"{metric}_{k}"] = v
-            else:
-                formatted_metrics[metric] = value
-
-        trainer.log_metrics("eval", formatted_metrics)
-        trainer.save_metrics("eval", formatted_metrics)
+        trainer.log_metrics("eval", metrics)
+        trainer.save_metrics("eval", metrics)
 
     kwargs = {
         "finetuned_from": model_args.model_name_or_path,
