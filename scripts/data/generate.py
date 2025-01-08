@@ -36,8 +36,8 @@ def add_tags(text: str, entities: list, dct: Timex = None) -> str:
     return context
 
 
-def doc2questions(doc, split: str = "train"):
-    if split == "train":
+def doc2questions(doc, closure: bool):
+    if closure:
         tlinks = doc.temporal_closure
     else:
         tlinks = doc.tlinks
@@ -116,12 +116,12 @@ def doc2questions(doc, split: str = "train"):
     return samples
 
 
-def transform_corpus(documents, split: str = "train"):
+def transform_corpus(documents, closure: bool):
     # Transform the documents into pair-wise contexts
     # Each tlink has its own context
     samples = []
     for doc in tqdm(documents):
-        samples += doc2questions(doc, split)
+        samples += doc2questions(doc, closure=closure)
 
     # Transform the contexts to have the special tokens
     examples = []
@@ -177,15 +177,16 @@ def drop_long_texts(examples: list[dict]):
     return [example for example in examples if len(example["text"].split()) <= 512]
 
 
-def main(dataset_name: str = "tempeval_3", n_valid_samples: int = 5_000):
+def main(
+    dataset_name: str = "tempeval_3", n_valid_samples: int = 5_000, closure: bool = True
+):
     corpus = tieval.datasets.read(dataset_name)
 
-    test_examples = transform_corpus(corpus.test, split="test")
-    dev_examples = transform_corpus(corpus.train, split="train")
+    test_examples = transform_corpus(corpus.test, closure=closure)
+    dev_examples = transform_corpus(corpus.train, closure=closure)
 
-    dev_examples = drop_long_texts(
-        dev_examples
-    )  # TODO: This is just to iterate fast. Should be removed.
+    if closure:
+        test_examples = validate_dataset(test_examples)
     dev_examples = validate_dataset(dev_examples)
 
     # Stratified split into train and validation
@@ -202,9 +203,16 @@ def main(dataset_name: str = "tempeval_3", n_valid_samples: int = 5_000):
     validset = datasets.Dataset.from_list(valid_examples)
     testset = datasets.Dataset.from_list(test_examples)
 
-    trainset.push_to_hub("hugosousa/TemporalQuestions", split="train", token=HF_TOKEN)
-    validset.push_to_hub("hugosousa/TemporalQuestions", split="valid", token=HF_TOKEN)
-    testset.push_to_hub("hugosousa/TemporalQuestions", split="test", token=HF_TOKEN)
+    config = "closure" if closure else "raw"
+    trainset.push_to_hub(
+        "hugosousa/TemporalQuestions", config_name=config, split="train", token=HF_TOKEN
+    )
+    validset.push_to_hub(
+        "hugosousa/TemporalQuestions", config_name=config, split="valid", token=HF_TOKEN
+    )
+    testset.push_to_hub(
+        "hugosousa/TemporalQuestions", config_name=config, split="test", token=HF_TOKEN
+    )
 
 
 if __name__ == "__main__":

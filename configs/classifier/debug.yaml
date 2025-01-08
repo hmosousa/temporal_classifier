@@ -6,6 +6,7 @@ model:
 
 data:
     dataset_name: temporal_questions
+    dataset_config_name: raw
     max_seq_length: 1024
     augment: False
     pad_to_max_length: False # To pad each batch at runtime

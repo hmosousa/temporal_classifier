@@ -39,6 +39,7 @@ def main(
     model_name: str = "random",
     revision: str = "main",
     dataset_name: Literal["temporal_questions", "timeset"] = "temporal_questions",
+    batch_size: int = 512,
     verbose: bool = False,
 ):
     """Evaluate a model with a given configuration.
@@ -66,7 +67,7 @@ def main(
         )
 
     logging.info("Getting predictions")
-    preds = classifier(dataset["text"], batch_size=512)
+    preds = classifier(dataset["text"], batch_size=batch_size)
     preds = [p["label"] for p in preds]
     dataset = dataset.add_column("pred", preds)
 

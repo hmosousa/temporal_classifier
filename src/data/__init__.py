@@ -18,13 +18,13 @@ DATASETS = {
 
 
 def load_dataset(
-    dataset_name: str, split: str, config: Dict[str, Any] = {}
+    dataset_name: str, split: str, **kwargs: Dict[str, Any]
 ) -> Tuple[Dataset, Dataset]:
     if dataset_name not in DATASETS:
         raise ValueError(
             f"Dataset {dataset_name} not found. Valid datasets are: {list(DATASETS.keys())}"
         )
-    return DATASETS[dataset_name](split=split, **config)
+    return DATASETS[dataset_name](split=split, **kwargs)
 
 
 __all__ = [

@@ -261,8 +261,12 @@ def main(
     set_seed(training_args.seed)
 
     # Downloading and loading a dataset from the hub.
-    trainset = load_dataset(data_args.dataset_name, "train")
-    validset = load_dataset(data_args.dataset_name, "valid")
+    trainset = load_dataset(
+        data_args.dataset_name, "train", config=data_args.dataset_config_name
+    )
+    validset = load_dataset(
+        data_args.dataset_name, "valid", config=data_args.dataset_config_name
+    )
 
     raw_datasets = datasets.DatasetDict(
         {

@@ -8,7 +8,7 @@ def test_load_all_temporal_questions_train():
 
     assert isinstance(trainset, Dataset)
     assert set(trainset.column_names) == {"text", "label"}
-    assert len(trainset) == 226_676 + 441_931
+    assert len(trainset) == 38_324 + 441_931
 
 
 def test_load_all_temporal_questions_valid():
@@ -29,7 +29,7 @@ def test_load_all_temporal_questions_test():
 
 def test_load_all_temporal_questions_dataset():
     trainset = load_dataset("all_temporal_questions", "train")
-    assert len(trainset) == 226_676 + 441_931
+    assert len(trainset) == 38_324 + 441_931
 
     validset = load_dataset("all_temporal_questions", "valid")
     assert len(validset) == 10_000

@@ -6,10 +6,10 @@ import pytest
 
 @pytest.mark.skip(reason="Skipping due to slow loading times")
 def load_all_temporal_questions(
-    split: Literal["train", "valid", "test"],
+    split: Literal["train", "valid", "test"], config: Literal["closure", "raw"] = "raw"
 ) -> datasets.Dataset:
     """The combination of the manual and synthetic temporal questions datasets."""
-    manual = datasets.load_dataset("hugosousa/TemporalQuestions", split=split)
+    manual = datasets.load_dataset("hugosousa/TemporalQuestions", config, split=split)
 
     if split != "test":  # Synthetic dataset is only available for train and valid
         synthetic = datasets.load_dataset(

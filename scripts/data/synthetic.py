@@ -197,10 +197,10 @@ async def make_data():
         dataset = datasets.concatenate_datasets(
             [
                 datasets.load_dataset(
-                    "hugosousa/TemporalQuestions", "default", split="train"
+                    "hugosousa/TemporalQuestions", "closure", split="train"
                 ),
                 datasets.load_dataset(
-                    "hugosousa/TemporalQuestions", "default", split="valid"
+                    "hugosousa/TemporalQuestions", "closure", split="valid"
                 ),
             ]
         )

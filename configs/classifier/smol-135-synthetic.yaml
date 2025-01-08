@@ -3,8 +3,8 @@ model:
     trust_remote_code: True
 
 data:
-    dataset_name: temporal_questions
-    dataset_config_name: raw
+    dataset_name: all_temporal_questions
+    dataset_config_name: super_clean
     max_seq_length: 1024
     augment: False
     pad_to_max_length: False # To pad each batch at runtime
