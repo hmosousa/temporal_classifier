@@ -300,7 +300,6 @@ class Timeline:
 
 def get_interval_relation(preds: List[Dict[str, Any]]) -> str:
     """Get the interval relation from a list of predictions."""
-    interval_relation = None
 
     # Add the entity pair to the predictions
     for pair, pred in zip(PAIRS, preds):
@@ -322,5 +321,5 @@ def get_interval_relation(preds: List[Dict[str, Any]]) -> str:
 
         if point_relation in POINT_TO_INTERVAL_RELATION:
             interval_relation = POINT_TO_INTERVAL_RELATION[point_relation]
-            break
-    return interval_relation
+            return interval_relation
+    return None
