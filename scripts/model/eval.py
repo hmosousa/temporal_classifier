@@ -39,6 +39,7 @@ def main(
     model_name: str = "random",
     revision: str = "main",
     dataset_name: Literal["temporal_questions", "timeset"] = "temporal_questions",
+    config_name: str = "raw",
     batch_size: int = 512,
     verbose: bool = False,
 ):
@@ -49,7 +50,7 @@ def main(
         dataset_name: The name of the dataset to evaluate on.
     """
     logging.info(f"Loading dataset {dataset_name}")
-    dataset = load_dataset(dataset_name, split="test")
+    dataset = load_dataset(dataset_name, split="test", config_name=config_name)
     dataset = dataset.map(add_text_type)
 
     logging.info(f"Loading model {model_name}")
