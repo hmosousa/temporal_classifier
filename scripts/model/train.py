@@ -398,6 +398,21 @@ def main(
         train_dataset = raw_datasets["train"]
         eval_dataset = raw_datasets["valid"]
 
+        logger.info(f"Dropping rows with more than {max_seq_length} tokens")
+        n_train = len(train_dataset)
+        train_dataset = train_dataset.filter(
+            lambda x: len(x["input_ids"]) <= max_seq_length
+        )
+        n_dropped_train = n_train - len(train_dataset)
+        logger.info(f"Dropped {n_dropped_train} rows from train dataset")
+
+        n_eval = len(eval_dataset)
+        eval_dataset = eval_dataset.filter(
+            lambda x: len(x["input_ids"]) <= max_seq_length
+        )
+        n_dropped_eval = n_eval - len(eval_dataset)
+        logger.info(f"Dropped {n_dropped_eval} rows from eval dataset")
+
     # Log a few random samples from the training set:
     if training_args.do_train:
         for index in random.sample(range(len(train_dataset)), 3):
@@ -444,10 +459,10 @@ def main(
     else:
         data_collator = None
 
-    if "early_stopping_patience" in config.trainer:
+    if "early_stopping_patience" in config.other:
         callbacks = [
             EarlyStoppingCallback(
-                early_stopping_patience=config.trainer.early_stopping_patience
+                early_stopping_patience=config.other.early_stopping_patience
             )
         ]
     else:

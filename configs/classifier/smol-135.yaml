@@ -5,21 +5,21 @@ model:
 data:
     dataset_name: temporal_questions
     dataset_config_name: raw
-    max_seq_length: 1024
+    max_seq_length: 512
     augment: False
     pad_to_max_length: False # To pad each batch at runtime
     shuffle_train_dataset: True
     shuffle_seed: 42
 
 trainer:
-    output_dir: models/smol-135-tq-false
+    output_dir: models/smol-135-tq
     overwrite_output_dir: True
     eval_strategy: epoch
-    per_device_train_batch_size: 32
-    per_device_eval_batch_size: 32
+    per_device_train_batch_size: 64
+    per_device_eval_batch_size: 64
     num_train_epochs: 30
     learning_rate: 1e-3
-    gradient_accumulation_steps: 4
+    gradient_accumulation_steps: 2
     max_grad_norm: 1.0
     lr_scheduler_type: reduce_lr_on_plateau
     lr_scheduler_kwargs:
@@ -35,7 +35,7 @@ trainer:
     seed: 42
     bf16: True
     push_to_hub: True
-    hub_model_id: hugosousa/smol-135-tq-false
+    hub_model_id: hugosousa/smol-135-tq
     hub_strategy: every_save
     do_train: True
     do_eval: True
@@ -43,3 +43,6 @@ trainer:
     use_liger_kernel: True
     label_smoothing_factor: 0.0
     torch_compile: False
+
+other:
+    early_stopping_patience: 3

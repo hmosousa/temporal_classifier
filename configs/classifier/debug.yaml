@@ -40,3 +40,6 @@ trainer:
     label_smoothing_factor: 0.0
     torch_compile: False
     save_strategy: epoch
+
+other:
+    early_stopping_patience: 3

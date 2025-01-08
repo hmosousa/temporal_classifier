@@ -3,16 +3,16 @@ model:
     trust_remote_code: True
 
 data:
-    dataset_name: temporal_questions
-    dataset_config_name: raw
+    dataset_name: all_temporal_questions
+    dataset_config_name: closure
     max_seq_length: 512
-    augment: True
+    augment: False
     pad_to_max_length: False # To pad each batch at runtime
     shuffle_train_dataset: True
     shuffle_seed: 42
 
 trainer:
-    output_dir: models/smol-135-tq-augment
+    output_dir: models/smol-135-tq-closure-synthetic
     overwrite_output_dir: True
     eval_strategy: epoch
     per_device_train_batch_size: 64
@@ -35,7 +35,7 @@ trainer:
     seed: 42
     bf16: True
     push_to_hub: True
-    hub_model_id: hugosousa/smol-135-tq-augment
+    hub_model_id: hugosousa/smol-135-tq-closure-synthetic
     hub_strategy: every_save
     do_train: True
     do_eval: True
