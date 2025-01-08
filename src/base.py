@@ -310,16 +310,18 @@ def get_interval_relation(preds: List[Dict[str, Any]]) -> str:
 
     # Get the interval relation
     running_relation = [None, None, None, None]  # ss_st, ss_et, es_st, es_et
-    for pred in preds:
-        relation = preds[0]["label"]
-        if relation == "-":
-            relation = None  # in tieval the "-" relation is None
+    while preds:
+        for pred in preds:
+            relation = preds[0]["label"]
+            if relation == "-":
+                relation = None  # in tieval the "-" relation is None
 
-        idx = PAIRS_TO_IDX[pred["pair"]]
-        running_relation[idx] = relation
-        point_relation = PointRelation(*running_relation)
+            idx = PAIRS_TO_IDX[pred["pair"]]
+            running_relation[idx] = relation
+            point_relation = PointRelation(*running_relation)
 
-        if point_relation in POINT_TO_INTERVAL_RELATION:
-            interval_relation = POINT_TO_INTERVAL_RELATION[point_relation]
-            return interval_relation
+            if point_relation in POINT_TO_INTERVAL_RELATION:
+                interval_relation = POINT_TO_INTERVAL_RELATION[point_relation]
+                return interval_relation
+        preds.pop(0)
     return None
