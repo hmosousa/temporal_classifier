@@ -3,6 +3,7 @@ import re
 from collections import Counter
 
 import datasets
+from tieval.entities import Timex
 
 from src.base import INVERT_RELATION
 
@@ -74,3 +75,21 @@ def augment_dataset(dataset: datasets.Dataset) -> datasets.Dataset:
     mirror_dataset = dataset.map(augment_row)
     augmented_dataset = datasets.concatenate_datasets([dataset, mirror_dataset])
     return augmented_dataset
+
+
+def add_tags(text: str, entities: list, dct: Timex = None) -> str:
+    """Add tags to the text."""
+    entities = sorted(list(entities), key=lambda x: x.offsets[0])
+
+    context = ""
+    if dct:
+        context = f"Documents creation time: <{dct.id}>{dct.text}</{dct.id}>\n"
+
+    e_prev = 0
+    for entity in entities:
+        s, e = entity.offsets
+        context += text[e_prev:s]
+        context += f"<{entity.id}>{entity.text}</{entity.id}>"
+        e_prev = e
+    context += text[e:]
+    return context

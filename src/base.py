@@ -1,9 +1,11 @@
 import itertools
-from typing import Dict, List, Literal, Tuple
+from typing import Any, Dict, List, Literal, Tuple
 
 from tieval.links import TLink
+from tieval.temporal_relation import _INTERVAL_TO_POINT_RELATION, PointRelation
 
 from src.closure import compute_temporal_closure
+
 
 RELATIONS = ["<", ">", "=", "-"]
 
@@ -27,6 +29,40 @@ RELATIONS2ID = {
 ENDPOINT_TYPES = ["start", "end"]
 
 ID2RELATIONS = {v: k for k, v in RELATIONS2ID.items()}
+
+
+INTERVAL_TO_POINT_RELATION = {
+    "BEGUN_BY": _INTERVAL_TO_POINT_RELATION["BEGUN_BY"],
+    "IBEFORE": _INTERVAL_TO_POINT_RELATION["IBEFORE"],
+    "BEFORE": _INTERVAL_TO_POINT_RELATION["BEFORE"],
+    "SIMULTANEOUS": _INTERVAL_TO_POINT_RELATION["SIMULTANEOUS"],
+    "ENDS": _INTERVAL_TO_POINT_RELATION["ENDS"],
+    "IAFTER": _INTERVAL_TO_POINT_RELATION["IAFTER"],
+    "INCLUDES": _INTERVAL_TO_POINT_RELATION["INCLUDES"],
+    "BEGINS": _INTERVAL_TO_POINT_RELATION["BEGINS"],
+    "ENDED_BY": _INTERVAL_TO_POINT_RELATION["ENDED_BY"],
+    "AFTER": _INTERVAL_TO_POINT_RELATION["AFTER"],
+    "IS_INCLUDED": _INTERVAL_TO_POINT_RELATION["IS_INCLUDED"],
+}
+
+POINT_TO_INTERVAL_RELATION = {
+    point: interval for interval, point in INTERVAL_TO_POINT_RELATION.items()
+}
+
+
+PAIRS = [
+    ("start_source", "start_target"),
+    ("start_source", "end_target"),
+    ("end_source", "start_target"),
+    ("end_source", "end_target"),
+]
+
+PAIRS_TO_IDX = {
+    ("start_source", "start_target"): 0,
+    ("start_source", "end_target"): 1,
+    ("end_source", "start_target"): 2,
+    ("end_source", "end_target"): 3,
+}
 
 
 class Relation:
@@ -260,3 +296,31 @@ class Timeline:
             ]
 
         return set(relations)
+
+
+def get_interval_relation(preds: List[Dict[str, Any]]) -> str:
+    """Get the interval relation from a list of predictions."""
+    interval_relation = None
+
+    # Add the entity pair to the predictions
+    for pair, pred in zip(PAIRS, preds):
+        pred["pair"] = pair
+
+    # Sort by confidence
+    preds = sorted(preds, key=lambda x: x["score"], reverse=True)
+
+    # Get the interval relation
+    running_relation = [None, None, None, None]  # ss_st, ss_et, es_st, es_et
+    for pred in preds:
+        relation = preds[0]["label"]
+        if relation == "-":
+            relation = None  # in tieval the "-" relation is None
+
+        idx = PAIRS_TO_IDX[pred["pair"]]
+        running_relation[idx] = relation
+        point_relation = PointRelation(*running_relation)
+
+        if point_relation in POINT_TO_INTERVAL_RELATION:
+            interval_relation = POINT_TO_INTERVAL_RELATION[point_relation]
+            break
+    return interval_relation

@@ -50,7 +50,7 @@ def main(
         dataset_name: The name of the dataset to evaluate on.
     """
     logging.info(f"Loading dataset {dataset_name}")
-    dataset = load_dataset(dataset_name, split="test", config_name=config_name)
+    dataset = load_dataset(dataset_name, split="test", config=config_name)
     dataset = dataset.map(add_text_type)
 
     logging.info(f"Loading model {model_name}")
@@ -105,7 +105,7 @@ def main(
 
     logging.info("Saving results")
     model_id = model_name.split("/")[-1]
-    outpath = RESULTS_DIR / dataset_name / f"{model_id}.json"
+    outpath = RESULTS_DIR / "point" / dataset_name / f"{model_id}.json"
     outpath.parent.mkdir(parents=True, exist_ok=True)
     with open(outpath, "w") as f:
         json.dump(report, f, indent=4)

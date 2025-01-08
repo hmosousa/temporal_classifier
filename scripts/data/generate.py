@@ -12,28 +12,11 @@ from sklearn.model_selection import train_test_split
 
 from src.base import Timeline
 from src.constants import HF_TOKEN
-from tieval.entities import Timex
+from src.data.utils import add_tags
 from tqdm import tqdm
 
 ROOT_DIR = Path(__file__).parent.parent
 DATA_DIR = ROOT_DIR / "data"
-
-
-def add_tags(text: str, entities: list, dct: Timex = None) -> str:
-    entities = sorted(list(entities), key=lambda x: x.offsets[0])
-
-    context = ""
-    if dct:
-        context = f"Documents creation time: <{dct.id}>{dct.text}</{dct.id}>\n"
-
-    e_prev = 0
-    for entity in entities:
-        s, e = entity.offsets
-        context += text[e_prev:s]
-        context += f"<{entity.id}>{entity.text}</{entity.id}>"
-        e_prev = e
-    context += text[e:]
-    return context
 
 
 def doc2questions(doc, closure: bool):
