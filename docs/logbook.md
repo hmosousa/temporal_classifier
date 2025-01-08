@@ -66,3 +66,6 @@ Llama for sequence classification gets the logits from the last hidden state.
 ## 2024-11-16
 
 The current prompt to generate synthetic data is able to generate text that contains the expected tags and text for the entities. Moving the training to this new data.
+
+## 2025-01-08
+There seems to be some grokking happening in the training process. The model achieved a train loss of 0 but validation f1 was improving.
