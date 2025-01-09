@@ -114,7 +114,12 @@ def main(
 
     logging.info("Saving results")
     model_id = model_name.split("/")[-1]
-    outpath = RESULTS_DIR / "point" / dataset_name / f"{model_id}.json"
+    if config_name:
+        outpath = (
+            RESULTS_DIR / "point" / f"{dataset_name}_{config_name}" / f"{model_id}.json"
+        )
+    else:
+        outpath = RESULTS_DIR / "point" / dataset_name / f"{model_id}.json"
     outpath.parent.mkdir(parents=True, exist_ok=True)
     with open(outpath, "w") as f:
         json.dump(report, f, indent=4)
