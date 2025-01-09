@@ -1,0 +1,86 @@
+{
+    "ENDS": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 3.0
+    },
+    "IS_INCLUDED": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 176.0
+    },
+    "INCLUDES": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 88.0
+    },
+    "ENDED_BY": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 2.0
+    },
+    "BEGINS": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 2.0
+    },
+    "BEFORE": {
+        "precision": 0.5027726432532348,
+        "recall": 0.8242424242424242,
+        "f1-score": 0.6245694603903559,
+        "support": 330.0
+    },
+    "AFTER": {
+        "precision": 0.387434554973822,
+        "recall": 0.7474747474747475,
+        "f1-score": 0.5103448275862069,
+        "support": 198.0
+    },
+    "SIMULTANEOUS": {
+        "precision": 1.0,
+        "recall": 0.00909090909090909,
+        "f1-score": 0.018018018018018018,
+        "support": 110.0
+    },
+    "BEGUN_BY": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 3.0
+    },
+    "IAFTER": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 9.0
+    },
+    "IBEFORE": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 8.0
+    },
+    "micro avg": {
+        "precision": 0.4536637931034483,
+        "recall": 0.45317545748116256,
+        "f1-score": 0.4534194938072159,
+        "support": 929.0
+    },
+    "macro avg": {
+        "precision": 0.17183701802064152,
+        "recall": 0.14370982552800735,
+        "f1-score": 0.10481202781768917,
+        "support": 929.0
+    },
+    "weighted avg": {
+        "precision": 0.3795769797183899,
+        "recall": 0.45317545748116256,
+        "f1-score": 0.33276445616024586,
+        "support": 929.0
+    }
+}

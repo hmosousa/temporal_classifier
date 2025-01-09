@@ -3,6 +3,7 @@ from typing import Any, Dict, Tuple
 from torch.utils.data import Dataset
 
 from src.data.all_temporal_questions import load_all_temporal_questions
+from src.data.matres import load_matres
 
 from src.data.synthetic_temporal_questions import load_synthetic_temporal_questions
 from src.data.temporal_questions import load_temporal_questions
@@ -14,6 +15,7 @@ DATASETS = {
     "temporal_questions": load_temporal_questions,
     "synthetic_temporal_questions": load_synthetic_temporal_questions,
     "all_temporal_questions": load_all_temporal_questions,
+    "matres": load_matres,
 }
 
 
@@ -33,6 +35,7 @@ __all__ = [
     "load_temporal_questions",
     "load_synthetic_temporal_questions",
     "load_all_temporal_questions",
+    "load_matres",
     "balance_dataset_classes",
     "augment_dataset",
 ]

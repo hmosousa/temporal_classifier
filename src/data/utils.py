@@ -1,9 +1,13 @@
+import copy
 import random
 import re
 from collections import Counter
 
 import datasets
+from tieval.base import Document
 from tieval.entities import Timex
+
+from tieval.links import TLink
 
 from src.base import INVERT_RELATION
 
@@ -92,4 +96,60 @@ def add_tags(text: str, entities: list, dct: Timex = None) -> str:
         context += f"<{entity.id}>{entity.text}</{entity.id}>"
         e_prev = e
     context += text[e:]
+    return context
+
+
+def get_tlink_context(doc: Document, tlink: TLink):
+    """Get the context of a tlink. The context are the sentences that contain the entities of the tlink."""
+    entities_map = {ent.id: ent for ent in list(doc.entities) + [doc.dct]}
+
+    if (
+        tlink.source.id not in entities_map
+        or tlink.target.id not in entities_map
+        or tlink.source.id == tlink.target.id
+    ):
+        return
+
+    has_dct = False
+    if tlink.source.is_dct:
+        entities = [tlink.target]
+        has_dct = True
+    elif tlink.target.is_dct:
+        entities = [tlink.source]
+        has_dct = True
+    else:
+        entities = [tlink.source, tlink.target]
+
+    offsets = [idx for ent in entities for idx in ent.offsets]
+
+    min_offset = min(offsets)
+    max_offset = max(offsets)
+
+    # Get the sentences that contain the entities
+    sentences = []
+    min_sent_offset = None
+    for sent in doc.sentences:
+        s_sent, e_sent = sent.offsets
+        if (
+            s_sent <= min_offset <= e_sent
+            or min_offset <= s_sent <= e_sent <= max_offset
+            or s_sent <= max_offset <= e_sent
+        ):
+            sentences.append(str(sent))
+            if min_sent_offset is None or s_sent < min_sent_offset:
+                min_sent_offset = s_sent
+    context = " ".join(sentences)
+
+    # Update entity offsets of the current context
+    for idx, ent in enumerate(entities):
+        ent_ = copy.deepcopy(ent)
+        s_ent, e_ent = ent.offsets
+        ent_.offsets = [s_ent - min_sent_offset, e_ent - min_sent_offset]
+        entities[idx] = ent_
+
+    if has_dct:
+        context = add_tags(context, entities, doc.dct)
+    else:
+        context = add_tags(context, entities)
+
     return context

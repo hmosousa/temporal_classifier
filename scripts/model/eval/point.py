@@ -39,7 +39,7 @@ def main(
     model_name: str = "random",
     revision: str = "main",
     dataset_name: Literal["temporal_questions", "timeset"] = "temporal_questions",
-    config_name: str = "raw",
+    config_name: str = None,
     batch_size: int = 512,
     verbose: bool = False,
 ):

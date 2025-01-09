@@ -9,7 +9,7 @@ _RELATION_MAP = {
 }
 
 
-def load_timeset(split: Literal["valid", "test"] = "test"):
+def load_timeset(split: Literal["valid", "test"] = "test", **kwargs):
     if split == "valid":
         split = "validation"
 

@@ -69,3 +69,6 @@ The current prompt to generate synthetic data is able to generate text that cont
 
 ## 2025-01-08
 There seems to be some grokking happening in the training process. The model achieved a train loss of 0 but validation f1 was improving.
+
+## 2025-01-09
+Start-start and end-end relations are actually the ones that the classifier ends up having the lowest accuracy.

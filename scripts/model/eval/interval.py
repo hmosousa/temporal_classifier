@@ -1,4 +1,3 @@
-import copy
 import json
 import logging
 from typing import Literal
@@ -11,7 +10,7 @@ from sklearn.metrics import classification_report
 
 from src.base import get_interval_relation, PAIRS
 from src.constants import RESULTS_DIR
-from src.data.utils import add_tags
+from src.data.utils import get_tlink_context
 from src.model.majority import MajorityClassifier
 from src.model.random import RandomClassifier
 from tqdm import tqdm
@@ -39,67 +38,10 @@ def add_text_type(example: dict):
     return example
 
 
-def get_tlink_context(doc, tlink):
-    """Get the context of a tlink. The context are the sentences that contain the entities of the tlink."""
-    entities_map = {ent.id: ent for ent in doc.entities + [doc.dct]}
-
-    if (
-        tlink.source.id not in entities_map
-        or tlink.target.id not in entities_map
-        or tlink.source.id == tlink.target.id
-    ):
-        return
-
-    has_dct = False
-    if tlink.source.is_dct:
-        entities = [tlink.target]
-        has_dct = True
-    elif tlink.target.is_dct:
-        entities = [tlink.source]
-        has_dct = True
-    else:
-        entities = [tlink.source, tlink.target]
-
-    offsets = [idx for ent in entities for idx in ent.offsets]
-
-    min_offset = min(offsets)
-    max_offset = max(offsets)
-
-    # Get the sentences that contain the entities
-    sentences = []
-    min_sent_offset = None
-    for sent in doc.sentences:
-        s_sent, e_sent = sent.offsets
-        if (
-            s_sent <= min_offset <= e_sent
-            or min_offset <= s_sent <= e_sent <= max_offset
-            or s_sent <= max_offset <= e_sent
-        ):
-            sentences.append(str(sent))
-            if min_sent_offset is None or s_sent < min_sent_offset:
-                min_sent_offset = s_sent
-    context = " ".join(sentences)
-
-    # Update entity offsets of the current context
-    for idx, ent in enumerate(entities):
-        ent_ = copy.deepcopy(ent)
-        s_ent, e_ent = ent.offsets
-        ent_.offsets = [s_ent - min_sent_offset, e_ent - min_sent_offset]
-        entities[idx] = ent_
-
-    if has_dct:
-        context = add_tags(context, entities, doc.dct)
-    else:
-        context = add_tags(context, entities)
-
-    return context
-
-
 def main(
     model_name: str = "hugosousa/smol-135-tq",
     revision: str = "main",
-    dataset_name: Literal["temporal_questions", "timeset"] = "tempeval_3",
-    batch_size: int = 512,
+    dataset_name: Literal["tempeval_3", "tddiscourse"] = "tddiscourse",
     verbose: bool = False,
 ):
     """Evaluate a model with a given configuration.
@@ -111,17 +53,15 @@ def main(
     logging.info(f"Loading dataset {dataset_name}")
     corpus = tieval.datasets.read(dataset_name)
 
-    train_labels = [
-        tl.relation.interval for doc in corpus.documents for tl in doc.tlinks
-    ]
-    unique_labels = list(set(train_labels))
+    all_labels = [tl.relation.interval for doc in corpus.documents for tl in doc.tlinks]
+    unique_labels = list(set(all_labels))
     test_docs = corpus.test
 
     logging.info(f"Loading model {model_name}")
     if model_name == "random":
         classifier = RandomClassifier(unique_labels)
     elif model_name == "majority":
-        classifier = MajorityClassifier(train_labels)
+        classifier = MajorityClassifier(all_labels)
     else:
         classifier = pipeline(
             "text-classification",
