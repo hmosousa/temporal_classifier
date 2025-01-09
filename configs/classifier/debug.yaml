@@ -38,7 +38,7 @@ trainer:
     skip_memory_metrics: True
     use_liger_kernel: False
     label_smoothing_factor: 0.0
-    torch_compile: False
+    torch_compile: True
     save_strategy: epoch
 
 other:
