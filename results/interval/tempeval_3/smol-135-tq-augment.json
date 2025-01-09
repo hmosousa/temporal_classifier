@@ -1,57 +1,9 @@
 {
-    "AFTER": {
-        "precision": 0.3261904761904762,
-        "recall": 0.6919191919191919,
-        "f1-score": 0.44336569579288027,
-        "support": 198.0
-    },
-    "BEGUN_BY": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1-score": 0.0,
-        "support": 3.0
-    },
-    "IBEFORE": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1-score": 0.0,
-        "support": 8.0
-    },
-    "INCLUDES": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1-score": 0.0,
-        "support": 88.0
-    },
-    "IAFTER": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1-score": 0.0,
-        "support": 9.0
-    },
-    "BEFORE": {
-        "precision": 0.4822834645669291,
-        "recall": 0.7424242424242424,
-        "f1-score": 0.5847255369928401,
-        "support": 330.0
-    },
     "IS_INCLUDED": {
         "precision": 0.0,
         "recall": 0.0,
         "f1-score": 0.0,
         "support": 176.0
-    },
-    "ENDS": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1-score": 0.0,
-        "support": 3.0
-    },
-    "ENDED_BY": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1-score": 0.0,
-        "support": 2.0
     },
     "SIMULTANEOUS": {
         "precision": 0.0,
@@ -59,11 +11,59 @@
         "f1-score": 0.0,
         "support": 110.0
     },
+    "ENDED_BY": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 2.0
+    },
+    "BEFORE": {
+        "precision": 0.4822834645669291,
+        "recall": 0.7424242424242424,
+        "f1-score": 0.5847255369928401,
+        "support": 330.0
+    },
+    "INCLUDES": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 88.0
+    },
+    "BEGUN_BY": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 3.0
+    },
+    "ENDS": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 3.0
+    },
+    "AFTER": {
+        "precision": 0.3261904761904762,
+        "recall": 0.6919191919191919,
+        "f1-score": 0.44336569579288027,
+        "support": 198.0
+    },
     "BEGINS": {
         "precision": 0.0,
         "recall": 0.0,
         "f1-score": 0.0,
         "support": 2.0
+    },
+    "IAFTER": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 9.0
+    },
+    "IBEFORE": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 8.0
     },
     "accuracy": 0.41119483315392896,
     "macro avg": {

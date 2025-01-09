@@ -93,7 +93,7 @@ def main(
 
                 # Get the model's prediction
                 point_preds = classifier(texts, batch_size=len(texts))
-                interval_relation = get_interval_relation(point_preds)
+                interval_relation = get_interval_relation(point_preds, unique_labels)
 
             labels.append(tlink.relation.interval)
             preds.append(interval_relation if interval_relation is not None else "None")
