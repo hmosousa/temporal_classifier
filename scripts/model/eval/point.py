@@ -47,8 +47,17 @@ def main(
 
     Args:
         model_name: The HuggingFace name of the model to evaluate.
+        revision: The revision of the model to evaluate.
         dataset_name: The name of the dataset to evaluate on.
     """
+    logging.info("Running eval with the following parameters:")
+    logging.info(f"  model_name: {model_name}")
+    logging.info(f"  revision: {revision}")
+    logging.info(f"  dataset_name: {dataset_name}")
+    logging.info(f"  config_name: {config_name}")
+    logging.info(f"  batch_size: {batch_size}")
+    logging.info(f"  verbose: {verbose}")
+
     logging.info(f"Loading dataset {dataset_name}")
     dataset = load_dataset(dataset_name, split="test", config=config_name)
     dataset = dataset.map(add_text_type)
