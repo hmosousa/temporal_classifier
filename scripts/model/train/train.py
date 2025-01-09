@@ -16,6 +16,7 @@ from sklearn.metrics import classification_report
 from src.base import ID2RELATIONS, RELATIONS, RELATIONS2ID
 from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
 from src.data import augment_dataset, load_dataset
+from src.trainer import Trainer
 
 from transformers import (
     AutoConfig,
@@ -26,7 +27,7 @@ from transformers import (
     EarlyStoppingCallback,
     EvalPrediction,
     set_seed,
-    Trainer,
+    # Trainer,
     TrainingArguments,
 )
 from transformers.trainer_utils import get_last_checkpoint
@@ -341,10 +342,15 @@ def main(
         )
     max_seq_length = min(data_args.max_seq_length, tokenizer.model_max_length)
 
+    if "label_smoothing_factor" in config.other:
+        factor = config.other.label_smoothing_factor
+    else:
+        factor = 0.0
+
     def multi_labels_to_ids(labels: List[str]) -> List[float]:
-        ids = [0.0] * len(RELATIONS2ID)  # BCELoss requires float as target type
+        ids = [factor / len(RELATIONS2ID)] * len(RELATIONS2ID)
         for label in labels:
-            ids[RELATIONS2ID[label]] = 1.0
+            ids[RELATIONS2ID[label]] = 1.0 - factor / len(RELATIONS2ID)
         return ids
 
     def preprocess_function(examples):

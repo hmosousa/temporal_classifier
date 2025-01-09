@@ -42,8 +42,8 @@ trainer:
     do_eval: True
     skip_memory_metrics: False
     use_liger_kernel: True
-    label_smoothing_factor: 0.0
     torch_compile: True
 
 other:
     early_stopping_patience: 3
+    label_smoothing_factor: 0.04
