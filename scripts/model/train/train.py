@@ -17,7 +17,6 @@ from src.base import ID2RELATIONS, RELATIONS, RELATIONS2ID
 from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
 from src.data import augment_dataset, load_dataset
 
-# from src.trainer import Trainer
 from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
