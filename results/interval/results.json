@@ -1,0 +1,138 @@
+{
+    "tddiscourse": [
+        {
+            "model": "smol-135-tq-synthetic",
+            "closure": false,
+            "augmented": false,
+            "synthetic": true,
+            "accuracy": null,
+            "micro avg f1-score": 24.87,
+            "precision": 30.33,
+            "recall": 24.6,
+            "f1-score": 13.79
+        },
+        {
+            "model": "majority",
+            "closure": false,
+            "augmented": false,
+            "synthetic": false,
+            "accuracy": 38.13,
+            "micro avg f1-score": null,
+            "precision": 14.54,
+            "recall": 38.13,
+            "f1-score": 21.05
+        },
+        {
+            "model": "random",
+            "closure": false,
+            "augmented": false,
+            "synthetic": false,
+            "accuracy": 19.6,
+            "micro avg f1-score": null,
+            "precision": 26.69,
+            "recall": 19.6,
+            "f1-score": 21.71
+        },
+        {
+            "model": "smol-135-tq-augment",
+            "closure": false,
+            "augmented": true,
+            "synthetic": false,
+            "accuracy": null,
+            "micro avg f1-score": 25.13,
+            "precision": 10.38,
+            "recall": 25.07,
+            "f1-score": 14.59
+        },
+        {
+            "model": "smol-135-tq",
+            "closure": false,
+            "augmented": false,
+            "synthetic": false,
+            "accuracy": null,
+            "micro avg f1-score": 22.3,
+            "precision": 9.75,
+            "recall": 22.13,
+            "f1-score": 13.49
+        },
+        {
+            "model": "smol-135-tq-closure",
+            "closure": true,
+            "augmented": false,
+            "synthetic": false,
+            "accuracy": null,
+            "micro avg f1-score": 23.2,
+            "precision": 10.8,
+            "recall": 23.13,
+            "f1-score": 14.32
+        }
+    ],
+    "tempeval_3": [
+        {
+            "model": "smol-135-tq-synthetic",
+            "closure": false,
+            "augmented": false,
+            "synthetic": true,
+            "accuracy": null,
+            "micro avg f1-score": 41.06,
+            "precision": 28.93,
+            "recall": 41.01,
+            "f1-score": 29.97
+        },
+        {
+            "model": "majority",
+            "closure": false,
+            "augmented": false,
+            "synthetic": false,
+            "accuracy": 35.52,
+            "micro avg f1-score": null,
+            "precision": 12.62,
+            "recall": 35.52,
+            "f1-score": 18.62
+        },
+        {
+            "model": "random",
+            "closure": false,
+            "augmented": false,
+            "synthetic": false,
+            "accuracy": 10.01,
+            "micro avg f1-score": null,
+            "precision": 25.48,
+            "recall": 10.01,
+            "f1-score": 13.55
+        },
+        {
+            "model": "smol-135-tq-augment",
+            "closure": false,
+            "augmented": true,
+            "synthetic": false,
+            "accuracy": 38.54,
+            "micro avg f1-score": null,
+            "precision": 27.51,
+            "recall": 38.54,
+            "f1-score": 28.81
+        },
+        {
+            "model": "smol-135-tq",
+            "closure": false,
+            "augmented": false,
+            "synthetic": false,
+            "accuracy": 38.54,
+            "micro avg f1-score": null,
+            "precision": 30.12,
+            "recall": 38.54,
+            "f1-score": 29.2
+        },
+        {
+            "model": "smol-135-tq-closure",
+            "closure": true,
+            "augmented": false,
+            "synthetic": false,
+            "accuracy": 37.89,
+            "micro avg f1-score": null,
+            "precision": 27.83,
+            "recall": 37.89,
+            "f1-score": 30.01
+        }
+    ]
+}
