@@ -19,25 +19,6 @@ from transformers import pipeline
 logging.basicConfig(level=logging.INFO)
 
 
-TEXT_TYPES = ["ss", "ee", "se", "es"]
-
-
-def add_text_type(example: dict):
-    if "<start_source>" in example["text"] and "<start_target>" in example["text"]:
-        example["type"] = "ss"  # start-start
-    elif "<end_source>" in example["text"] and "<end_target>" in example["text"]:
-        example["type"] = "ee"  # end-end
-    elif "<start_source>" in example["text"] and "<end_target>" in example["text"]:
-        example["type"] = "se"  # start-end
-    elif "<end_source>" in example["text"] and "<start_target>" in example["text"]:
-        example["type"] = "es"  # end-start
-    else:
-        raise ValueError(
-            f"Text does not contain a valid entity pair: {example['text']}"
-        )
-    return example
-
-
 def main(
     model_name: str = "hugosousa/smol-135-tq",
     revision: str = "main",
