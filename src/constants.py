@@ -18,6 +18,8 @@ CONFIGS_DIR = ROOT_DIR / "configs"
 MODELS_DIR = ROOT_DIR / "models"
 LOGS_DIR = ROOT_DIR / "logs"
 DATA_DIR = ROOT_DIR / "data"
+IMGS_DIR = ROOT_DIR / "imgs"
+
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 NEW_TOKENS = [
