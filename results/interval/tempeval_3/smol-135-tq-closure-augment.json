@@ -1,0 +1,86 @@
+{
+    "ENDED_BY": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 2.0
+    },
+    "IAFTER": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 9.0
+    },
+    "AFTER": {
+        "precision": 0.2624521072796935,
+        "recall": 0.6919191919191919,
+        "f1-score": 0.38055555555555554,
+        "support": 198.0
+    },
+    "IS_INCLUDED": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 176.0
+    },
+    "SIMULTANEOUS": {
+        "precision": 0.2857142857142857,
+        "recall": 0.01818181818181818,
+        "f1-score": 0.03418803418803419,
+        "support": 110.0
+    },
+    "BEGINS": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 2.0
+    },
+    "INCLUDES": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 88.0
+    },
+    "BEGUN_BY": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 3.0
+    },
+    "BEFORE": {
+        "precision": 0.5176151761517616,
+        "recall": 0.5787878787878787,
+        "f1-score": 0.5464949928469242,
+        "support": 330.0
+    },
+    "IBEFORE": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 8.0
+    },
+    "ENDS": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 3.0
+    },
+    "micro avg": {
+        "precision": 0.3559870550161812,
+        "recall": 0.35522066738428415,
+        "f1-score": 0.35560344827586204,
+        "support": 929.0
+    },
+    "macro avg": {
+        "precision": 0.0968892335587037,
+        "recall": 0.11717171717171716,
+        "f1-score": 0.08738532569004671,
+        "support": 929.0
+    },
+    "weighted avg": {
+        "precision": 0.2736351956943294,
+        "recall": 0.35522066738428415,
+        "f1-score": 0.27928313390760895,
+        "support": 929.0
+    }
+}

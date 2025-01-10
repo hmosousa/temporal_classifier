@@ -45,6 +45,17 @@
             "f1-score": 14.59
         },
         {
+            "model": "smol-135-tq-closure-augment",
+            "closure": true,
+            "augmented": true,
+            "synthetic": false,
+            "accuracy": null,
+            "micro avg f1-score": 21.27,
+            "precision": 10.17,
+            "recall": 21.07,
+            "f1-score": 13.13
+        },
+        {
             "model": "smol-135-tq",
             "closure": false,
             "augmented": false,
@@ -111,6 +122,17 @@
             "precision": 27.51,
             "recall": 38.54,
             "f1-score": 28.81
+        },
+        {
+            "model": "smol-135-tq-closure-augment",
+            "closure": true,
+            "augmented": true,
+            "synthetic": false,
+            "accuracy": null,
+            "micro avg f1-score": 35.56,
+            "precision": 27.36,
+            "recall": 35.52,
+            "f1-score": 27.93
         },
         {
             "model": "smol-135-tq",

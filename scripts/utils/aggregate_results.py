@@ -3,10 +3,12 @@
 import json
 from typing import Literal
 
+import fire
+
 from src.constants import RESULTS_DIR
 
 
-def main(relation_type: Literal["point", "interval"] = "interval"):
+def main(relation_type: Literal["point", "interval"] = "point"):
     """Aggregate results from the results folder to a single results.json file."""
     results_dir = RESULTS_DIR / relation_type
 
@@ -64,4 +66,4 @@ def main(relation_type: Literal["point", "interval"] = "interval"):
 
 
 if __name__ == "__main__":
-    main()
+    fire.Fire(main)
