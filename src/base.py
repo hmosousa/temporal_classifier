@@ -1,11 +1,9 @@
 import itertools
-from typing import Any, Dict, List, Literal, Tuple
+from typing import Dict, List, Literal, Tuple
 
 from tieval.links import TLink
-from tieval.temporal_relation import _INTERVAL_TO_POINT_RELATION, PointRelation
 
 from src.closure import compute_temporal_closure
-
 
 RELATIONS = ["<", ">", "=", "-"]
 
@@ -29,21 +27,6 @@ RELATIONS2ID = {
 ENDPOINT_TYPES = ["start", "end"]
 
 ID2RELATIONS = {v: k for k, v in RELATIONS2ID.items()}
-
-
-PAIRS = [
-    ("start_source", "start_target"),
-    ("start_source", "end_target"),
-    ("end_source", "start_target"),
-    ("end_source", "end_target"),
-]
-
-PAIRS_TO_IDX = {
-    ("start_source", "start_target"): 0,
-    ("start_source", "end_target"): 1,
-    ("end_source", "start_target"): 2,
-    ("end_source", "end_target"): 3,
-}
 
 
 class Relation:
@@ -277,40 +260,3 @@ class Timeline:
             ]
 
         return set(relations)
-
-
-def get_interval_relation(preds: List[Dict[str, Any]], unique_labels: List[str]) -> str:
-    """Get the interval relation from a list of predictions."""
-
-    interval_to_point_relation = {
-        label: _INTERVAL_TO_POINT_RELATION[label] for label in unique_labels
-    }
-
-    point_to_interval_relation = {
-        point: interval for interval, point in interval_to_point_relation.items()
-    }
-
-    # Add the entity pair to the predictions
-    for pair, pred in zip(PAIRS, preds):
-        pred["pair"] = pair
-
-    # Sort by confidence
-    preds = sorted(preds, key=lambda x: x["score"], reverse=True)
-
-    # Get the interval relation
-    running_relation = [None, None, None, None]  # ss_st, ss_et, es_st, es_et
-    while preds:
-        for pred in preds:
-            relation = preds[0]["label"]
-            if relation == "-":
-                relation = None  # in tieval the "-" relation is None
-
-            idx = PAIRS_TO_IDX[pred["pair"]]
-            running_relation[idx] = relation
-            point_relation = PointRelation(*running_relation)
-
-            if point_relation in point_to_interval_relation:
-                interval_relation = point_to_interval_relation[point_relation]
-                return interval_relation
-        preds.pop(0)
-    return None

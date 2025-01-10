@@ -2,15 +2,18 @@ import json
 import logging
 from typing import Literal
 
+import numpy as np
+
 import tieval.datasets
 import tieval.temporal_relation
 import torch
 from fire import Fire
 from sklearn.metrics import classification_report
 
-from src.base import get_interval_relation, PAIRS
+from src.base import RELATIONS
 from src.constants import RESULTS_DIR
 from src.data.utils import get_tlink_context
+from src.interval import get_interval_relation, PAIRS
 from src.model.majority import MajorityClassifier
 from src.model.random import RandomClassifier
 from tqdm import tqdm
@@ -24,12 +27,14 @@ def main(
     revision: str = "main",
     dataset_name: Literal["tempeval_3", "tddiscourse"] = "tddiscourse",
     verbose: bool = False,
+    strategy: Literal["high_to_low", "most_likely"] = "most_likely",
 ):
     """Evaluate a model with a given configuration.
 
     Args:
         model_name: The HuggingFace name of the model to evaluate.
         dataset_name: The name of the dataset to evaluate on.
+        strategy: The strategy to use to convert the point relations to an interval relation.
     """
     logging.info(f"Loading dataset {dataset_name}")
     corpus = tieval.datasets.read(dataset_name)
@@ -73,8 +78,20 @@ def main(
                     texts.append(text)
 
                 # Get the model's prediction
-                point_preds = classifier(texts, batch_size=len(texts))
-                interval_relation = get_interval_relation(point_preds, unique_labels)
+                point_preds = classifier(
+                    texts, batch_size=len(texts), top_k=len(RELATIONS)
+                )
+
+                y_prob = np.zeros((len(texts), len(RELATIONS)))
+                for idx, pred in enumerate(point_preds):
+                    for label_pred in pred:
+                        y_prob[idx, RELATIONS.index(label_pred["label"])] = label_pred[
+                            "score"
+                        ]
+
+                interval_relation = get_interval_relation(
+                    y_prob, unique_labels, strategy
+                )
 
             labels.append(tlink.relation.interval)
             preds.append(interval_relation if interval_relation is not None else "None")
