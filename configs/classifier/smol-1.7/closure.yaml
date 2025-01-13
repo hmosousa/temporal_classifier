@@ -36,7 +36,7 @@ trainer:
     seed: 42
     bf16: True
     push_to_hub: True
-    hub_model_id: hugosousa/smol-135-tq-closure
+    hub_model_id: hugosousa/smol-1.7-tq-closure
     hub_strategy: every_save
     do_train: True
     do_eval: True
