@@ -21,7 +21,7 @@ MODEL_ORDER = [
 ]
 
 
-def main(relation_type: Literal["point", "interval"] = "interval"):
+def main(relation_type: Literal["point", "interval"] = "point"):
     results = json.load(open(RESULTS_DIR / relation_type / "results.json"))
 
     for benchmark, models in results.items():
@@ -33,6 +33,8 @@ def main(relation_type: Literal["point", "interval"] = "interval"):
         df["augmented"] = df["augmented"].apply(lambda x: "✅" if x else "❌")
         df["closure"] = df["closure"].apply(lambda x: "✅" if x else "❌")
         df["synthetic"] = df["synthetic"].apply(lambda x: "✅" if x else "❌")
+
+        df.drop(columns=["confidence"], inplace=True)
 
         df.sort_values(by=["model"], inplace=True)
         print(df.to_markdown(index=False))

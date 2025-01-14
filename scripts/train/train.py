@@ -16,7 +16,6 @@ from sklearn.metrics import classification_report
 from src.base import ID2RELATIONS, RELATIONS, RELATIONS2ID
 from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
 from src.data import augment_dataset, load_dataset
-from src.trainer import Trainer
 
 from transformers import (
     AutoConfig,
@@ -27,7 +26,7 @@ from transformers import (
     EarlyStoppingCallback,
     EvalPrediction,
     set_seed,
-    # Trainer,
+    Trainer,
     TrainingArguments,
 )
 from transformers.trainer_utils import get_last_checkpoint

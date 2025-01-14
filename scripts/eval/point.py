@@ -9,6 +9,7 @@ from sklearn.metrics import classification_report
 from src.base import RELATIONS
 from src.constants import RESULTS_DIR
 from src.data import load_dataset
+from src.evaluation import compute_confidence_intervals
 from src.model.majority import MajorityClassifier
 from src.model.random import RandomClassifier
 from transformers import pipeline
@@ -40,8 +41,9 @@ def main(
     revision: str = "main",
     dataset_name: Literal["temporal_questions", "timeset"] = "temporal_questions",
     config_name: str = None,
-    batch_size: int = 512,
+    batch_size: int = 32,
     verbose: bool = False,
+    confidence: bool = True,
 ):
     """Evaluate a model with a given configuration.
 
@@ -49,7 +51,11 @@ def main(
         model_name: The HuggingFace name of the model to evaluate.
         revision: The revision of the model to evaluate.
         dataset_name: The name of the dataset to evaluate on.
+        confidence: Whether to calculate confidence intervals.
     """
+    if dataset_name == "temporal_questions" and config_name is None:
+        config_name = "raw"
+
     logging.info("Running eval with the following parameters:")
     logging.info(f"  model_name: {model_name}")
     logging.info(f"  revision: {revision}")
@@ -89,6 +95,9 @@ def main(
         zero_division=0.0,
         labels=RELATIONS,
     )
+
+    if confidence:
+        report["confidence"] = compute_confidence_intervals(dataset, labels=RELATIONS)
     if verbose:
         print(classification_report(dataset["label"], dataset["pred"], digits=4))
 
