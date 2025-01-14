@@ -2,8 +2,6 @@ from typing import Literal
 
 import datasets
 
-from src.prompts import NO_CONTEXT_PROMPT
-
 _RELATION_MAP = {
     "BEFORE": "<",
     "AFTER": ">",
@@ -11,7 +9,7 @@ _RELATION_MAP = {
 }
 
 
-def load_timeset(split: Literal["valid", "test"] = "test"):
+def load_timeset(split: Literal["valid", "test"] = "test", **kwargs):
     if split == "valid":
         split = "validation"
 
@@ -20,29 +18,20 @@ def load_timeset(split: Literal["valid", "test"] = "test"):
     )
 
     def process_example(example):
-        src_id = example["id_arg1"]
         source = example["arg1"]
-
-        tgt_id = example["id_arg2"]
         target = example["arg2"]
 
         context = (
             example["context"][: source["start"]]
-            + f"<{src_id}>{source['mention']}</{src_id}>"
+            + f"<start_source>{source['mention']}</start_source>"
         )
         context += (
             example["context"][source["end"] : target["start"]]
-            + f"<{tgt_id}>{target['mention']}</{tgt_id}>"
+            + f"<start_target>{target['mention']}</start_target>"
         )
         context += example["context"][target["end"] :]
 
-        source_text = f"start <{src_id}>{source['mention']}</{src_id}>"
-        target_text = f"start <{tgt_id}>{target['mention']}</{tgt_id}>"
-
-        prompt = NO_CONTEXT_PROMPT.format(
-            context=context, source=source_text, target=target_text
-        )
-        return {"text": prompt, "label": _RELATION_MAP[example["relation"]]}
+        return {"text": context, "label": _RELATION_MAP[example["relation"]]}
 
     processed_dataset = dataset.map(process_example)
     processed_dataset = processed_dataset.remove_columns(dataset.column_names)

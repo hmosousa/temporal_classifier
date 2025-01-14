@@ -1,0 +1,49 @@
+model:
+    model_name_or_path: HuggingFaceTB/SmolLM2-1.7B
+    trust_remote_code: True
+
+data:
+    dataset_name: temporal_questions
+    dataset_config_name: raw
+    max_seq_length: 512
+    augment: False
+    pad_to_max_length: False # To pad each batch at runtime
+    shuffle_train_dataset: True
+    shuffle_seed: 42
+
+trainer:
+    output_dir: models/smol-1.7-tq
+    overwrite_output_dir: True
+    eval_strategy: epoch
+    per_device_train_batch_size: 8
+    per_device_eval_batch_size: 8
+    num_train_epochs: 30
+    learning_rate: 1e-3
+    gradient_accumulation_steps: 16
+    max_grad_norm: 1.0
+    lr_scheduler_type: reduce_lr_on_plateau
+    lr_scheduler_kwargs:
+        factor: 0.5
+        patience: 1
+        mode: max
+    logging_dir: logs
+    logging_steps: 1
+    save_total_limit: 2
+    save_strategy: epoch
+    load_best_model_at_end: True
+    metric_for_best_model: eval_weighted_avg_f1-score
+    greater_is_better: True
+    seed: 42
+    bf16: True
+    push_to_hub: True
+    hub_model_id: hugosousa/smol-1.7-tq
+    hub_strategy: every_save
+    do_train: True
+    do_eval: True
+    skip_memory_metrics: False
+    use_liger_kernel: True
+    label_smoothing_factor: 0.0
+    torch_compile: True
+
+other:
+    early_stopping_patience: 3

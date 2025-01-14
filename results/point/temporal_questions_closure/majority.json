@@ -1,0 +1,230 @@
+{
+    "<": {
+        "precision": 0.5291940789473685,
+        "recall": 1.0,
+        "f1-score": 0.6921215380478624,
+        "support": 6435.0
+    },
+    ">": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 5297.0
+    },
+    "=": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 375.0
+    },
+    "-": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 53.0
+    },
+    "accuracy": 0.5291940789473685,
+    "macro avg": {
+        "precision": 0.13229851973684212,
+        "recall": 0.25,
+        "f1-score": 0.1730303845119656,
+        "support": 12160.0
+    },
+    "weighted avg": {
+        "precision": 0.28004637319295367,
+        "recall": 0.5291940789473685,
+        "f1-score": 0.36626661984687453,
+        "support": 12160.0
+    },
+    "confidence": {
+        "accuracy": {
+            "lower": 0.520139802631579,
+            "upper": 0.5382421875
+        },
+        "macro avg": {
+            "precision": {
+                "lower": 0.13003495065789475,
+                "upper": 0.134560546875
+            },
+            "recall": {
+                "lower": 0.25,
+                "upper": 0.25
+            },
+            "f1-score": {
+                "lower": 0.1710828834918761,
+                "upper": 0.17495365547901942
+            }
+        },
+        "weighted avg": {
+            "precision": {
+                "lower": 0.2705454169191482,
+                "upper": 0.2897046525696308
+            },
+            "recall": {
+                "lower": 0.520139802631579,
+                "upper": 0.5382421875
+            },
+            "f1-score": {
+                "lower": 0.3559480712956535,
+                "upper": 0.37666975308392237
+            }
+        }
+    },
+    "type": {},
+    "ss": {
+        "<": {
+            "precision": 0.49078947368421055,
+            "recall": 1.0,
+            "f1-score": 0.6584289496910856,
+            "support": 1492.0
+        },
+        ">": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 1375.0
+        },
+        "=": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 173.0
+        },
+        "-": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+        },
+        "accuracy": 0.49078947368421055,
+        "macro avg": {
+            "precision": 0.12269736842105264,
+            "recall": 0.25,
+            "f1-score": 0.1646072374227714,
+            "support": 3040.0
+        },
+        "weighted avg": {
+            "precision": 0.24087430747922436,
+            "recall": 0.49078947368421055,
+            "f1-score": 0.32314999767733543,
+            "support": 3040.0
+        }
+    },
+    "ee": {
+        "<": {
+            "precision": 0.5440789473684211,
+            "recall": 1.0,
+            "f1-score": 0.7047294418406477,
+            "support": 1654.0
+        },
+        ">": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 1208.0
+        },
+        "=": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 178.0
+        },
+        "-": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 0.0
+        },
+        "accuracy": 0.5440789473684211,
+        "macro avg": {
+            "precision": 0.13601973684210528,
+            "recall": 0.25,
+            "f1-score": 0.17618236046016192,
+            "support": 3040.0
+        },
+        "weighted avg": {
+            "precision": 0.29602190096952913,
+            "recall": 0.5440789473684211,
+            "f1-score": 0.3834284528961945,
+            "support": 3040.0
+        }
+    },
+    "se": {
+        "<": {
+            "precision": 0.6470394736842106,
+            "recall": 1.0,
+            "f1-score": 0.7857000199720392,
+            "support": 1967.0
+        },
+        ">": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 1030.0
+        },
+        "=": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 11.0
+        },
+        "-": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 32.0
+        },
+        "accuracy": 0.6470394736842106,
+        "macro avg": {
+            "precision": 0.16175986842105264,
+            "recall": 0.25,
+            "f1-score": 0.1964250049930098,
+            "support": 3040.0
+        },
+        "weighted avg": {
+            "precision": 0.4186600805055402,
+            "recall": 0.6470394736842106,
+            "f1-score": 0.5083789273963819,
+            "support": 3040.0
+        }
+    },
+    "es": {
+        "<": {
+            "precision": 0.43486842105263157,
+            "recall": 1.0,
+            "f1-score": 0.6061439706556625,
+            "support": 1322.0
+        },
+        ">": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 1684.0
+        },
+        "=": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 13.0
+        },
+        "-": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 21.0
+        },
+        "accuracy": 0.43486842105263157,
+        "macro avg": {
+            "precision": 0.10871710526315789,
+            "recall": 0.25,
+            "f1-score": 0.15153599266391563,
+            "support": 3040.0
+        },
+        "weighted avg": {
+            "precision": 0.18911054362880889,
+            "recall": 0.43486842105263157,
+            "f1-score": 0.26359287144960064,
+            "support": 3040.0
+        }
+    }
+}

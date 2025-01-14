@@ -3,3 +3,5 @@ cache/*
 wandb/*
 models/*
 logs/*
+data/*
+notebooks/data/

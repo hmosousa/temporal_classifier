@@ -3,7 +3,7 @@ from collections import Counter
 import datasets
 import pytest
 
-from src.data.utils import balance_dataset_classes, get_entity_mapping
+from src.data.utils import augment_dataset, balance_dataset_classes, get_entity_mapping
 
 
 @pytest.fixture
@@ -77,3 +77,25 @@ def test_get_entity_mapping_multiple():
         "ei2": "The Wall Street Journal",
         "t1": "2024",
     }
+
+
+def test_augment_dataset_simple():
+    text = "<start_source>A</start_source> <end_source>B</end_source> <start_target>C</start_target> <end_target>D</end_target>"
+    label = "<"
+    dataset = datasets.Dataset.from_dict(
+        {
+            "text": [text],
+            "label": [label],
+        }
+    )
+    augmented_dataset = augment_dataset(dataset)
+    assert len(augmented_dataset) == 2
+
+    assert augmented_dataset[0]["text"] == text
+    assert augmented_dataset[0]["label"] == "<"
+
+    assert (
+        augmented_dataset[1]["text"]
+        == "<start_target>A</start_target> <end_target>B</end_target> <start_source>C</start_source> <end_source>D</end_source>"
+    )
+    assert augmented_dataset[1]["label"] == ">"
