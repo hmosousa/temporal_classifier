@@ -2,7 +2,6 @@ import json
 import logging
 from typing import Literal
 
-import torch
 from fire import Fire
 from sklearn.metrics import classification_report
 
@@ -10,9 +9,7 @@ from src.base import RELATIONS
 from src.constants import RESULTS_DIR
 from src.data import load_dataset
 from src.evaluation import compute_confidence_intervals
-from src.model.majority import MajorityClassifier
-from src.model.random import RandomClassifier
-from transformers import pipeline
+from src.model import load_model, MajorityClassifier, RandomClassifier
 
 logging.basicConfig(level=logging.INFO)
 
@@ -74,13 +71,7 @@ def main(
     elif model_name == "majority":
         classifier = MajorityClassifier(dataset["label"])
     else:
-        classifier = pipeline(
-            "text-classification",
-            model=model_name,
-            torch_dtype=torch.bfloat16,
-            device_map="auto",
-            revision=revision,
-        )
+        classifier = load_model("classifier", model_name, revision)
 
     logging.info("Getting predictions")
     preds = classifier(dataset["text"], batch_size=batch_size)
