@@ -16,10 +16,8 @@ from sklearn.metrics import classification_report
 from src.base import RELATIONS2ID
 from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
 from src.data import augment_dataset, load_dataset
-
+from src.model.classifier import Classifier
 from transformers import (
-    AutoConfig,
-    AutoModelForSequenceClassification,
     AutoTokenizer,
     DataCollatorWithPadding,
     default_data_collator,
@@ -29,6 +27,8 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
+
+from transformers.models.llama.configuration_llama import LlamaConfig
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import send_example_telemetry
 
@@ -286,7 +286,23 @@ def main(
     # Load pretrained model and tokenizer
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
-    model_config = AutoConfig.from_pretrained(
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_args.model_name_or_path,
+        cache_dir=model_args.cache_dir,
+        use_fast=model_args.use_fast_tokenizer,
+        revision=model_args.model_revision,
+        token=model_args.token,
+        trust_remote_code=model_args.trust_remote_code,
+    )
+
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+
+    # Add new tokens to the tokenizer
+    tokenizer.add_tokens(NEW_TOKENS)
+    new_token_ids = tokenizer.convert_tokens_to_ids(NEW_TOKENS)
+
+    model_config = LlamaConfig.from_pretrained(
         model_args.model_name_or_path,
         num_labels=num_labels,
         finetuning_task="text-classification",
@@ -301,15 +317,10 @@ def main(
     logger.info("setting problem type to multi label classification")
     model_config.problem_type = "multi_label_classification"
 
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_args.model_name_or_path,
-        cache_dir=model_args.cache_dir,
-        use_fast=model_args.use_fast_tokenizer,
-        revision=model_args.model_revision,
-        token=model_args.token,
-        trust_remote_code=model_args.trust_remote_code,
-    )
-    model = AutoModelForSequenceClassification.from_pretrained(
+    logger.info(f"Adding new tokens to the model: {new_token_ids}")
+    model_config.tokens_to_encode_ids = new_token_ids
+
+    model = Classifier.from_pretrained(
         model_args.model_name_or_path,
         from_tf=bool(".ckpt" in model_args.model_name_or_path),
         config=model_config,
@@ -320,15 +331,10 @@ def main(
         ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
     )
 
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-        model.config.pad_token_id = model.config.eos_token_id
+    model.config.pad_token_id = model.config.eos_token_id
 
-    # Add new tokens to the tokenizer
-    if not debug:
-        # This is slow when running in parallel because it creates a new embedding layer
-        tokenizer.add_tokens(NEW_TOKENS)
-        model.resize_token_embeddings(len(tokenizer))
+    # Add new tokens to the model
+    model.resize_token_embeddings(len(tokenizer))
 
     # Padding strategy
     if data_args.pad_to_max_length:
@@ -356,12 +362,7 @@ def main(
         return ids
 
     def preprocess_function(examples):
-        result = tokenizer(
-            examples["text"],
-            padding=padding,
-            max_length=max_seq_length,
-            truncation=True,
-        )
+        result = tokenizer(examples["text"], padding=padding)
         if label2id is not None and "label" in examples:
             result["label"] = [
                 multi_labels_to_ids(labels) for labels in examples["label"]
@@ -404,6 +405,18 @@ def main(
         )
         train_dataset = raw_datasets["train"]
         eval_dataset = raw_datasets["valid"]
+
+        logger.info("Checking that all rows have 4 special tokens")
+
+        def has_four_special_tokens(x):
+            special_token_count = 0
+            for token in new_token_ids:
+                if token in x["input_ids"]:
+                    special_token_count += 1
+            return special_token_count == 4
+
+        train_dataset = train_dataset.filter(has_four_special_tokens)
+        eval_dataset = eval_dataset.filter(has_four_special_tokens)
 
         logger.info(f"Dropping rows with more than {max_seq_length} tokens")
         n_train = len(train_dataset)
@@ -475,6 +488,7 @@ def main(
     else:
         callbacks = []
 
+    # compute_loss_func = transformers.loss.loss_utils.ForSequenceClassificationLoss
     # Initialize our Trainer
     trainer = Trainer(
         model=model,
@@ -485,6 +499,7 @@ def main(
         processing_class=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
+        # compute_loss_func=compute_loss_func,
     )
 
     # Training

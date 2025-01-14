@@ -42,4 +42,4 @@ trainer:
 
 other:
     early_stopping_patience: 3
-    label_smoothing_factor: 0.4
+    label_smoothing_factor: 0.1
