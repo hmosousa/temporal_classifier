@@ -1,6 +1,6 @@
-# Temporal Game
+# Temporal Classifier
 
-Train an agent to build a timeline of events.
+Train an agent to classify temporal relations.
 
 ## Setup
 

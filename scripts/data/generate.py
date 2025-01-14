@@ -1,6 +1,5 @@
 """Generate Temporal Questions dataset from TemporalEval3 corpus."""
 
-import copy
 import logging
 from collections import Counter
 from pathlib import Path
@@ -12,99 +11,76 @@ from sklearn.model_selection import train_test_split
 
 from src.base import Timeline
 from src.constants import HF_TOKEN
-from src.data.utils import add_tags
+from src.data.utils import get_tlink_context
 from tqdm import tqdm
 
 ROOT_DIR = Path(__file__).parent.parent
 DATA_DIR = ROOT_DIR / "data"
 
 
-def doc2questions(doc, closure: bool):
+def doc2questions(doc, closure: bool, just_sentences: bool = False):
+    entities_map = {ent.id: ent for ent in doc.entities + [doc.dct]}
     if closure:
-        tlinks = doc.temporal_closure
+        tlinks = list(doc.temporal_closure)
+
+        # Temporal closure changes the entities from Entity to str.
+        # This is a workaround to get the entities back.
+        tlinks2drop = []
+        for idx, tlink in enumerate(tlinks):
+            if isinstance(tlink.source, str):
+                if tlink.source in entities_map:
+                    tlink.source = entities_map[tlink.source]
+                else:
+                    tlinks2drop.append(idx)
+                    continue
+
+            if isinstance(tlink.target, str):
+                if tlink.target in entities_map:
+                    tlink.target = entities_map[tlink.target]
+                else:
+                    tlinks2drop.append(idx)
+                    continue
+
+        for idx in sorted(tlinks2drop, reverse=True):
+            tlinks.pop(idx)
+
+        tlinks = set(tlinks)
     else:
         tlinks = doc.tlinks
-        for tlink in tlinks:
-            tlink.source = tlink.source.id
-            tlink.target = tlink.target.id
-
-    entities_map = {ent.id: ent for ent in doc.entities + [doc.dct]}
 
     samples = []
     for tlink in tlinks:
         if (
-            tlink.source not in entities_map
-            or tlink.target not in entities_map
-            or tlink.source == tlink.target
+            tlink.source.id not in entities_map
+            or tlink.target.id not in entities_map
+            or tlink.source.id == tlink.target.id
         ):
             continue
 
-        source = entities_map[tlink.source]
-        target = entities_map[tlink.target]
+        context = get_tlink_context(doc, tlink, just_sentences=just_sentences)
 
-        has_dct = False
-        if source.is_dct:
-            entities = [target]
-            has_dct = True
-        elif target.is_dct:
-            entities = [source]
-            has_dct = True
-        else:
-            entities = [source, target]
-
-        offsets = [idx for ent in entities for idx in ent.offsets]
-
-        min_offset = min(offsets)
-        max_offset = max(offsets)
-
-        # Get the context that contains the entities
-        # By merging the sentences that contain the entities
-        context = []
-        min_sent_offset = None
-        for sent in doc.sentences:
-            s_sent, e_sent = sent.offsets
-            if (
-                s_sent <= min_offset <= e_sent
-                or min_offset <= s_sent <= e_sent <= max_offset
-                or s_sent <= max_offset <= e_sent
-            ):
-                context.append(str(sent))
-                if min_sent_offset is None or s_sent < min_sent_offset:
-                    min_sent_offset = s_sent
-        context = " ".join(context)
-
-        # Update entity offsets of the current context
-        for idx, ent in enumerate(entities):
-            ent_ = copy.deepcopy(ent)
-            s_ent, e_ent = ent.offsets
-            ent_.offsets = [s_ent - min_sent_offset, e_ent - min_sent_offset]
-            entities[idx] = ent_
-
-        if has_dct:
-            context = add_tags(context, entities, doc.dct)
-        else:
-            context = add_tags(context, entities)
-
+        tlink.source = tlink.source.id
+        tlink.target = tlink.target.id
         timeline = Timeline(tlinks=[tlink], on_endpoints=True).to_dict()
 
         samples.append(
             {
                 "id": f"{doc.name}",
                 "context": context,
-                "source": source.id,
-                "target": target.id,
+                "source": tlink.source,
+                "target": tlink.target,
                 "timeline": timeline["relations"],
             }
         )
     return samples
 
 
-def transform_corpus(documents, closure: bool):
+def transform_corpus(documents, closure: bool, just_sentences: bool = False):
     # Transform the documents into pair-wise contexts
     # Each tlink has its own context
     samples = []
     for doc in tqdm(documents):
-        samples += doc2questions(doc, closure=closure)
+        samples += doc2questions(doc, closure=closure, just_sentences=just_sentences)
 
     # Transform the contexts to have the special tokens
     examples = []
@@ -161,12 +137,27 @@ def drop_long_texts(examples: list[dict]):
 
 
 def main(
-    dataset_name: str = "tempeval_3", n_valid_samples: int = 5_000, closure: bool = True
+    dataset_name: str = "tempeval_3",
+    n_valid_samples: int = 5_000,
+    closure: bool = False,
+    just_sentences: bool = False,
 ):
+    """Generate TemporalQuestions dataset from TemporalEval3 corpus.
+
+    Args:
+        dataset_name: Name of the dataset to use.
+        n_valid_samples: Number of samples to use for validation.
+        closure: Whether to compute temporal closure or not.
+        just_sentences: Whether to use just the sentences that contain the temporal entities as context or not.
+    """
     corpus = tieval.datasets.read(dataset_name)
 
-    test_examples = transform_corpus(corpus.test, closure=closure)
-    dev_examples = transform_corpus(corpus.train, closure=closure)
+    test_examples = transform_corpus(
+        corpus.test, closure=closure, just_sentences=just_sentences
+    )
+    dev_examples = transform_corpus(
+        corpus.train, closure=closure, just_sentences=just_sentences
+    )
 
     if closure:
         test_examples = validate_dataset(test_examples)

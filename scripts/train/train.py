@@ -13,7 +13,7 @@ from fire import Fire
 from omegaconf import OmegaConf
 from sklearn.metrics import classification_report
 
-from src.base import ID2RELATIONS, RELATIONS, RELATIONS2ID
+from src.base import RELATIONS2ID
 from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
 from src.data import augment_dataset, load_dataset
 
@@ -278,7 +278,10 @@ def main(
     logger.info(f"Dataset loaded: {raw_datasets}")
     logger.info(raw_datasets)
 
-    num_labels = len(RELATIONS)
+    relations = set(raw_datasets["train"]["label"])
+    num_labels = len(relations)
+    label2id = {r: RELATIONS2ID[r] for r in relations}
+    id2label = {RELATIONS2ID[r]: r for r in relations}
 
     # Load pretrained model and tokenizer
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
@@ -291,8 +294,8 @@ def main(
         revision=model_args.model_revision,
         token=model_args.token,
         trust_remote_code=model_args.trust_remote_code,
-        label2id=RELATIONS2ID,
-        id2label=ID2RELATIONS,
+        label2id=label2id,
+        id2label=id2label,
     )
 
     logger.info("setting problem type to multi label classification")
@@ -347,9 +350,9 @@ def main(
         factor = 0.0
 
     def multi_labels_to_ids(labels: List[str]) -> List[float]:
-        ids = [factor / len(RELATIONS2ID)] * len(RELATIONS2ID)
+        ids = [factor / num_labels] * num_labels
         for label in labels:
-            ids[RELATIONS2ID[label]] = 1.0 - factor / len(RELATIONS2ID)
+            ids[label2id[label]] = 1.0 - factor / num_labels
         return ids
 
     def preprocess_function(examples):
@@ -359,7 +362,7 @@ def main(
             max_length=max_seq_length,
             truncation=True,
         )
-        if RELATIONS2ID is not None and "label" in examples:
+        if label2id is not None and "label" in examples:
             result["label"] = [
                 multi_labels_to_ids(labels) for labels in examples["label"]
             ]
@@ -429,17 +432,17 @@ def main(
     def compute_metrics(p: EvalPrediction):
         logits = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
         y_preds = logits.argmax(axis=1)
-        preds = [ID2RELATIONS[int(y_pred)] for y_pred in y_preds.tolist()]
+        preds = [id2label[int(y_pred)] for y_pred in y_preds.tolist()]
 
         y_labels = p.label_ids.argmax(axis=1)
-        labels = [ID2RELATIONS[int(y_label)] for y_label in y_labels.tolist()]
+        labels = [id2label[int(y_label)] for y_label in y_labels.tolist()]
 
         result = classification_report(
             y_true=labels,
             y_pred=preds,
             output_dict=True,
             zero_division=0.0,
-            labels=RELATIONS,
+            labels=list(label2id.keys()),
         )
 
         formatted_result = {}

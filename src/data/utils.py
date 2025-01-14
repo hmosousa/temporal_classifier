@@ -83,11 +83,15 @@ def augment_dataset(dataset: datasets.Dataset) -> datasets.Dataset:
 
 def add_tags(text: str, entities: list, dct: Timex = None) -> str:
     """Add tags to the text."""
-    entities = sorted(list(entities), key=lambda x: x.offsets[0])
 
     context = ""
-    if dct:
+    if dct and dct in entities:
         context = f"Documents creation time: <{dct.id}>{dct.text}</{dct.id}>\n"
+        entities.remove(dct)
+    else:
+        context = f"Documents creation time: {dct.text}\n"
+
+    entities = sorted(list(entities), key=lambda x: x.offsets[0])
 
     e_prev = 0
     for entity in entities:
@@ -99,7 +103,7 @@ def add_tags(text: str, entities: list, dct: Timex = None) -> str:
     return context
 
 
-def get_tlink_context(doc: Document, tlink: TLink):
+def get_tlink_context(doc: Document, tlink: TLink, just_sentences: bool = False):
     """Get the context of a tlink. The context are the sentences that contain the entities of the tlink."""
     entities_map = {ent.id: ent for ent in list(doc.entities) + [doc.dct]}
 
@@ -120,36 +124,38 @@ def get_tlink_context(doc: Document, tlink: TLink):
     else:
         entities = [tlink.source, tlink.target]
 
-    offsets = [idx for ent in entities for idx in ent.offsets]
+    if just_sentences:
+        offsets = [idx for ent in entities for idx in ent.offsets]
 
-    min_offset = min(offsets)
-    max_offset = max(offsets)
+        min_offset = min(offsets)
+        max_offset = max(offsets)
 
-    # Get the sentences that contain the entities
-    sentences = []
-    min_sent_offset = None
-    for sent in doc.sentences:
-        s_sent, e_sent = sent.offsets
-        if (
-            s_sent <= min_offset <= e_sent
-            or min_offset <= s_sent <= e_sent <= max_offset
-            or s_sent <= max_offset <= e_sent
-        ):
-            sentences.append(str(sent))
-            if min_sent_offset is None or s_sent < min_sent_offset:
-                min_sent_offset = s_sent
-    context = " ".join(sentences)
+        # Get the sentences that contain the entities
+        sentences = []
+        min_sent_offset = None
+        for sent in doc.sentences:
+            s_sent, e_sent = sent.offsets
+            if (
+                s_sent <= min_offset <= e_sent
+                or min_offset <= s_sent <= e_sent <= max_offset
+                or s_sent <= max_offset <= e_sent
+            ):
+                sentences.append(str(sent))
+                if min_sent_offset is None or s_sent < min_sent_offset:
+                    min_sent_offset = s_sent
+        context = " ".join(sentences)
 
-    # Update entity offsets of the current context
-    for idx, ent in enumerate(entities):
-        ent_ = copy.deepcopy(ent)
-        s_ent, e_ent = ent.offsets
-        ent_.offsets = [s_ent - min_sent_offset, e_ent - min_sent_offset]
-        entities[idx] = ent_
+        # Update entity offsets of the current context
+        for idx, ent in enumerate(entities):
+            ent_ = copy.deepcopy(ent)
+            s_ent, e_ent = ent.offsets
+            ent_.offsets = [s_ent - min_sent_offset, e_ent - min_sent_offset]
+            entities[idx] = ent_
+    else:
+        context = doc.text
 
     if has_dct:
-        context = add_tags(context, entities, doc.dct)
+        context = add_tags(context, entities + [doc.dct], doc.dct)
     else:
-        context = add_tags(context, entities)
-
+        context = add_tags(context, entities, doc.dct)
     return context
