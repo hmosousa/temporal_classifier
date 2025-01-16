@@ -36,7 +36,7 @@ def add_text_type(example: dict):
 def main(
     model_name: str = "random",
     revision: str = "main",
-    dataset_name: Literal["temporal_questions", "timeset"] = "temporal_questions",
+    dataset_name: Literal["temporal_questions", "timeset", "matres"] = "matres",
     config_name: str = None,
     batch_size: int = 32,
     verbose: bool = False,

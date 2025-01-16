@@ -55,6 +55,18 @@ class DataTrainingArguments:
             "help": "The configuration name of the dataset to use (via the datasets library)."
         },
     )
+    train_split: str = field(
+        default="train",
+        metadata={"help": "The split to use for the training dataset."},
+    )
+    valid_split: str = field(
+        default="valid",
+        metadata={"help": "The split to use for the validation dataset."},
+    )
+    test_split: str = field(
+        default="test",
+        metadata={"help": "The split to use for the test dataset."},
+    )
     max_seq_length: int = field(
         default=128,
         metadata={
@@ -261,10 +273,14 @@ def main(
 
     # Downloading and loading a dataset from the hub.
     trainset = load_dataset(
-        data_args.dataset_name, "train", config=data_args.dataset_config_name
+        data_args.dataset_name,
+        split=data_args.train_split,
+        config=data_args.dataset_config_name,
     )
     validset = load_dataset(
-        data_args.dataset_name, "valid", config=data_args.dataset_config_name
+        data_args.dataset_name,
+        split=data_args.valid_split,
+        config=data_args.dataset_config_name,
     )
 
     raw_datasets = datasets.DatasetDict(
@@ -406,18 +422,6 @@ def main(
         train_dataset = raw_datasets["train"]
         eval_dataset = raw_datasets["valid"]
 
-        logger.info("Checking that all rows have 4 special tokens")
-
-        def has_four_special_tokens(x):
-            special_token_count = 0
-            for token in new_token_ids:
-                if token in x["input_ids"]:
-                    special_token_count += 1
-            return special_token_count == 4
-
-        train_dataset = train_dataset.filter(has_four_special_tokens)
-        eval_dataset = eval_dataset.filter(has_four_special_tokens)
-
         logger.info(f"Dropping rows with more than {max_seq_length} tokens")
         n_train = len(train_dataset)
         train_dataset = train_dataset.filter(
@@ -425,13 +429,6 @@ def main(
         )
         n_dropped_train = n_train - len(train_dataset)
         logger.info(f"Dropped {n_dropped_train} rows from train dataset")
-
-        n_eval = len(eval_dataset)
-        eval_dataset = eval_dataset.filter(
-            lambda x: len(x["input_ids"]) <= max_seq_length
-        )
-        n_dropped_eval = n_eval - len(eval_dataset)
-        logger.info(f"Dropped {n_dropped_eval} rows from eval dataset")
 
     # Log a few random samples from the training set:
     if training_args.do_train:

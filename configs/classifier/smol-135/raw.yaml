@@ -5,7 +5,9 @@ model:
 data:
     dataset_name: temporal_questions
     dataset_config_name: raw
-    max_seq_length: 4096
+    train_split: train
+    valid_split: valid
+    max_seq_length: 2048
     augment: False
     pad_to_max_length: False # To pad each batch at runtime
     shuffle_train_dataset: True
@@ -15,11 +17,11 @@ trainer:
     output_dir: models/smol-135-tq
     overwrite_output_dir: True
     eval_strategy: epoch
-    per_device_train_batch_size: 16
-    per_device_eval_batch_size: 16
+    per_device_train_batch_size: 32
+    per_device_eval_batch_size: 32
     num_train_epochs: 30
-    learning_rate: 1e-3
-    gradient_accumulation_steps: 8
+    learning_rate: 1e-5
+    gradient_accumulation_steps: 4
     max_grad_norm: 1.0
     lr_scheduler_type: reduce_lr_on_plateau
     lr_scheduler_kwargs:

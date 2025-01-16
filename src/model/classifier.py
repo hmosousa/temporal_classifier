@@ -21,10 +21,16 @@ class Classifier(LlamaForSequenceClassification):
         self.num_special_tokens = 4  # the number of special tokens per sequence
         self.num_labels = config.num_labels
         self.model = LlamaModel(config)
+        self.hidden = nn.Linear(
+            config.hidden_size * self.num_special_tokens,
+            config.hidden_size * self.num_special_tokens,
+            bias=True,
+        )
         self.score = nn.Linear(
             config.hidden_size * self.num_special_tokens, self.num_labels, bias=True
         )
         self.tokens_to_encode_ids = config.tokens_to_encode_ids
+        self.activation = nn.ReLU()
 
         # Initialize weights and apply final processing
         self.post_init()
@@ -79,7 +85,9 @@ class Classifier(LlamaForSequenceClassification):
         special_tkns_hidden_state = hidden_states[special_tkns_idxs]
         special_tkns_hidden_state = special_tkns_hidden_state.view(batch_size, -1)
 
-        logits = self.score(special_tkns_hidden_state)
+        hidden = self.hidden(special_tkns_hidden_state)
+        hidden = self.activation(hidden)
+        logits = self.score(hidden)
 
         if self.config.pad_token_id is None and batch_size != 1:
             raise ValueError(
