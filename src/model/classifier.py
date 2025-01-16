@@ -13,7 +13,7 @@ from transformers.models.llama.modeling_llama import (
 )
 
 
-class Classifier(LlamaForSequenceClassification):
+class ContextClassifier(LlamaForSequenceClassification):
     def __init__(self, config):
         config.loss_type = "ForSequenceClassification"
         super().__init__(config)

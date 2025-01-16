@@ -1,6 +1,6 @@
 import torch
 from src.base import ID2RELATIONS, RELATIONS2ID
-from src.model.classifier import Classifier
+from src.model.classifier import ContextClassifier
 from transformers import LlamaConfig
 
 
@@ -15,7 +15,7 @@ class TestClassifier:
         )
         model_config.tokens_to_encode_ids = [1, 2, 3, 4]
         model_config.pad_token_id = model_config.eos_token_id
-        model = Classifier.from_pretrained(
+        model = ContextClassifier.from_pretrained(
             "HuggingFaceTB/SmolLM2-135M",
             config=model_config,
         )
@@ -37,7 +37,7 @@ class TestClassifier:
         )
         model_config.tokens_to_encode_ids = [1, 2, 3, 4]
         model_config.pad_token_id = model_config.eos_token_id
-        model = Classifier.from_pretrained(
+        model = ContextClassifier.from_pretrained(
             "HuggingFaceTB/SmolLM2-135M",
             config=model_config,
         )

@@ -16,7 +16,7 @@ from sklearn.metrics import classification_report
 from src.base import RELATIONS2ID
 from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
 from src.data import augment_dataset, load_dataset
-from src.model.classifier import Classifier
+from src.model.classifier import ContextClassifier
 from transformers import (
     AutoTokenizer,
     DataCollatorWithPadding,
@@ -336,7 +336,7 @@ def main(
     logger.info(f"Adding new tokens to the model: {new_token_ids}")
     model_config.tokens_to_encode_ids = new_token_ids
 
-    model = Classifier.from_pretrained(
+    model = ContextClassifier.from_pretrained(
         model_args.model_name_or_path,
         from_tf=bool(".ckpt" in model_args.model_name_or_path),
         config=model_config,
