@@ -29,8 +29,18 @@ ENDPOINT_TYPES = ["start", "end"]
 ID2RELATIONS = {v: k for k, v in RELATIONS2ID.items()}
 
 
-class Relation:
+class PointRelation:
     def __init__(self, source: str, target: str, type: Literal["<", ">", "=", "-"]):
+        if not (source.startswith("start") or source.startswith("end")):
+            raise ValueError(
+                f"Invalid source: {source}. It must start with 'start' or 'end'."
+            )
+
+        if not (target.startswith("start") or target.startswith("end")):
+            raise ValueError(
+                f"Invalid target: {target}. It must start with 'start' or 'end'."
+            )
+
         if type not in RELATIONS:
             raise ValueError(f"Invalid relation type: {type}")
         self.source = source
@@ -43,7 +53,7 @@ class Relation:
     def __repr__(self) -> str:
         return f"Relation({self.source}, {self.target}, {self.type})"
 
-    def __eq__(self, other: "Relation") -> bool:
+    def __eq__(self, other: "PointRelation") -> bool:
         if (
             self.source == other.source
             and self.target == other.target
@@ -58,11 +68,11 @@ class Relation:
             return True
         return False
 
-    def __ne__(self, other: "Relation") -> bool:
+    def __ne__(self, other: "PointRelation") -> bool:
         return not self == other
 
-    def __invert__(self) -> "Relation":
-        return Relation(
+    def __invert__(self) -> "PointRelation":
+        return PointRelation(
             source=self.target, target=self.source, type=INVERT_RELATION[self.type]
         )
 
@@ -82,12 +92,9 @@ class Relation:
 
 
 class Timeline:
-    """If on_endpoints is True, add implicit relations between the start and end of each entity."""
-
     def __init__(
         self,
-        relations: List[Relation] = None,
-        on_endpoints: bool = True,
+        relations: List[PointRelation] = None,
         tlinks: List[TLink] = None,
         compute_closure: bool = False,
     ):
@@ -99,7 +106,6 @@ class Timeline:
 
         self.relations = set(relations)
         self.entities = self._get_entities()
-        self._on_endpoints = on_endpoints
         if compute_closure:
             self.relations.update(self._expand_relations())
         self._relation_dict = self._build_relation_dict()
@@ -120,7 +126,7 @@ class Timeline:
     def __len__(self) -> int:
         return len(self.relations)
 
-    def __contains__(self, relation: Relation) -> bool:
+    def __contains__(self, relation: PointRelation) -> bool:
         return relation in self.relations
 
     def _get_entities(self) -> List[str]:
@@ -137,7 +143,9 @@ class Timeline:
         unique_entities = set(ent.split(" ")[1] for ent in self.entities)
         for entity in unique_entities:
             relations.append(
-                Relation(source=f"start {entity}", target=f"end {entity}", type="<")
+                PointRelation(
+                    source=f"start {entity}", target=f"end {entity}", type="<"
+                )
             )
         return relations
 
@@ -154,18 +162,17 @@ class Timeline:
             inferred_relations = compute_temporal_closure(relations_dict)
             self._closure_cache = Timeline(
                 [
-                    Relation(
+                    PointRelation(
                         source=relation["source"],
                         target=relation["target"],
                         type=relation["relation"],
                     )
                     for relation in inferred_relations
                 ],
-                on_endpoints=self._on_endpoints,
             )
         return self._closure_cache
 
-    def __getitem__(self, key: Tuple[str, str]) -> List[Relation]:
+    def __getitem__(self, key: Tuple[str, str]) -> List[PointRelation]:
         sorted_key = tuple(sorted(key))
         relations = self._relation_dict.get(sorted_key, [])
         relations = [
@@ -185,7 +192,7 @@ class Timeline:
         return True
 
     @property
-    def invalid_relations(self) -> List[Relation]:
+    def invalid_relations(self) -> List[PointRelation]:
         tc = self.closure()
         return [
             relation
@@ -198,7 +205,7 @@ class Timeline:
     def possible_relation_pairs(self) -> List[Tuple[str, str]]:
         return list(itertools.combinations(self.entities, 2))
 
-    def add(self, relation: Relation) -> None:
+    def add(self, relation: PointRelation) -> None:
         self.relations.add(relation)
         self.entities = self._get_entities()
         key = tuple(sorted([relation.source, relation.target]))
@@ -210,10 +217,9 @@ class Timeline:
     def __and__(self, other: "Timeline") -> "Timeline":
         return Timeline(
             list(self.relations & other.relations),
-            on_endpoints=self._on_endpoints,
         )
 
-    def _build_relation_dict(self) -> Dict[Tuple[str, str], List[Relation]]:
+    def _build_relation_dict(self) -> Dict[Tuple[str, str], List[PointRelation]]:
         relation_dict = {}
         for relation in self.relations:
             key = tuple(sorted([relation.source, relation.target]))
@@ -233,12 +239,10 @@ class Timeline:
         cls,
         relations: List[Dict],
         compute_closure: bool = False,
-        on_endpoints: bool = True,
     ) -> "Timeline":
         return cls(
-            relations=[Relation(**r) for r in relations],
+            relations=[PointRelation(**r) for r in relations],
             compute_closure=compute_closure,
-            on_endpoints=on_endpoints,
         )
 
     @staticmethod
@@ -251,12 +255,12 @@ class Timeline:
             pr = [r if r is not None else "-" for r in tlink.relation.point.relation]
 
             relations += [
-                Relation(f"start {tlink.source}", f"start {tlink.target}", pr[0]),
-                Relation(f"start {tlink.source}", f"end {tlink.target}", pr[1]),
-                Relation(f"end {tlink.source}", f"start {tlink.target}", pr[2]),
-                Relation(f"end {tlink.source}", f"end {tlink.target}", pr[3]),
-                Relation(f"start {tlink.source}", f"end {tlink.source}", "<"),
-                Relation(f"start {tlink.target}", f"end {tlink.target}", "<"),
+                PointRelation(f"start {tlink.source}", f"start {tlink.target}", pr[0]),
+                PointRelation(f"start {tlink.source}", f"end {tlink.target}", pr[1]),
+                PointRelation(f"end {tlink.source}", f"start {tlink.target}", pr[2]),
+                PointRelation(f"end {tlink.source}", f"end {tlink.target}", pr[3]),
+                PointRelation(f"start {tlink.source}", f"end {tlink.source}", "<"),
+                PointRelation(f"start {tlink.target}", f"end {tlink.target}", "<"),
             ]
 
         return set(relations)

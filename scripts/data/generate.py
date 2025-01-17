@@ -61,7 +61,7 @@ def doc2questions(doc, closure: bool, just_sentences: bool = False):
 
         tlink.source = tlink.source.id
         tlink.target = tlink.target.id
-        timeline = Timeline(tlinks=[tlink], on_endpoints=True).to_dict()
+        timeline = Timeline(tlinks=[tlink]).to_dict()
 
         samples.append(
             {

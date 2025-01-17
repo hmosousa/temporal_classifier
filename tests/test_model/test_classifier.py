@@ -1,9 +1,12 @@
+import pytest
+
 import torch
 from src.base import ID2RELATIONS, RELATIONS2ID
 from src.model.classifier import ContextClassifier
 from transformers import LlamaConfig
 
 
+@pytest.mark.skip(reason="Skipping due to slow loading times")
 class TestClassifier:
     def test_classifier_one_example(self):
         model_config = LlamaConfig.from_pretrained(

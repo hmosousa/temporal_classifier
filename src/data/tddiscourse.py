@@ -3,6 +3,8 @@ from typing import Literal
 import datasets
 import tieval.datasets
 
+from src.base import Timeline
+
 from src.data.utils import get_tlink_context
 
 
@@ -51,7 +53,7 @@ TEST_DOCS = [
 ]
 
 
-def load_tddiscourse(
+def load_interval_tddiscourse(
     split: Literal["train", "valid", "test"],
     **kwargs,
 ) -> datasets.Dataset:
@@ -72,5 +74,38 @@ def load_tddiscourse(
         for tlink in doc.tlinks:
             context = get_tlink_context(doc, tlink)
             examples.append({"text": context, "label": tlink.relation.interval})
+
+    return datasets.Dataset.from_list(examples)
+
+
+def load_point_tddiscourse(
+    split: Literal["train", "valid", "test"],
+    closure: bool = False,
+    **kwargs,
+) -> datasets.Dataset:
+    """Load TDDiscourse dataset."""
+    corpus = tieval.datasets.read("tddiscourse")
+
+    if split == "train":
+        docs = [doc for doc in corpus.train if doc.name in TRAIN_DOCS]
+    elif split == "valid":
+        docs = [doc for doc in corpus.train if doc.name in VALID_DOCS]
+    elif split == "test":
+        docs = [doc for doc in corpus.test if doc.name in TEST_DOCS]
+    else:
+        raise ValueError(f"Invalid split: {split}")
+
+    examples = []
+    for doc in docs:
+        timeline = Timeline(tlinks=doc.tlinks, compute_closure=True)
+        if closure:
+            closure_timeline = timeline.closure()
+            relations = closure_timeline.relations
+        else:
+            relations = timeline.relations
+
+        for relation in relations:
+            context = get_tlink_context(doc, relation)
+            examples.append({"text": context, "label": relation.interval})
 
     return datasets.Dataset.from_list(examples)

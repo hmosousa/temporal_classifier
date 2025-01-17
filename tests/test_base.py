@@ -1,14 +1,14 @@
 import pytest
 
-from src.base import INVERT_RELATION, Relation, Timeline
+from src.base import INVERT_RELATION, PointRelation, Timeline
 
 
 class TestRelation:
     def test_relation_equality(self):
-        r1 = Relation(source="A", target="B", type="<")
-        r2 = Relation(source="A", target="B", type="<")
-        r3 = Relation(source="B", target="A", type=">")
-        r4 = Relation(source="A", target="B", type=">")
+        r1 = PointRelation(source="start A", target="start B", type="<")
+        r2 = PointRelation(source="start A", target="start B", type="<")
+        r3 = PointRelation(source="start B", target="start A", type=">")
+        r4 = PointRelation(source="start A", target="start B", type=">")
 
         assert r1 == r2
         assert r1 == r3
@@ -17,20 +17,20 @@ class TestRelation:
     def test_relation_inversion(self):
         relations = [
             (
-                Relation(source="A", target="B", type="<"),
-                Relation(source="B", target="A", type=">"),
+                PointRelation(source="start A", target="start B", type="<"),
+                PointRelation(source="start B", target="start A", type=">"),
             ),
             (
-                Relation(source="X", target="Y", type=">"),
-                Relation(source="Y", target="X", type="<"),
+                PointRelation(source="start X", target="start Y", type=">"),
+                PointRelation(source="start Y", target="start X", type="<"),
             ),
             (
-                Relation(source="P", target="Q", type="="),
-                Relation(source="Q", target="P", type="="),
+                PointRelation(source="start P", target="start Q", type="="),
+                PointRelation(source="start Q", target="start P", type="="),
             ),
             (
-                Relation(source="M", target="N", type="-"),
-                Relation(source="N", target="M", type="-"),
+                PointRelation(source="start M", target="start N", type="-"),
+                PointRelation(source="start N", target="start M", type="-"),
             ),
         ]
 
@@ -43,40 +43,40 @@ class TestRelation:
 
     def test_relation_invert_relation_consistency(self):
         for rel_type, inverted_type in INVERT_RELATION.items():
-            r = Relation(source="A", target="B", type=rel_type)
+            r = PointRelation(source="start A", target="start B", type=rel_type)
             inverted = ~r
             assert inverted.type == inverted_type
 
     def test_relation_invalid_type(self):
         with pytest.raises(ValueError):
-            Relation(source="A", target="B", type="invalid")
+            PointRelation(source="start A", target="start B", type="invalid")
 
     def test_relation_source_target_swap(self):
-        r1 = Relation(source="A", target="B", type="<")
-        r2 = Relation(source="B", target="A", type=">")
+        r1 = PointRelation(source="start A", target="start B", type="<")
+        r2 = PointRelation(source="start B", target="start A", type=">")
         assert r1 == r2
 
-        r3 = Relation(source="X", target="Y", type="=")
-        r4 = Relation(source="Y", target="X", type="=")
+        r3 = PointRelation(source="start X", target="start Y", type="=")
+        r4 = PointRelation(source="start Y", target="start X", type="=")
         assert r3 == r4
 
-        r5 = Relation(source="P", target="Q", type="-")
-        r6 = Relation(source="Q", target="P", type="-")
+        r5 = PointRelation(source="start P", target="start Q", type="-")
+        r6 = PointRelation(source="start Q", target="start P", type="-")
         assert r5 == r6
 
     def test_relation_inequality(self):
-        r1 = Relation(source="A", target="B", type="<")
-        r2 = Relation(source="B", target="C", type="<")
-        r3 = Relation(source="A", target="B", type="=")
+        r1 = PointRelation(source="start A", target="start B", type="<")
+        r2 = PointRelation(source="start B", target="start C", type="<")
+        r3 = PointRelation(source="start A", target="start B", type="=")
 
         assert r1 != r2
         assert r1 != r3
         assert r2 != r3
 
     def test_in_list(self):
-        r1 = Relation(source="A", target="B", type="<")
-        r2 = Relation(source="B", target="C", type="<")
-        r3 = Relation(source="A", target="B", type="=")
+        r1 = PointRelation(source="start A", target="start B", type="<")
+        r2 = PointRelation(source="start B", target="start C", type="<")
+        r3 = PointRelation(source="start A", target="start B", type="=")
 
         relations = [r1, r2, r3]
         assert r1 in relations
@@ -84,8 +84,8 @@ class TestRelation:
         assert r3 in relations
 
     def test_hash(self):
-        r1 = Relation(source="A", target="B", type="<")
-        r2 = Relation(source="B", target="A", type=">")
+        r1 = PointRelation(source="start A", target="start B", type="<")
+        r2 = PointRelation(source="start B", target="start A", type=">")
         assert hash(r1) == hash(r2)
 
 
@@ -93,38 +93,38 @@ class TestTimeline:
     @pytest.fixture
     def relations(self):
         return [
-            Relation(source="A", target="B", type="<"),
-            Relation(source="B", target="C", type="<"),
-            Relation(source="C", target="D", type="<"),
-            Relation(source="E", target="F", type=">"),
-            Relation(source="G", target="H", type="-"),
+            PointRelation(source="start A", target="start B", type="<"),
+            PointRelation(source="start B", target="start C", type="<"),
+            PointRelation(source="start C", target="start D", type="<"),
+            PointRelation(source="start E", target="start F", type=">"),
+            PointRelation(source="start G", target="start H", type="-"),
         ]
 
     @pytest.fixture
     def relations_closure(self):
         return [
-            Relation(source="A", target="B", type="<"),
-            Relation(source="B", target="C", type="<"),
-            Relation(source="A", target="C", type="<"),
-            Relation(source="C", target="D", type="<"),
-            Relation(source="A", target="D", type="<"),
-            Relation(source="B", target="D", type="<"),
-            Relation(source="E", target="F", type=">"),
-            Relation(source="G", target="H", type="-"),
+            PointRelation(source="start A", target="start B", type="<"),
+            PointRelation(source="start B", target="start C", type="<"),
+            PointRelation(source="start A", target="start C", type="<"),
+            PointRelation(source="start C", target="start D", type="<"),
+            PointRelation(source="start A", target="start D", type="<"),
+            PointRelation(source="start B", target="start D", type="<"),
+            PointRelation(source="start E", target="start F", type=">"),
+            PointRelation(source="start G", target="start H", type="-"),
         ]
 
     def test_timeline_equality(self):
         t1 = Timeline(
-            relations=[Relation(source="A", target="B", type="<")], on_endpoints=False
+            relations=[PointRelation(source="end A", target="start B", type="<")]
         )
         t2 = Timeline(
-            relations=[Relation(source="A", target="B", type="<")], on_endpoints=False
+            relations=[PointRelation(source="end A", target="start B", type="<")]
         )
         t3 = Timeline(
-            relations=[Relation(source="B", target="A", type=">")], on_endpoints=False
+            relations=[PointRelation(source="start B", target="end A", type=">")]
         )
         t4 = Timeline(
-            relations=[Relation(source="A", target="B", type="=")], on_endpoints=False
+            relations=[PointRelation(source="start A", target="start B", type="=")]
         )
 
         assert t1 == t2
@@ -132,95 +132,104 @@ class TestTimeline:
         assert not (t1 == t4)
 
     def test_timeline_valid_closure(self, relations, relations_closure):
-        t = Timeline(relations=relations, on_endpoints=False)
-        expected_tc = Timeline(relations=relations_closure, on_endpoints=False)
+        t = Timeline(relations=relations)
+        expected_tc = Timeline(relations=relations_closure)
         tc = t.closure()
         assert tc == expected_tc
 
     def test_invalid_relations(self):
         relations = [
-            Relation(source="A", target="B", type="<"),
-            Relation(source="B", target="C", type="<"),
-            Relation(source="A", target="C", type=">"),
-            Relation(source="D", target="E", type=">"),
+            PointRelation(source="start A", target="start B", type="<"),
+            PointRelation(source="start B", target="start C", type="<"),
+            PointRelation(source="start A", target="start C", type=">"),
+            PointRelation(source="start D", target="start E", type=">"),
         ]
-        timeline = Timeline(relations=relations, on_endpoints=False)
+        timeline = Timeline(relations=relations)
         assert not timeline.is_valid
         assert len(timeline.invalid_relations) == 6
 
     def test_entities(self, relations):
-        t = Timeline(relations=relations, on_endpoints=False)
-        assert t.entities == ["A", "B", "C", "D", "E", "F", "G", "H"]
+        t = Timeline(relations=relations)
+        assert t.entities == [
+            "start A",
+            "start B",
+            "start C",
+            "start D",
+            "start E",
+            "start F",
+            "start G",
+            "start H",
+        ]
 
     def test_possible_relation_pairs(self):
         t = Timeline(
             relations=[
-                Relation(source="A", target="B", type="<"),
-                Relation(source="B", target="C", type="<"),
+                PointRelation(source="start A", target="start B", type="<"),
+                PointRelation(source="start B", target="start C", type="<"),
             ],
-            on_endpoints=False,
         )
         assert t.possible_relation_pairs == [
-            ("A", "B"),
-            ("A", "C"),
-            ("B", "C"),
+            ("start A", "start B"),
+            ("start A", "start C"),
+            ("start B", "start C"),
         ]
 
     def test_get_item(self):
         t = Timeline(
-            relations=[Relation(source="A", target="B", type="<")], on_endpoints=False
+            relations=[PointRelation(source="start A", target="start B", type="<")]
         )
-        assert t["A", "B"] == [Relation(source="A", target="B", type="<")]
-        assert t["B", "A"] == [Relation(source="B", target="A", type=">")]
+        assert t["start A", "start B"] == [
+            PointRelation(source="start A", target="start B", type="<")
+        ]
+        assert t["start B", "start A"] == [
+            PointRelation(source="start B", target="start A", type=">")
+        ]
 
     def test_get_item_source_target(self):
         t = Timeline(
-            relations=[Relation(source="A", target="B", type="<")], on_endpoints=False
+            relations=[PointRelation(source="start A", target="start B", type="<")]
         )
-        rel = t["A", "B"][0]
-        assert rel.source == "A"
-        assert rel.target == "B"
+        rel = t["start A", "start B"][0]
+        assert rel.source == "start A"
+        assert rel.target == "start B"
         assert rel.type == "<"
 
     def test_get_item_source_target_swap(self):
         t = Timeline(
-            relations=[Relation(source="A", target="B", type="<")], on_endpoints=False
+            relations=[PointRelation(source="start A", target="start B", type="<")]
         )
-        rel = t["B", "A"][0]
-        assert rel.source == "B"
-        assert rel.target == "A"
+        rel = t["start B", "start A"][0]
+        assert rel.source == "start B"
+        assert rel.target == "start A"
         assert rel.type == ">"
 
     def test_len(self, relations):
-        t = Timeline(relations=relations, on_endpoints=False)
+        t = Timeline(relations=relations)
         assert len(t) == 5
 
     def test_contains(self):
-        t = Timeline(
-            relations=[
-                Relation(source="A", target="B", type="<"),
-            ],
-            on_endpoints=False,
-        )
-        assert Relation(source="A", target="B", type="<") in t
-        assert Relation(source="B", target="A", type=">") in t
-        assert Relation(source="B", target="C", type="<") not in t
+        relations = [
+            PointRelation(source="start A", target="start B", type="<"),
+        ]
+        t = Timeline(relations)
+        assert PointRelation(source="start A", target="start B", type="<") in t
+        assert PointRelation(source="start B", target="start A", type=">") in t
+        assert PointRelation(source="start B", target="start C", type="<") not in t
 
     def test_add_relation(self):
-        t = Timeline(on_endpoints=False)
+        t = Timeline()
 
-        t.add(Relation(source="A", target="B", type="<"))
+        t.add(PointRelation(source="start A", target="start B", type="<"))
         assert t == Timeline(
-            relations=[Relation(source="A", target="B", type="<")], on_endpoints=False
+            relations=[PointRelation(source="start A", target="start B", type="<")],
         )
 
-        t.add(Relation(source="B", target="C", type="<"))
+        t.add(PointRelation(source="start B", target="start C", type="<"))
         assert t == Timeline(
             relations=[
-                Relation(source="A", target="B", type="<"),
-                Relation(source="B", target="C", type="<"),
+                PointRelation(source="start A", target="start B", type="<"),
+                PointRelation(source="start B", target="start C", type="<"),
             ],
-            on_endpoints=False,
         )
 
     def test_from_relations(self):
@@ -229,8 +238,8 @@ class TestTimeline:
         ]
         t = Timeline().from_relations(relations, compute_closure=True)
         expected_relations = [
-            Relation(source="end A", target="start B", type="<"),
-            Relation(source="start A", target="end A", type="<"),
-            Relation(source="start B", target="end B", type="<"),
+            PointRelation(source="end A", target="start B", type="<"),
+            PointRelation(source="start A", target="end A", type="<"),
+            PointRelation(source="start B", target="end B", type="<"),
         ]
         assert t == Timeline(relations=expected_relations)

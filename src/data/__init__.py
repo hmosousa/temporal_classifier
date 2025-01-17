@@ -2,23 +2,22 @@ from typing import Any, Dict, Tuple
 
 from torch.utils.data import Dataset
 
-from src.data.all_temporal_questions import load_all_temporal_questions
-from src.data.interval.tddiscourse import load_tddiscourse
-from src.data.interval.tempeval import load_tempeval
-from src.data.interval.timebankdense import load_timebank_dense
 from src.data.matres import load_matres
-from src.data.synthetic_temporal_questions import load_synthetic_temporal_questions
+from src.data.synthetic import load_synthetic
+
+from src.data.tddiscourse import load_interval_tddiscourse
+from src.data.tempeval import load_tempeval
 from src.data.temporal_questions import load_temporal_questions
+from src.data.timebankdense import load_timebank_dense
 from src.data.timeset import load_timeset
 from src.data.utils import augment_dataset, balance_dataset_classes
 
 DATASETS = {
     "timeset": load_timeset,
     "temporal_questions": load_temporal_questions,
-    "synthetic_temporal_questions": load_synthetic_temporal_questions,
-    "all_temporal_questions": load_all_temporal_questions,
+    "synthetic": load_synthetic,
     "matres": load_matres,
-    "tddiscourse": load_tddiscourse,
+    "interval_tddiscourse": load_interval_tddiscourse,
     "tempeval": load_tempeval,
     "timebank_dense": load_timebank_dense,
 }
@@ -41,7 +40,7 @@ __all__ = [
     "load_synthetic_temporal_questions",
     "load_all_temporal_questions",
     "load_matres",
-    "load_tddiscourse",
+    "load_interval_tddiscourse",
     "load_tempeval",
     "load_timebank_dense",
     "balance_dataset_classes",

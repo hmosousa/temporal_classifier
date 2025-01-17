@@ -159,3 +159,31 @@ def get_tlink_context(doc: Document, tlink: TLink, just_sentences: bool = False)
     else:
         context = add_tags(context, entities, doc.dct)
     return context
+
+
+def fix_closure_tlinks(tlinks: list[TLink], entity_map: dict):
+    """Fix the closure of the tlinks."""
+    # Temporal closure changes the entities from Entity to str.
+    # This is a workaround to get the entities back.
+    tlinks2drop = []
+    for idx, tlink in enumerate(tlinks):
+        if isinstance(tlink.source, str):
+            if tlink.source in entity_map:
+                tlink.source = entity_map[tlink.source]
+            else:
+                tlinks2drop.append(idx)
+                continue
+
+        if isinstance(tlink.target, str):
+            if tlink.target in entity_map:
+                tlink.target = entity_map[tlink.target]
+            else:
+                tlinks2drop.append(idx)
+                continue
+
+    for idx in sorted(tlinks2drop, reverse=True):
+        tlinks.pop(idx)
+
+    tlinks = set(tlinks)
+
+    return tlinks
