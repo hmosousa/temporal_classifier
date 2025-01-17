@@ -3,8 +3,13 @@ from typing import Literal
 import datasets
 import tieval.datasets
 
-from src.data.utils import get_tlink_context
+from src.base import Timeline
 
+from src.data.utils import (
+    get_tlink_context,
+    INTERVAL_EXPECTED_TAGS,
+    POINT_EXPECTED_TAGS,
+)
 
 # Train, valid, test split from https://github.com/muk343/TimeBank-dense
 TRAIN_DOCS = [
@@ -53,7 +58,7 @@ TEST_DOCS = [
 ]
 
 
-def load_timebank_dense(
+def load_interval_timebank_dense(
     split: Literal["train", "valid", "test"],
     **kwargs,
 ) -> datasets.Dataset:
@@ -71,8 +76,81 @@ def load_timebank_dense(
 
     examples = []
     for doc in docs:
-        for tlink in doc.tlinks:
-            context = get_tlink_context(doc, tlink)
-            examples.append({"text": context, "label": tlink.relation.interval})
+        for tlink in set(doc.tlinks):
+            if tlink.source.id == tlink.target.id:
+                continue
 
+            context = get_tlink_context(doc, tlink)
+            srcid = tlink.source.id
+            tgtid = tlink.target.id
+            text = (
+                context.replace(f"<{srcid}>", "<source>")
+                .replace(f"</{srcid}>", "</source>")
+                .replace(f"<{tgtid}>", "<target>")
+                .replace(f"</{tgtid}>", "</target>")
+            )
+
+            tag_count = sum(1 for tag in INTERVAL_EXPECTED_TAGS if tag in text)
+            if tag_count != 4:
+                continue
+
+            text = text.replace("\n", "").strip()
+            examples.append(
+                {"doc": doc.name, "text": text, "label": tlink.relation.interval}
+            )
+    return datasets.Dataset.from_list(examples)
+
+
+def load_point_timebank_dense(
+    split: Literal["train", "valid", "test"],
+    **kwargs,
+) -> datasets.Dataset:
+    """Load TimeBank Dense dataset."""
+    corpus = tieval.datasets.read("timebank_dense")
+
+    if split == "train":
+        docs = [doc for doc in corpus.documents if doc.name in TRAIN_DOCS]
+    elif split == "valid":
+        docs = [doc for doc in corpus.documents if doc.name in VALID_DOCS]
+    elif split == "test":
+        docs = [doc for doc in corpus.documents if doc.name in TEST_DOCS]
+    else:
+        raise ValueError(f"Invalid split: {split}")
+
+    examples = []
+    for doc in docs:
+        for tlink in set(doc.tlinks):
+            context = get_tlink_context(doc, tlink)
+            timeline = Timeline(tlinks=[tlink]).to_dict()
+            for relation in timeline["relations"]:
+                src_endpoint, srcid = relation["source"].split(" ")
+                tgt_endpoint, tgtid = relation["target"].split(" ")
+                if srcid == tgtid:
+                    continue
+
+                if src_endpoint == "start":
+                    new_src_tags = "<start_source>", "</start_source>"
+                else:
+                    new_src_tags = "<end_source>", "</end_source>"
+
+                if tgt_endpoint == "start":
+                    new_tgt_tags = "<start_target>", "</start_target>"
+                else:
+                    new_tgt_tags = "<end_target>", "</end_target>"
+
+                text = (
+                    context.replace(f"<{srcid}>", new_src_tags[0])
+                    .replace(f"</{srcid}>", new_src_tags[1])
+                    .replace(f"<{tgtid}>", new_tgt_tags[0])
+                    .replace(f"</{tgtid}>", new_tgt_tags[1])
+                )
+
+                tag_count = sum(1 for tag in POINT_EXPECTED_TAGS if tag in text)
+                if tag_count != 4:
+                    continue
+
+                text = text.replace("\n", "").strip()
+                examples.append(
+                    {"doc": doc.name, "text": text, "label": relation["type"]}
+                )
     return datasets.Dataset.from_list(examples)

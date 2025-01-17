@@ -3,7 +3,7 @@ from typing import Literal
 import datasets
 import tieval.datasets
 
-from src.data.utils import get_tlink_context
+from src.data.utils import get_tlink_context, POINT_EXPECTED_TAGS
 
 # Map from MATRES relations to this project point relations
 _RELATIONS_TO_POINT = {
@@ -15,13 +15,17 @@ _RELATIONS_TO_POINT = {
 
 
 def load_matres(
-    split: Literal["train", "test"],
+    split: Literal["train", "valid", "test"],
     **kwargs,
 ) -> datasets.Dataset:
     """Format MATRES the same way as TemporalQuestions."""
     corpus = tieval.datasets.read("matres")
-    if split == "train":
-        docs = corpus.train
+    if split in ["train", "valid"]:
+        n_train_docs = int(len(corpus.train) * 0.9)
+        if split == "train":
+            docs = corpus.train[:n_train_docs]
+        else:
+            docs = corpus.train[n_train_docs:]
     elif split == "test":
         docs = corpus.test
     else:
@@ -39,7 +43,13 @@ def load_matres(
                 .replace(f"<{tlink.target.id}>", "<start_target>")
                 .replace(f"</{tlink.target.id}>", "</start_target>")
             )
+            text = text.replace("\n", "").strip()
+
+            tag_count = sum(1 for tag in POINT_EXPECTED_TAGS if tag in text)
+            if tag_count != 4:
+                continue
+
             label = _RELATIONS_TO_POINT[tlink.relation.interval]
-            examples.append({"text": text, "label": label})
+            examples.append({"doc": doc.name, "text": text, "label": label})
 
     return datasets.Dataset.from_list(examples)

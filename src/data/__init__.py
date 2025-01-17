@@ -5,10 +5,13 @@ from torch.utils.data import Dataset
 from src.data.matres import load_matres
 from src.data.synthetic import load_synthetic
 
-from src.data.tddiscourse import load_interval_tddiscourse
+from src.data.tddiscourse import load_interval_tddiscourse, load_point_tddiscourse
 from src.data.tempeval import load_interval_tempeval, load_point_tempeval
 from src.data.temporal_questions import load_temporal_questions
-from src.data.timebankdense import load_timebank_dense
+from src.data.timebankdense import (
+    load_interval_timebank_dense,
+    load_point_timebank_dense,
+)
 from src.data.timeset import load_timeset
 from src.data.utils import augment_dataset, balance_dataset_classes
 
@@ -18,9 +21,11 @@ DATASETS = {
     "synthetic": load_synthetic,
     "matres": load_matres,
     "interval_tddiscourse": load_interval_tddiscourse,
+    "point_tddiscourse": load_point_tddiscourse,
     "interval_tempeval": load_interval_tempeval,
     "point_tempeval": load_point_tempeval,
-    "timebank_dense": load_timebank_dense,
+    "interval_timebank_dense": load_interval_timebank_dense,
+    "point_timebank_dense": load_point_timebank_dense,
 }
 
 
@@ -43,7 +48,8 @@ __all__ = [
     "load_interval_tddiscourse",
     "load_interval_tempeval",
     "load_point_tempeval",
-    "load_timebank_dense",
+    "load_interval_timebank_dense",
+    "load_point_timebank_dense",
     "balance_dataset_classes",
     "augment_dataset",
 ]

@@ -99,7 +99,7 @@ class Timeline:
         compute_closure: bool = False,
     ):
         if tlinks is not None:
-            relations = self.tlinks2relations(tlinks)
+            relations = tlinks2relations(tlinks)
 
         elif relations is None:
             relations = set()
@@ -245,34 +245,24 @@ class Timeline:
             compute_closure=compute_closure,
         )
 
-    @staticmethod
-    def tlinks2relations(tlinks):
-        relations = []
-        for tlink in tlinks:
-            if tlink.source.id == tlink.target.id:
-                continue
 
-            pr = [r if r is not None else "-" for r in tlink.relation.point.relation]
+def tlinks2relations(tlinks):
+    relations = []
+    for tlink in tlinks:
+        if tlink.source.id == tlink.target.id:
+            continue
 
-            relations += [
-                PointRelation(
-                    f"start {tlink.source.id}", f"start {tlink.target.id}", pr[0]
-                ),
-                PointRelation(
-                    f"start {tlink.source.id}", f"end {tlink.target.id}", pr[1]
-                ),
-                PointRelation(
-                    f"end {tlink.source.id}", f"start {tlink.target.id}", pr[2]
-                ),
-                PointRelation(
-                    f"end {tlink.source.id}", f"end {tlink.target.id}", pr[3]
-                ),
-                PointRelation(
-                    f"start {tlink.source.id}", f"end {tlink.source.id}", "<"
-                ),
-                PointRelation(
-                    f"start {tlink.target.id}", f"end {tlink.target.id}", "<"
-                ),
-            ]
+        pr = [r if r is not None else "-" for r in tlink.relation.point.relation]
 
-        return set(relations)
+        relations += [
+            PointRelation(
+                f"start {tlink.source.id}", f"start {tlink.target.id}", pr[0]
+            ),
+            PointRelation(f"start {tlink.source.id}", f"end {tlink.target.id}", pr[1]),
+            PointRelation(f"end {tlink.source.id}", f"start {tlink.target.id}", pr[2]),
+            PointRelation(f"end {tlink.source.id}", f"end {tlink.target.id}", pr[3]),
+            PointRelation(f"start {tlink.source.id}", f"end {tlink.source.id}", "<"),
+            PointRelation(f"start {tlink.target.id}", f"end {tlink.target.id}", "<"),
+        ]
+
+    return set(relations)
