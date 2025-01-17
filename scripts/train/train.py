@@ -4,10 +4,13 @@ import multiprocessing as mp
 import os
 import random
 import sys
+from collections import Counter
 from dataclasses import dataclass, field
 from typing import List, Optional
 
 import datasets
+
+import torch
 import transformers
 from fire import Fire
 from omegaconf import OmegaConf
@@ -371,6 +374,13 @@ def main(
         factor = config.other.label_smoothing_factor
     else:
         factor = 0.0
+
+    if config.other.init_bias:
+        lids = [RELATIONS2ID[label] for label in trainset["label"]]
+        counter = Counter(lids)
+        fqs = [counter[i] / len(trainset) for i in range(num_labels)]
+        init_bias = torch.log(torch.tensor(fqs))
+        model.score.bias.data = init_bias
 
     def multi_labels_to_ids(labels: List[str]) -> List[float]:
         ids = [factor / num_labels] * num_labels
