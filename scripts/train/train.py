@@ -19,7 +19,6 @@ from sklearn.metrics import classification_report
 from src.base import RELATIONS2ID
 from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
 from src.data import augment_dataset, load_dataset
-from src.metrics import compute_loss_func
 from src.model.classifier import ContextClassifier
 from src.trainer import Trainer
 from transformers import (
@@ -498,15 +497,13 @@ def main(
 
     # Initialize our Trainer
     trainer = Trainer(
+        config=training_args,
         model=model,
-        args=training_args,
+        tokenizer=tokenizer,
         train_dataset=train_dataset if training_args.do_train else None,
-        eval_dataset=eval_dataset if training_args.do_eval else None,
-        compute_metrics=compute_metrics,
-        processing_class=tokenizer,
+        valid_dataset=eval_dataset if training_args.do_eval else None,
         data_collator=data_collator,
         callbacks=callbacks,
-        compute_loss_func=compute_loss_func,
     )
 
     # Training
@@ -518,7 +515,7 @@ def main(
             checkpoint = training_args.resume_from_checkpoint
         elif last_checkpoint is not None:
             checkpoint = last_checkpoint
-        train_result = trainer.train(resume_from_checkpoint=checkpoint)
+        train_result = trainer.train(checkpoint=checkpoint)
 
         metrics = train_result.metrics
         max_train_samples = (
