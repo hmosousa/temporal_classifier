@@ -249,18 +249,30 @@ class Timeline:
     def tlinks2relations(tlinks):
         relations = []
         for tlink in tlinks:
-            if tlink.source == tlink.target:
+            if tlink.source.id == tlink.target.id:
                 continue
 
             pr = [r if r is not None else "-" for r in tlink.relation.point.relation]
 
             relations += [
-                PointRelation(f"start {tlink.source}", f"start {tlink.target}", pr[0]),
-                PointRelation(f"start {tlink.source}", f"end {tlink.target}", pr[1]),
-                PointRelation(f"end {tlink.source}", f"start {tlink.target}", pr[2]),
-                PointRelation(f"end {tlink.source}", f"end {tlink.target}", pr[3]),
-                PointRelation(f"start {tlink.source}", f"end {tlink.source}", "<"),
-                PointRelation(f"start {tlink.target}", f"end {tlink.target}", "<"),
+                PointRelation(
+                    f"start {tlink.source.id}", f"start {tlink.target.id}", pr[0]
+                ),
+                PointRelation(
+                    f"start {tlink.source.id}", f"end {tlink.target.id}", pr[1]
+                ),
+                PointRelation(
+                    f"end {tlink.source.id}", f"start {tlink.target.id}", pr[2]
+                ),
+                PointRelation(
+                    f"end {tlink.source.id}", f"end {tlink.target.id}", pr[3]
+                ),
+                PointRelation(
+                    f"start {tlink.source.id}", f"end {tlink.source.id}", "<"
+                ),
+                PointRelation(
+                    f"start {tlink.target.id}", f"end {tlink.target.id}", "<"
+                ),
             ]
 
         return set(relations)
