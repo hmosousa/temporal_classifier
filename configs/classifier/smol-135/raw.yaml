@@ -3,10 +3,9 @@ model:
     trust_remote_code: True
 
 data:
-    dataset_name: matres
-    # dataset_config_name: raw
+    dataset_name: temporal_contexts
     train_split: train
-    valid_split: test
+    valid_split: valid
     max_seq_length: 2048
     augment: False
     pad_to_max_length: False # To pad each batch at runtime
