@@ -18,7 +18,6 @@ def load_matres(
     split: Literal["train", "valid", "test"],
     **kwargs,
 ) -> datasets.Dataset:
-    """Format MATRES the same way as TemporalQuestions."""
     corpus = tieval.datasets.read("matres")
     if split in ["train", "valid"]:
         n_train_docs = int(len(corpus.train) * 0.9)
@@ -43,7 +42,7 @@ def load_matres(
                 .replace(f"<{tlink.target.id}>", "<start_target>")
                 .replace(f"</{tlink.target.id}>", "</start_target>")
             )
-            text = text.replace("\n", "").strip()
+            text = text.replace("\n", " ").strip()
 
             tag_count = sum(1 for tag in POINT_EXPECTED_TAGS if tag in text)
             if tag_count != 4:

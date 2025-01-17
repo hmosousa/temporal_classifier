@@ -49,7 +49,7 @@ def load_interval_tempeval(
             if tag_count != 4:
                 continue
 
-            text = text.replace("\n", "").strip()
+            text = text.replace("\n", " ").strip()
             examples.append(
                 {"doc": doc.name, "text": text, "label": tlink.relation.interval}
             )
@@ -106,7 +106,7 @@ def load_point_tempeval(
                 if tag_count != 4:
                     continue
 
-                text = text.replace("\n", "").strip()
+                text = text.replace("\n", " ").strip()
                 examples.append(
                     {"doc": doc.name, "text": text, "label": relation["type"]}
                 )

@@ -33,7 +33,7 @@ def load_timeset(split: Literal["valid", "test"] = "test", **kwargs):
             + f"<start_target>{target['mention']}</start_target>"
         )
         text += example["context"][target["end"] :]
-        text = text.replace("\n", "").strip()
+        text = text.replace("\n", " ").strip()
 
         tag_count = sum(1 for tag in POINT_EXPECTED_TAGS if tag in text)
         if tag_count != 4:

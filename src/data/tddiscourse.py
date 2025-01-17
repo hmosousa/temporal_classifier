@@ -93,7 +93,7 @@ def load_interval_tddiscourse(
             if tag_count != 4:
                 continue
 
-            text = text.replace("\n", "").strip()
+            text = text.replace("\n", " ").strip()
             if "(PROFILE" in text:
                 text, _ = text.split("(PROFILE")
                 text = text.strip()
@@ -152,7 +152,7 @@ def load_point_tddiscourse(
                 if tag_count != 4:
                     continue
 
-                text = text.replace("\n", "").strip()
+                text = text.replace("\n", " ").strip()
                 if "(PROFILE" in text:
                     text, _ = text.split("(PROFILE")
                     text = text.strip()

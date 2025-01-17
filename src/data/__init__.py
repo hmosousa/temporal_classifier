@@ -7,7 +7,7 @@ from src.data.synthetic import load_synthetic
 
 from src.data.tddiscourse import load_interval_tddiscourse, load_point_tddiscourse
 from src.data.tempeval import load_interval_tempeval, load_point_tempeval
-from src.data.temporal_questions import load_temporal_questions
+from src.data.temporal_contexts import load_temporal_contexts
 from src.data.timebankdense import (
     load_interval_timebank_dense,
     load_point_timebank_dense,
@@ -17,7 +17,7 @@ from src.data.utils import augment_dataset, balance_dataset_classes
 
 DATASETS = {
     "timeset": load_timeset,
-    "temporal_questions": load_temporal_questions,
+    "temporal_contexts": load_temporal_contexts,
     "synthetic": load_synthetic,
     "matres": load_matres,
     "interval_tddiscourse": load_interval_tddiscourse,
@@ -42,7 +42,7 @@ def load_dataset(
 __all__ = [
     "load_dataset",
     "load_timeset",
-    "load_temporal_questions",
+    "load_temporal_contexts",
     "load_synthetic",
     "load_matres",
     "load_interval_tddiscourse",

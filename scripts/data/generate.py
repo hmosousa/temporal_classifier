@@ -1,11 +1,13 @@
 """Generate Temporal Questions dataset from TemporalEval3 corpus."""
 
+import logging
 from collections import Counter
 from pathlib import Path
 
 import datasets
 import fire
 
+from src.constants import HF_TOKEN
 from src.data import load_dataset
 
 ROOT_DIR = Path(__file__).parent.parent
@@ -56,59 +58,29 @@ def main():
         test_datasets.append(testset)
 
     train_dataset = datasets.concatenate_datasets(train_datasets)
-    train_texts_count = Counter(train_dataset["text"])
-    duplicate_train_texts = {
-        text for text, count in train_texts_count.items() if count > 1
-    }
-    duplicates_dataset = train_dataset.filter(
-        lambda x: x["text"] in duplicate_train_texts
-    )
-    duplicates_dataset.to_pandas().to_csv("duplicates_train.csv", index=False)
+    train_df = train_dataset.to_pandas()
+    train_df.drop_duplicates(subset="text", keep="last", inplace=True)
+    train_df = train_df[["dataset", "doc", "text", "label"]]
 
     valid_dataset = datasets.concatenate_datasets(valid_datasets)
-    valid_texts_count = Counter(valid_dataset["text"])
-    duplicate_valid_texts = {
-        text for text, count in valid_texts_count.items() if count > 1
-    }
-    duplicates_dataset = valid_dataset.filter(
-        lambda x: x["text"] in duplicate_valid_texts
-    )
-    duplicates_dataset.to_pandas().to_csv("duplicates_valid.csv", index=False)
+    valid_df = valid_dataset.to_pandas()
+    valid_df.drop_duplicates(subset="text", keep="last", inplace=True)
+    valid_df = valid_df[~valid_df["text"].isin(train_df["text"])]
+    valid_df = valid_df[["dataset", "doc", "text", "label"]]
 
     test_dataset = datasets.concatenate_datasets(test_datasets)
-    test_texts_count = Counter(test_dataset["text"])
-    duplicate_test_texts = {
-        text for text, count in test_texts_count.items() if count > 1
-    }
-    duplicates_dataset = test_dataset.filter(
-        lambda x: x["text"] in duplicate_test_texts
-    )
-    duplicates_dataset.to_pandas().to_csv("duplicates_test.csv", index=False)
+    test_df = test_dataset.to_pandas()
+    test_df.drop_duplicates(subset="text", keep="last", inplace=True)
+    test_df = test_df[["dataset", "doc", "text", "label"]]
 
-    # # Stratified split into train and validation
-    # train_examples, valid_examples = train_test_split(
-    #     dev_examples,
-    #     test_size=n_valid_samples,
-    #     random_state=42,
-    #     stratify=[example["label"] for example in dev_examples],
-    #     shuffle=True,
-    # )
+    logging.info("Pushing to hub")
+    trainset = datasets.Dataset.from_pandas(train_df, preserve_index=False)
+    validset = datasets.Dataset.from_pandas(valid_df, preserve_index=False)
+    testset = datasets.Dataset.from_pandas(test_df, preserve_index=False)
 
-    # logging.info("Pushing to hub")
-    # trainset = datasets.Dataset.from_list(train_examples)
-    # validset = datasets.Dataset.from_list(valid_examples)
-    # testset = datasets.Dataset.from_list(test_examples)
-
-    # config = "closure" if closure else "raw"
-    # trainset.push_to_hub(
-    #     "hugosousa/TemporalQuestions", config_name=config, split="train", token=HF_TOKEN
-    # )
-    # validset.push_to_hub(
-    #     "hugosousa/TemporalQuestions", config_name=config, split="valid", token=HF_TOKEN
-    # )
-    # testset.push_to_hub(
-    #     "hugosousa/TemporalQuestions", config_name=config, split="test", token=HF_TOKEN
-    # )
+    trainset.push_to_hub("hugosousa/TemporalContexts", split="train", token=HF_TOKEN)
+    validset.push_to_hub("hugosousa/TemporalContexts", split="valid", token=HF_TOKEN)
+    testset.push_to_hub("hugosousa/TemporalContexts", split="test", token=HF_TOKEN)
 
 
 if __name__ == "__main__":
