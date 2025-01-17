@@ -8,7 +8,7 @@ from sklearn.metrics import classification_report
 from src.base import RELATIONS
 from src.constants import RESULTS_DIR
 from src.data import load_dataset
-from src.evaluation import compute_confidence_intervals
+from src.metrics import compute_confidence_intervals
 from src.model import load_model, MajorityClassifier, RandomClassifier
 
 logging.basicConfig(level=logging.INFO)

@@ -1,21 +1,3 @@
-# coding=utf-8
-# Copyright 2020-present the HuggingFace Inc. team.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""
-The Trainer class, to easily train a 🤗 Transformers from scratch or finetune it on a new task.
-"""
-
 import contextlib
 import copy
 import functools
@@ -94,10 +76,6 @@ from transformers.modeling_utils import (
     load_sharded_checkpoint,
     PreTrainedModel,
     unwrap_model,
-)
-from transformers.models.auto.modeling_auto import (
-    MODEL_FOR_CAUSAL_LM_MAPPING_NAMES,
-    MODEL_MAPPING_NAMES,
 )
 from transformers.optimization import Adafactor, get_scheduler
 from transformers.processing_utils import ProcessorMixin
@@ -243,12 +221,7 @@ if is_sagemaker_mp_enabled():
 
     IS_SAGEMAKER_MP_POST_1_10 = version.parse(SMP_VERSION) >= version.parse("1.10")
 
-    from transformers.trainer_pt_utils import (
-        smp_forward_backward,
-        smp_forward_only,
-        smp_gather,
-        smp_nested_concat,
-    )
+    from transformers.trainer_pt_utils import smp_forward_backward, smp_gather
 else:
     IS_SAGEMAKER_MP_POST_1_10 = False
 
@@ -544,36 +517,6 @@ class Trainer:
             Callable[[torch.Tensor, torch.Tensor], torch.Tensor]
         ] = None,
     ):
-        if args is None:
-            output_dir = "tmp_trainer"
-            logger.info(
-                f"No `TrainingArguments` passed, using `output_dir={output_dir}`."
-            )
-            args = TrainingArguments(output_dir=output_dir)
-        if args.batch_eval_metrics and compute_metrics is not None:
-            if (
-                "compute_result"
-                not in inspect.signature(compute_metrics).parameters.keys()
-            ):
-                raise ValueError(
-                    "When using `batch_eval_metrics`, your `compute_metrics` function must take a `compute_result`"
-                    " boolean argument which will be triggered after the last batch of the eval set to signal that the"
-                    " summary statistics should be returned by the function."
-                )
-        if (
-            args.eval_strategy is not None
-            and args.eval_strategy != "no"
-            and eval_dataset is None
-        ):
-            raise ValueError(
-                f"You have set `args.eval_strategy` to {args.eval_strategy} but you didn't pass an `eval_dataset` to `Trainer`. Either set `args.eval_strategy` to `no` or pass an `eval_dataset`. "
-            )
-        if args.save_strategy == SaveStrategy.BEST or args.load_best_model_at_end:
-            if args.metric_for_best_model is None:
-                raise ValueError(
-                    "`args.metric_for_best_model` must be provided when using 'best' save_strategy or if `args.load_best_model_at_end` is set to `True`."
-                )
-
         self.args = args
         self.compute_loss_func = compute_loss_func
         # Seed must be set before instantiating the model when using model
@@ -598,31 +541,7 @@ class Trainer:
         # force device and distributed setup init explicitly
         args._setup_devices
 
-        if model is None:
-            if model_init is not None:
-                self.model_init = model_init
-                model = self.call_model_init()
-            else:
-                raise RuntimeError(
-                    "`Trainer` requires either a `model` or `model_init` argument"
-                )
-        else:
-            if model_init is not None:
-                warnings.warn(
-                    "`Trainer` requires either a `model` or `model_init` argument, but not both. `model_init` will"
-                    " overwrite your model when calling the `train` method. This will become a fatal error in the next"
-                    " release.",
-                    FutureWarning,
-                )
-            self.model_init = model_init
-
-        if model.__class__.__name__ in MODEL_MAPPING_NAMES:
-            raise ValueError(
-                f"The model you have picked ({model.__class__.__name__}) cannot be used as is for training: it only "
-                "computes hidden states and does not accept any labels. You should choose a model with a head "
-                "suitable for your task like any of the `AutoModelForXxx` listed at "
-                "https://huggingface.co/docs/transformers/model_doc/auto"
-            )
+        self.model_init = model_init
 
         if getattr(model, "is_parallelizable", False) and getattr(
             model, "model_parallel", False
@@ -668,44 +587,7 @@ class Trainer:
                     "Please install it with `pip install liger-kernel`"
                 )
 
-        _is_quantized_and_base_model = getattr(
-            model, "is_quantized", False
-        ) and not getattr(model, "_hf_peft_config_loaded", False)
-        _quantization_method_supports_training = (
-            getattr(model, "hf_quantizer", None) is not None
-            and model.hf_quantizer.is_trainable
-        )
-
-        _is_model_quantized_and_qat_trainable = getattr(
-            model, "hf_quantizer", None
-        ) is not None and getattr(model.hf_quantizer, "is_qat_trainable", False)
-
-        # Filter out quantized + compiled models
-        if _is_quantized_and_base_model and hasattr(model, "_orig_mod"):
-            raise ValueError(
-                "You cannot fine-tune quantized model with `torch.compile()` make sure to pass a non-compiled model when fine-tuning a quantized model with PEFT"
-            )
-
         # At this stage the model is already loaded
-        if (
-            _is_quantized_and_base_model
-            and not _is_peft_model(model)
-            and not _is_model_quantized_and_qat_trainable
-        ):
-            raise ValueError(
-                "You cannot perform fine-tuning on purely quantized models. Please attach trainable adapters on top of"
-                " the quantized model to correctly perform fine-tuning. Please see: https://huggingface.co/docs/transformers/peft"
-                " for more details"
-            )
-        elif (
-            _is_quantized_and_base_model and not _quantization_method_supports_training
-        ):
-            raise ValueError(
-                f"The model you are trying to fine-tune is quantized with {model.hf_quantizer.quantization_config.quant_method}"
-                " but that quantization method do not support training. Please open an issue on GitHub: https://github.com/huggingface/transformers"
-                f" to request the support for training support for {model.hf_quantizer.quantization_config.quant_method}"
-            )
-
         self.is_fsdp_xla_enabled = args.fsdp_config["xla"]
         if len(args.fsdp) > 0:
             if self.is_deepspeed_enabled:
@@ -4390,9 +4272,7 @@ class Trainer:
             return loss_mb.reduce_mean().detach().to(self.args.device)
 
         with self.compute_loss_context_manager():
-            loss = self.compute_loss(
-                model, inputs, num_items_in_batch=num_items_in_batch
-            )
+            loss = self.compute_loss(model, inputs)
 
         del inputs
         if (
@@ -4431,57 +4311,22 @@ class Trainer:
                 return loss.detach() / self.args.gradient_accumulation_steps
             return loss.detach()
 
-    def compute_loss(
-        self, model, inputs, return_outputs=False, num_items_in_batch=None
-    ):
+    def compute_loss(self, model, inputs, return_outputs=False):
         """
         How the loss is computed by Trainer. By default, all models return the loss in the first element.
 
         Subclass and override for custom behavior.
         """
-        if (
-            self.label_smoother is not None or self.compute_loss_func is not None
-        ) and "labels" in inputs:
-            labels = inputs.pop("labels")
-        else:
-            labels = None
-        if self.model_accepts_loss_kwargs:
-            loss_kwargs = {}
-            if num_items_in_batch is not None:
-                loss_kwargs["num_items_in_batch"] = num_items_in_batch
-            inputs = {**inputs, **loss_kwargs}
+
+        labels = inputs.pop("labels")
+
         outputs = model(**inputs)
+
         # Save past state if it exists
-        # TODO: this needs to be fixed and made cleaner later.
         if self.args.past_index >= 0:
             self._past = outputs[self.args.past_index]
 
-        if labels is not None:
-            unwrapped_model = self.accelerator.unwrap_model(model)
-            if _is_peft_model(unwrapped_model):
-                model_name = unwrapped_model.base_model.model._get_name()
-            else:
-                model_name = unwrapped_model._get_name()
-            # User-defined compute_loss function
-            if self.compute_loss_func is not None:
-                loss = self.compute_loss_func(
-                    outputs, labels, num_items_in_batch=num_items_in_batch
-                )
-            elif model_name in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.values():
-                loss = self.label_smoother(outputs, labels, shift_labels=True)
-            else:
-                loss = self.label_smoother(outputs, labels)
-        else:
-            if isinstance(outputs, dict) and "loss" not in outputs:
-                raise ValueError(
-                    "The model did not return a loss from the inputs, only the following keys: "
-                    f"{','.join(outputs.keys())}. For reference, the inputs it received are {','.join(inputs.keys())}."
-                )
-            # We don't use .loss here since the model may return tuples instead of ModelOutput.
-            loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
-
-        if self.args.average_tokens_across_devices and self.model_accepts_loss_kwargs:
-            loss *= self.accelerator.num_processes
+        loss = self.compute_loss_func(outputs, labels)
 
         return (loss, outputs) if return_outputs else loss
 
@@ -5316,60 +5161,32 @@ class Trainer:
             labels = None
 
         with torch.no_grad():
-            if is_sagemaker_mp_enabled():
-                raw_outputs = smp_forward_only(model, inputs)
-                if has_labels or loss_without_labels:
-                    if isinstance(raw_outputs, dict):
-                        loss_mb = raw_outputs["loss"]
-                        logits_mb = tuple(
-                            v
-                            for k, v in raw_outputs.items()
-                            if k not in ignore_keys + ["loss"]
-                        )
-                    else:
-                        loss_mb = raw_outputs[0]
-                        logits_mb = raw_outputs[1:]
+            if has_labels or loss_without_labels:
+                with self.compute_loss_context_manager():
+                    loss, outputs = self.compute_loss(
+                        model, inputs, return_outputs=True
+                    )
+                loss = loss.mean().detach()
 
-                    loss = loss_mb.reduce_mean().detach().cpu()
-                    logits = smp_nested_concat(logits_mb)
+                if isinstance(outputs, dict):
+                    logits = tuple(
+                        v for k, v in outputs.items() if k not in ignore_keys + ["loss"]
+                    )
                 else:
-                    loss = None
-                    if isinstance(raw_outputs, dict):
-                        logits_mb = tuple(
-                            v for k, v in raw_outputs.items() if k not in ignore_keys
-                        )
-                    else:
-                        logits_mb = raw_outputs
-                    logits = smp_nested_concat(logits_mb)
+                    logits = outputs[1:]
             else:
-                if has_labels or loss_without_labels:
-                    with self.compute_loss_context_manager():
-                        loss, outputs = self.compute_loss(
-                            model, inputs, return_outputs=True
-                        )
-                    loss = loss.mean().detach()
-
-                    if isinstance(outputs, dict):
-                        logits = tuple(
-                            v
-                            for k, v in outputs.items()
-                            if k not in ignore_keys + ["loss"]
-                        )
-                    else:
-                        logits = outputs[1:]
+                loss = None
+                with self.compute_loss_context_manager():
+                    outputs = model(**inputs)
+                if isinstance(outputs, dict):
+                    logits = tuple(
+                        v for k, v in outputs.items() if k not in ignore_keys
+                    )
                 else:
-                    loss = None
-                    with self.compute_loss_context_manager():
-                        outputs = model(**inputs)
-                    if isinstance(outputs, dict):
-                        logits = tuple(
-                            v for k, v in outputs.items() if k not in ignore_keys
-                        )
-                    else:
-                        logits = outputs
-                    # TODO: this needs to be fixed and made cleaner later.
-                    if self.args.past_index >= 0:
-                        self._past = outputs[self.args.past_index - 1]
+                    logits = outputs
+                # TODO: this needs to be fixed and made cleaner later.
+                if self.args.past_index >= 0:
+                    self._past = outputs[self.args.past_index - 1]
 
         if prediction_loss_only:
             return (loss, None, None)

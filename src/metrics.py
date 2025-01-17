@@ -2,6 +2,7 @@ from typing import Dict
 
 import datasets
 import numpy as np
+import torch.nn.functional as F
 from sklearn.metrics import classification_report
 
 from src.base import Timeline
@@ -152,3 +153,12 @@ def compute_confidence_intervals(
         },
     }
     return confidence_intervals
+
+
+def compute_loss_func(outputs, inputs, num_items_in_batch=None):
+    loss = F.binary_cross_entropy_with_logits(
+        input=outputs.logits,
+        target=inputs,
+        reduction="mean",
+    )
+    return loss

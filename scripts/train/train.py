@@ -16,7 +16,9 @@ from sklearn.metrics import classification_report
 from src.base import RELATIONS2ID
 from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
 from src.data import augment_dataset, load_dataset
+from src.metrics import compute_loss_func
 from src.model.classifier import ContextClassifier
+from src.trainer import Trainer
 from transformers import (
     AutoTokenizer,
     DataCollatorWithPadding,
@@ -24,7 +26,6 @@ from transformers import (
     EarlyStoppingCallback,
     EvalPrediction,
     set_seed,
-    Trainer,
     TrainingArguments,
 )
 
@@ -325,7 +326,6 @@ def main(
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         token=model_args.token,
-        trust_remote_code=model_args.trust_remote_code,
         label2id=label2id,
         id2label=id2label,
     )
@@ -343,14 +343,15 @@ def main(
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         token=model_args.token,
-        trust_remote_code=model_args.trust_remote_code,
         ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
     )
 
     model.config.pad_token_id = model.config.eos_token_id
 
     # Add new tokens to the model
-    model.resize_token_embeddings(len(tokenizer))
+    model.resize_token_embeddings(
+        len(tokenizer), pad_to_multiple_of=8, mean_resizing=True
+    )
 
     # Padding strategy
     if data_args.pad_to_max_length:
@@ -485,7 +486,6 @@ def main(
     else:
         callbacks = []
 
-    # compute_loss_func = transformers.loss.loss_utils.ForSequenceClassificationLoss
     # Initialize our Trainer
     trainer = Trainer(
         model=model,
@@ -496,7 +496,7 @@ def main(
         processing_class=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
-        # compute_loss_func=compute_loss_func,
+        compute_loss_func=compute_loss_func,
     )
 
     # Training

@@ -1,7 +1,7 @@
 import pytest
 
 from src.base import Relation, Timeline
-from src.evaluation import accuracy, f1, precision, recall
+from src.metrics import accuracy, f1, precision, recall
 
 
 @pytest.fixture
