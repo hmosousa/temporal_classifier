@@ -94,6 +94,11 @@ class Trainer:
             logits = self.model.forward(**batch)
             loss = self.criterion(logits, batch["labels"])
             loss.backward()
+
+            if self.config.max_grad_norm is not None:
+                nn.utils.clip_grad_norm_(
+                    self.model.parameters(), self.config.max_grad_norm
+                )
             self.optimizer.step()
 
             # metrics
