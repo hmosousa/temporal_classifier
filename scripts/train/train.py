@@ -206,11 +206,6 @@ def main(
 ):
     config = OmegaConf.load(config_file)
 
-    if "debug" in config:
-        debug = config.debug
-    else:
-        debug = False
-
     config.model["token"] = HF_TOKEN
     model_args = ModelArguments(**config.model)
 
@@ -506,14 +501,7 @@ def main(
 
     # Training
     if training_args.do_train:
-        checkpoint = None
-        if debug:
-            checkpoint = None
-        elif training_args.resume_from_checkpoint is not None:
-            checkpoint = training_args.resume_from_checkpoint
-        elif last_checkpoint is not None:
-            checkpoint = last_checkpoint
-        trainer.train(checkpoint=checkpoint)
+        trainer.train()
 
         max_train_samples = (
             data_args.max_train_samples

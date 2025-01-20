@@ -57,7 +57,7 @@ class Trainer:
         )
         return dataloader
 
-    def train(self, checkpoint=None):
+    def train(self):
         logging.info("Getting dataloaders")
         train_loader = self.get_dataloaders(
             self.train_dataset, self.config.per_device_train_batch_size
@@ -166,7 +166,8 @@ class Trainer:
         """
 
         # Create the repo if it doesn't exist
-        huggingface_hub.create_repo(self.config.hub_model_id, token=HF_TOKEN)
+        if not huggingface_hub.repo_exists(self.config.hub_model_id):
+            huggingface_hub.create_repo(self.config.hub_model_id, token=HF_TOKEN)
 
         return huggingface_hub.upload_folder(
             repo_id=self.config.hub_model_id,
