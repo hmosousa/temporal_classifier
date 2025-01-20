@@ -33,7 +33,9 @@ class Trainer:
         self.config = config
         self.model = model.to(self.device)
         self.optimizer = optim.AdamW(model.parameters(), lr=config.learning_rate)
-        self.criterion = nn.CrossEntropyLoss(reduction="mean")
+        self.criterion = nn.CrossEntropyLoss(
+            reduction="mean", label_smoothing=config.label_smoothing_factor
+        )
         self.callbacks = callbacks
         self.tokenizer = tokenizer
         self.train_dataset = train_dataset
@@ -110,9 +112,7 @@ class Trainer:
 
             # metrics
             total_loss += loss.item()
-            total_correct += (
-                (logits.argmax(dim=1) == batch["labels"].argmax(dim=1)).sum().item()
-            )
+            total_correct += (logits.argmax(dim=1) == batch["labels"]).sum().item()
             total_examples += batch["labels"].shape[0]
 
             # logging
@@ -135,9 +135,7 @@ class Trainer:
             for batch in valid_loader:
                 batch = {k: v.to(self.device) for k, v in batch.items()}
                 logits = self.model.forward(**batch)
-                total_correct += (
-                    (logits.argmax(dim=1) == batch["labels"].argmax(dim=1)).sum().item()
-                )
+                total_correct += (logits.argmax(dim=1) == batch["labels"]).sum().item()
                 loss = self.criterion(logits, batch["labels"])
                 total_loss += loss.item()
                 total_examples += batch["labels"].shape[0]

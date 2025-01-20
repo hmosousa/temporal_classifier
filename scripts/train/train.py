@@ -6,7 +6,7 @@ import random
 import sys
 from collections import Counter
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Optional
 
 import datasets
 import torch
@@ -362,11 +362,6 @@ def main(
         )
     max_seq_length = min(data_args.max_seq_length, tokenizer.model_max_length)
 
-    if "label_smoothing_factor" in config.other:
-        factor = config.other.label_smoothing_factor
-    else:
-        factor = 0.0
-
     if config.other.init_bias:
         lids = [RELATIONS2ID[label] for label in trainset["label"]]
         counter = Counter(lids)
@@ -374,18 +369,10 @@ def main(
         init_bias = torch.log(torch.tensor(fqs))
         model.score.bias.data = init_bias
 
-    def multi_labels_to_ids(labels: List[str]) -> List[float]:
-        ids = [factor / num_labels] * num_labels
-        for label in labels:
-            ids[label2id[label]] = 1.0 - factor / num_labels
-        return ids
-
     def preprocess_function(examples):
         result = tokenizer(examples["text"], padding=padding)
         if label2id is not None and "label" in examples:
-            result["label"] = [
-                multi_labels_to_ids(labels) for labels in examples["label"]
-            ]
+            result["label"] = [label2id[label] for label in examples["label"]]
         return result
 
     if training_args.do_train:

@@ -37,8 +37,8 @@ trainer:
     torch_compile: True
     save_strategy: epoch
     hub_model_id: hugosousa/debug
+    label_smoothing_factor: 0.01
 
 other:
     early_stopping_patience: 3
-    label_smoothing_factor: 0.0
     init_bias: True
