@@ -1,10 +1,14 @@
+import collections
+import json
 import logging
 import multiprocessing as mp
-import os
+import pathlib
 from typing import Optional
 
 import datasets
 import huggingface_hub
+
+import sklearn
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -27,10 +31,19 @@ class Trainer:
         train_dataset: datasets.Dataset,
         valid_dataset: datasets.Dataset,
         data_collator,
-        callbacks,
     ):
-        self.device = "cuda"
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.config = config
+        self.output_dir = pathlib.Path(config.output_dir)
+
+        if config.init_bias:
+            logger.info("Initializing bias of the last layer")
+            lids = train_dataset["label"]
+            counter = collections.Counter(lids)
+            fqs = [counter[i] / len(train_dataset) for i in range(len(counter))]
+            init_bias = torch.log(torch.tensor(fqs))
+            init_bias = init_bias.to(model.score.bias.dtype)
+            model.score.bias.data = init_bias
         self.model = model.to(self.device)
 
         if self.config.torch_compile:
@@ -41,7 +54,6 @@ class Trainer:
         self.criterion = nn.CrossEntropyLoss(
             reduction="mean", label_smoothing=config.label_smoothing_factor
         )
-        self.callbacks = callbacks
         self.tokenizer = tokenizer
         self.train_dataset = train_dataset
         self.valid_dataset = valid_dataset
@@ -78,6 +90,8 @@ class Trainer:
         self.run.config.update(self.config)
 
         logging.info("Training")
+        best_valid_loss = float("inf")
+        patience = 0
         for epoch in range(self.config.num_train_epochs):
             train_loss, train_acc = self.train_step(train_loader)
             valid_loss, valid_acc = self.valid_step(valid_loader)
@@ -91,9 +105,60 @@ class Trainer:
                 },
                 step=self.global_step,
             )
+
+            if valid_loss < best_valid_loss:
+                best_valid_loss = valid_loss
+                logger.info(f"Saving model. New best valid loss: {valid_loss:.4f}")
+                self.save_model(
+                    output_dir=self.output_dir,
+                    push_to_hub=False,
+                )
+                patience = 0
+            else:
+                patience += 1
+                if patience > self.config.early_stopping_patience:
+                    logger.info(
+                        "Early stopping since no improvement in validation loss"
+                    )
+                    break
             print(
                 f"Epoch {epoch} - Train Loss: {train_loss:.4f} - Train Acc: {train_acc:.4f} - Valid Loss: {valid_loss:.4f} - Valid Acc: {valid_acc:.4f}"
             )
+
+        if self.config.load_best_model_at_end:
+            logger.info("Loading best model")
+            self.load_model(self.output_dir)
+
+        if self.config.push_to_hub:
+            self.save_tokenizer(self.output_dir)
+            self.push_to_hub(
+                commit_message="End of training",
+                blocking=True,
+            )
+
+    def compute_metrics(self, y_pred, y_true):
+        preds = [self.model.id2label[int(pred)] for pred in y_pred.tolist()]
+        labels = [self.model.id2label[int(label)] for label in y_true.tolist()]
+
+        result = sklearn.metrics.classification_report(
+            y_true=labels,
+            y_pred=preds,
+            output_dict=True,
+            zero_division=0.0,
+            labels=list(self.model.id2label.keys()),
+        )
+
+        formatted_result = {}
+        for metric, value in result.items():
+            if isinstance(value, dict):
+                for k, v in value.items():
+                    formatted_result[f"{metric}_{k}".replace(" ", "_")] = v
+            else:
+                formatted_result[metric] = value
+
+        logger.info(json.dumps(formatted_result, indent=4))
+
+        return formatted_result
 
     def train_step(self, train_loader: DataLoader):
         self.model.train()
@@ -174,7 +239,7 @@ class Trainer:
 
         return huggingface_hub.upload_folder(
             repo_id=self.config.hub_model_id,
-            folder_path=self.config.output_dir,
+            folder_path=self.output_dir,
             commit_message=commit_message,
             token=HF_TOKEN,
             run_as_future=not blocking,
@@ -184,7 +249,12 @@ class Trainer:
             ],
         )
 
-    def save_model(self):
+    def save_model(
+        self,
+        output_dir: pathlib.Path,
+        push_to_hub: bool = False,
+        commit_message: Optional[str] = "Model save",
+    ):
         """
         Will save the model, so you can reload it using `from_pretrained()`.
 
@@ -192,15 +262,15 @@ class Trainer:
         """
 
         # If we are executing this function, we are the process zero, so we don't check for that.
-        os.makedirs(self.config.output_dir, exist_ok=True)
-        logger.info(f"Saving model checkpoint to {self.config.output_dir}")
+        output_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Saving model checkpoint to {output_dir}")
 
         # Save a trained model and configuration using `save_pretrained()`.
         # They can then be reloaded using `from_pretrained()`
         if hasattr(self.model, "save_pretrained"):
             state_dict = self.model.state_dict()
             self.model.save_pretrained(
-                self.config.output_dir,
+                output_dir,
                 state_dict=state_dict,
                 safe_serialization=self.config.save_safetensors,
             )
@@ -211,9 +281,21 @@ class Trainer:
 
             torch.save(
                 state_dict,
-                os.path.join(self.config.output_dir, transformers.utils.WEIGHTS_NAME),
+                output_dir / transformers.utils.WEIGHTS_NAME,
             )
 
         # Push to the Hub when `save_model` is called by the user.
-        if self.config.push_to_hub:
-            self.push_to_hub(commit_message="Model save")
+        if push_to_hub:
+            self.push_to_hub(commit_message=commit_message)
+
+    def save_tokenizer(self, output_dir: pathlib.Path):
+        self.tokenizer.save_pretrained(output_dir)
+
+    def load_model(self, output_dir: pathlib.Path):
+        if hasattr(self.model, "from_pretrained"):
+            model = self.model.from_pretrained(output_dir)
+        else:
+            model.load_state_dict(
+                torch.load(output_dir / transformers.utils.WEIGHTS_NAME)
+            )
+        return model

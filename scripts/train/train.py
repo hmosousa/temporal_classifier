@@ -1,19 +1,14 @@
-import json
 import logging
 import multiprocessing as mp
-import os
 import random
 import sys
-from collections import Counter
 from dataclasses import dataclass, field
 from typing import Optional
 
 import datasets
 import torch
-import transformers
 from fire import Fire
 from omegaconf import OmegaConf
-from sklearn.metrics import classification_report
 
 from src.base import RELATIONS2ID
 from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
@@ -24,13 +19,9 @@ from transformers import (
     AutoTokenizer,
     DataCollatorWithPadding,
     default_data_collator,
-    EarlyStoppingCallback,
-    EvalPrediction,
     set_seed,
-    TrainingArguments,
 )
 from transformers.models.llama.configuration_llama import LlamaConfig
-from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import send_example_telemetry
 
 logger = logging.getLogger(__name__)
@@ -201,6 +192,74 @@ class ModelArguments:
     )
 
 
+@dataclass
+class TrainingArguments:
+    output_dir: str = field(
+        default="models",
+        metadata={
+            "help": "The output directory where the model predictions and checkpoints will be written."
+        },
+    )
+    per_device_train_batch_size: int = field(
+        default=8,
+        metadata={"help": "The batch size for training."},
+    )
+    per_device_eval_batch_size: int = field(
+        default=8,
+        metadata={"help": "The batch size for evaluation."},
+    )
+    num_train_epochs: int = field(
+        default=30,
+        metadata={"help": "The number of epochs to train the model."},
+    )
+    learning_rate: float = field(
+        default=1e-5,
+        metadata={"help": "The learning rate for the optimizer."},
+    )
+    max_grad_norm: float = field(
+        default=1.0,
+        metadata={"help": "The maximum gradient norm for gradient clipping."},
+    )
+    load_best_model_at_end: bool = field(
+        default=True,
+        metadata={"help": "Whether to load the best model at the end of training."},
+    )
+    seed: int = field(
+        default=42,
+        metadata={"help": "The random seed to use for training."},
+    )
+    bf16: bool = field(
+        default=True,
+        metadata={"help": "Whether to use bfloat16 for training."},
+    )
+    push_to_hub: bool = field(
+        default=True,
+        metadata={"help": "Whether to push the model to the hub."},
+    )
+    hub_model_id: str = field(
+        default="hugosousa/debug",
+        metadata={"help": "The model id to use for the hub."},
+    )
+    label_smoothing_factor: float = field(
+        default=0.01,
+        metadata={"help": "The factor for label smoothing."},
+    )
+    early_stopping_patience: int = field(
+        default=3,
+        metadata={
+            "help": "Number of epochs to wait for no improvement in validation loss before stopping."
+        },
+    )
+    init_bias: bool = field(
+        default=True,
+        metadata={"help": "Whether to initialize the bias of the last layer."},
+    )
+    torch_compile: bool = field(
+        default=False,
+        metadata={"help": "Whether to use torch compile."},
+    )
+
+
 def main(
     config_file: str = CONFIGS_DIR / "classifier" / "debug.yaml",
 ):
@@ -225,45 +284,12 @@ def main(
         handlers=[logging.StreamHandler(sys.stdout)],
     )
 
-    if training_args.should_log:
-        # The default of training_args.log_level is passive, so we set log level at info here to have that default.
-        transformers.utils.logging.set_verbosity_info()
-
-    log_level = training_args.get_process_log_level()
-    logger.setLevel(log_level)
-    datasets.utils.logging.set_verbosity(log_level)
-    transformers.utils.logging.set_verbosity(log_level)
-    transformers.utils.logging.enable_default_handler()
-    transformers.utils.logging.enable_explicit_format()
+    # The default of training_args.log_level is passive, so we set log level at info here to have that default.
+    logger.setLevel(logging.INFO)
 
     # Log on each process the small summary:
-    logger.warning(
-        f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}, "
-        + f"distributed training: {training_args.parallel_mode.value == 'distributed'}, 16-bits training: {training_args.fp16}"
-    )
     logger.info(f"Training/evaluation parameters {training_args}")
-
-    # Detecting last checkpoint.
-    last_checkpoint = None
-    if (
-        os.path.isdir(training_args.output_dir)
-        and training_args.do_train
-        and not training_args.overwrite_output_dir
-    ):
-        last_checkpoint = get_last_checkpoint(training_args.output_dir)
-        if last_checkpoint is None and len(os.listdir(training_args.output_dir)) > 0:
-            raise ValueError(
-                f"Output directory ({training_args.output_dir}) already exists and is not empty. "
-                "Use --overwrite_output_dir to overcome."
-            )
-        elif (
-            last_checkpoint is not None and training_args.resume_from_checkpoint is None
-        ):
-            logger.info(
-                f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
-                "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
-            )
-
+    logger.info(f"Model arguments: {model_args}")
     # Set seed before initializing model.
     set_seed(training_args.seed)
 
@@ -288,7 +314,6 @@ def main(
 
     # Print some info about the dataset
     logger.info(f"Dataset loaded: {raw_datasets}")
-    logger.info(raw_datasets)
 
     relations = set(raw_datasets["train"]["label"])
     num_labels = len(relations)
@@ -325,9 +350,6 @@ def main(
         id2label=id2label,
     )
 
-    logger.info("setting problem type to multi label classification")
-    model_config.problem_type = "multi_label_classification"
-
     logger.info(f"Adding new tokens to the model: {new_token_ids}")
     model_config.tokens_to_encode_ids = new_token_ids
 
@@ -339,6 +361,7 @@ def main(
         revision=model_args.model_revision,
         token=model_args.token,
         ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
+        torch_dtype=torch.bfloat16,
     )
 
     model.config.pad_token_id = model.config.eos_token_id
@@ -362,140 +385,81 @@ def main(
         )
     max_seq_length = min(data_args.max_seq_length, tokenizer.model_max_length)
 
-    if config.other.init_bias:
-        lids = [RELATIONS2ID[label] for label in trainset["label"]]
-        counter = Counter(lids)
-        fqs = [counter[i] / len(trainset) for i in range(num_labels)]
-        init_bias = torch.log(torch.tensor(fqs))
-        model.score.bias.data = init_bias
-
     def preprocess_function(examples):
         result = tokenizer(examples["text"], padding=padding)
         if label2id is not None and "label" in examples:
             result["label"] = [label2id[label] for label in examples["label"]]
         return result
 
-    if training_args.do_train:
-        if "train" not in raw_datasets:
-            raise ValueError("--do_train requires a train dataset.")
-        train_dataset = raw_datasets["train"]
-        if data_args.max_train_samples is not None:
-            max_train_samples = min(len(train_dataset), data_args.max_train_samples)
-            train_dataset = train_dataset.select(range(max_train_samples))
-        if data_args.augment:
-            logger.info("Augmenting the training dataset")
-            train_dataset = augment_dataset(train_dataset)
-        if data_args.shuffle_train_dataset:
-            logger.info("Shuffling the training dataset")
-            train_dataset = train_dataset.shuffle(seed=data_args.shuffle_seed)
-        raw_datasets["train"] = train_dataset
+    # Train data
+    train_dataset = raw_datasets["train"]
+    if data_args.max_train_samples is not None:
+        max_train_samples = min(len(train_dataset), data_args.max_train_samples)
+        train_dataset = train_dataset.select(range(max_train_samples))
+    if data_args.augment:
+        logger.info("Augmenting the training dataset")
+        train_dataset = augment_dataset(train_dataset)
+    if data_args.shuffle_train_dataset:
+        logger.info("Shuffling the training dataset")
+        train_dataset = train_dataset.shuffle(seed=data_args.shuffle_seed)
+    raw_datasets["train"] = train_dataset
 
-    if training_args.do_eval:
-        eval_dataset = raw_datasets["valid"]
-        if data_args.max_eval_samples is not None:
-            max_eval_samples = min(len(eval_dataset), data_args.max_eval_samples)
-            eval_dataset = eval_dataset.select(range(max_eval_samples))
-        if data_args.augment:
-            logger.info("Augmenting the evaluation dataset")
-            eval_dataset = augment_dataset(eval_dataset)
-        raw_datasets["valid"] = eval_dataset
+    # Eval data
+    eval_dataset = raw_datasets["valid"]
+    if data_args.max_eval_samples is not None:
+        max_eval_samples = min(len(eval_dataset), data_args.max_eval_samples)
+        eval_dataset = eval_dataset.select(range(max_eval_samples))
+    if data_args.augment:
+        logger.info("Augmenting the evaluation dataset")
+        eval_dataset = augment_dataset(eval_dataset)
+    raw_datasets["valid"] = eval_dataset
 
     # Running the preprocessing pipeline on all the datasets
-    with training_args.main_process_first(desc="dataset map pre-processing"):
-        raw_datasets = raw_datasets.map(
-            preprocess_function,
-            batched=True,
-            num_proc=data_args.preprocessing_num_workers,
-            load_from_cache_file=not data_args.overwrite_cache,
-            desc="Running tokenizer on dataset",
-        )
-        train_dataset = raw_datasets["train"]
-        eval_dataset = raw_datasets["valid"]
-
-        logger.info(f"Dropping rows with more than {max_seq_length} tokens")
-        n_train = len(train_dataset)
-        train_dataset = train_dataset.filter(
-            lambda x: len(x["input_ids"]) <= max_seq_length
-        )
-        n_dropped_train = n_train - len(train_dataset)
-        logger.info(f"Dropped {n_dropped_train} rows from train dataset")
-
-    # Log a few random samples from the training set:
-    if training_args.do_train:
-        for index in random.sample(range(len(train_dataset)), 3):
-            logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
+    raw_datasets = raw_datasets.map(
+        preprocess_function,
+        batched=True,
+        num_proc=data_args.preprocessing_num_workers,
+        load_from_cache_file=not data_args.overwrite_cache,
+        desc="Running tokenizer on dataset",
+    )
+    train_dataset = raw_datasets["train"]
+    eval_dataset = raw_datasets["valid"]
 
     logger.info(
-        "Using multilabel F1 for multi-label classification task, you can use --metric_name to overwrite."
+        f"Dropping rows in the training dataset with more than {max_seq_length} tokens"
     )
+    n_train = len(train_dataset)
+    train_dataset = train_dataset.filter(
+        lambda x: len(x["input_ids"]) <= max_seq_length
+    )
+    n_dropped_train = n_train - len(train_dataset)
+    logger.info(f"Dropped {n_dropped_train} rows from train dataset")
 
-    def compute_metrics(p: EvalPrediction):
-        logits = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
-        y_preds = logits.argmax(axis=1)
-        preds = [id2label[int(y_pred)] for y_pred in y_preds.tolist()]
-
-        y_labels = p.label_ids.argmax(axis=1)
-        labels = [id2label[int(y_label)] for y_label in y_labels.tolist()]
-
-        result = classification_report(
-            y_true=labels,
-            y_pred=preds,
-            output_dict=True,
-            zero_division=0.0,
-            labels=list(label2id.keys()),
-        )
-
-        formatted_result = {}
-        for metric, value in result.items():
-            if isinstance(value, dict):
-                for k, v in value.items():
-                    formatted_result[f"{metric}_{k}".replace(" ", "_")] = v
-            else:
-                formatted_result[metric] = value
-
-        logger.info(json.dumps(formatted_result, indent=4))
-
-        return formatted_result
+    # Log a few random samples from the training set:
+    for index in random.sample(range(len(train_dataset)), 3):
+        logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
 
     # Data collator will default to DataCollatorWithPadding when the tokenizer is passed to Trainer, so we change it if
     # we already did the padding.
     if data_args.pad_to_max_length:
         data_collator = default_data_collator
-    elif training_args.fp16 or training_args.bf16:
+    elif training_args.bf16:
         data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8)
     else:
         data_collator = None
-
-    if "early_stopping_patience" in config.other:
-        callbacks = [
-            EarlyStoppingCallback(
-                early_stopping_patience=config.other.early_stopping_patience
-            )
-        ]
-    else:
-        callbacks = []
 
     # Initialize our Trainer
     trainer = Trainer(
         config=training_args,
         model=model,
         tokenizer=tokenizer,
-        train_dataset=train_dataset if training_args.do_train else None,
-        valid_dataset=eval_dataset if training_args.do_eval else None,
+        train_dataset=train_dataset,
+        valid_dataset=eval_dataset,
         data_collator=data_collator,
-        callbacks=callbacks,
     )
 
     # Training
-    if training_args.do_train:
-        trainer.train()
-
-        max_train_samples = (
-            data_args.max_train_samples
-            if data_args.max_train_samples is not None
-            else len(train_dataset)
-        )
-        trainer.save_model()  # Saves the tokenizer too for easy upload
+    trainer.train()
 
 
 if __name__ == "__main__":

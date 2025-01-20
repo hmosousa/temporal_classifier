@@ -14,7 +14,6 @@ data:
 
 trainer:
     output_dir: models/debug
-    overwrite_output_dir: True # To not resume training from checkpoint
     eval_strategy: epoch
     per_device_train_batch_size: 2
     per_device_eval_batch_size: 2
@@ -32,13 +31,11 @@ trainer:
     push_to_hub: True
     do_train: True
     do_eval: True
-    skip_memory_metrics: True
-    use_liger_kernel: False
-    torch_compile: True
+    torch_compile: False
     save_strategy: epoch
     hub_model_id: hugosousa/debug
     label_smoothing_factor: 0.01
+    early_stopping_patience: 3
 
 other:
-    early_stopping_patience: 3
     init_bias: True
