@@ -258,6 +258,10 @@ class TrainingArguments:
         default=False,
         metadata={"help": "Whether to use torch compile."},
     )
+    save_safetensors: bool = field(
+        default=True,
+        metadata={"help": "Whether to save the model in safetensors format."},
+    )
 
 
 def main(
