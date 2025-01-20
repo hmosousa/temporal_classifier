@@ -32,6 +32,11 @@ class Trainer:
         self.device = "cuda"
         self.config = config
         self.model = model.to(self.device)
+
+        if self.config.torch_compile:
+            logger.info("Compiling model")
+            self.model = torch.compile(self.model)
+
         self.optimizer = optim.AdamW(model.parameters(), lr=config.learning_rate)
         self.criterion = nn.CrossEntropyLoss(
             reduction="mean", label_smoothing=config.label_smoothing_factor
@@ -192,9 +197,8 @@ class Trainer:
 
         # Save a trained model and configuration using `save_pretrained()`.
         # They can then be reloaded using `from_pretrained()`
-        if isinstance(self.model, transformers.PreTrainedModel):
+        if hasattr(self.model, "save_pretrained"):
             state_dict = self.model.state_dict()
-
             self.model.save_pretrained(
                 self.config.output_dir,
                 state_dict=state_dict,
