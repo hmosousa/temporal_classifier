@@ -1,14 +1,21 @@
 import logging
-
 import multiprocessing as mp
+import os
+from typing import Optional
 
 import datasets
+import huggingface_hub
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import transformers
+
 import wandb
 from torch.utils.data import DataLoader
+
+from src.constants import HF_TOKEN
+
+logger = logging.getLogger(__name__)
 
 
 class Trainer:
@@ -138,3 +145,72 @@ class Trainer:
         loss = total_loss / len(valid_loader)
         acc = total_correct / total_examples
         return loss, acc
+
+    def push_to_hub(
+        self,
+        commit_message: Optional[str] = "End of training",
+        blocking: bool = True,
+    ) -> str:
+        """
+        Upload `self.model` and `self.processing_class` to the 🤗 model hub on the repo `self.args.hub_model_id`.
+
+        Parameters:
+            commit_message (`str`, *optional*, defaults to `"End of training"`):
+                Message to commit while pushing.
+            blocking (`bool`, *optional*, defaults to `True`):
+                Whether the function should return only when the `git push` has finished.
+
+        Returns:
+            The URL of the repository where the model was pushed if `blocking=False`, or a `Future` object tracking the
+            progress of the commit if `blocking=True`.
+        """
+
+        # Create the repo if it doesn't exist
+        huggingface_hub.create_repo(self.config.hub_model_id, token=HF_TOKEN)
+
+        return huggingface_hub.upload_folder(
+            repo_id=self.config.hub_model_id,
+            folder_path=self.config.output_dir,
+            commit_message=commit_message,
+            token=HF_TOKEN,
+            run_as_future=not blocking,
+            ignore_patterns=[
+                "_*",
+                f"{transformers.trainer_utils.PREFIX_CHECKPOINT_DIR}-*",
+            ],
+        )
+
+    def save_model(self):
+        """
+        Will save the model, so you can reload it using `from_pretrained()`.
+
+        Will only save from the main process.
+        """
+
+        # If we are executing this function, we are the process zero, so we don't check for that.
+        os.makedirs(self.config.output_dir, exist_ok=True)
+        logger.info(f"Saving model checkpoint to {self.config.output_dir}")
+
+        # Save a trained model and configuration using `save_pretrained()`.
+        # They can then be reloaded using `from_pretrained()`
+        if isinstance(self.model, transformers.PreTrainedModel):
+            state_dict = self.model.state_dict()
+
+            self.model.save_pretrained(
+                self.config.output_dir,
+                state_dict=state_dict,
+                safe_serialization=self.config.save_safetensors,
+            )
+        else:
+            logger.info(
+                "Trainer.model is not a `PreTrainedModel`, only saving its state dict."
+            )
+
+            torch.save(
+                state_dict,
+                os.path.join(self.config.output_dir, transformers.utils.WEIGHTS_NAME),
+            )
+
+        # Push to the Hub when `save_model` is called by the user.
+        if self.config.push_to_hub:
+            self.push_to_hub(commit_message="Model save")

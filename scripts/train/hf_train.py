@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 import datasets
+
 import torch
 import transformers
 from fire import Fire
@@ -18,8 +19,9 @@ from sklearn.metrics import classification_report
 from src.base import RELATIONS2ID
 from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
 from src.data import augment_dataset, load_dataset
+from src.hf_trainer import Trainer
+from src.metrics import compute_loss_func
 from src.model.classifier import ContextClassifier
-from src.trainer import Trainer
 from transformers import (
     AutoTokenizer,
     DataCollatorWithPadding,
@@ -29,6 +31,7 @@ from transformers import (
     set_seed,
     TrainingArguments,
 )
+
 from transformers.models.llama.configuration_llama import LlamaConfig
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import send_example_telemetry
@@ -495,13 +498,15 @@ def main(
 
     # Initialize our Trainer
     trainer = Trainer(
-        config=training_args,
         model=model,
-        tokenizer=tokenizer,
+        args=training_args,
         train_dataset=train_dataset if training_args.do_train else None,
-        valid_dataset=eval_dataset if training_args.do_eval else None,
+        eval_dataset=eval_dataset if training_args.do_eval else None,
+        compute_metrics=compute_metrics,
+        processing_class=tokenizer,
         data_collator=data_collator,
         callbacks=callbacks,
+        compute_loss_func=compute_loss_func,
     )
 
     # Training
@@ -513,14 +518,42 @@ def main(
             checkpoint = training_args.resume_from_checkpoint
         elif last_checkpoint is not None:
             checkpoint = last_checkpoint
-        trainer.train(checkpoint=checkpoint)
+        train_result = trainer.train(resume_from_checkpoint=checkpoint)
 
+        metrics = train_result.metrics
         max_train_samples = (
             data_args.max_train_samples
             if data_args.max_train_samples is not None
             else len(train_dataset)
         )
+        metrics["train_samples"] = min(max_train_samples, len(train_dataset))
         trainer.save_model()  # Saves the tokenizer too for easy upload
+        trainer.log_metrics("train", metrics)
+        trainer.save_metrics("train", metrics)
+
+    # Evaluation
+    if training_args.do_eval:
+        logger.info("*** Evaluate ***")
+        metrics = trainer.evaluate(eval_dataset=eval_dataset)
+        max_eval_samples = (
+            data_args.max_eval_samples
+            if data_args.max_eval_samples is not None
+            else len(eval_dataset)
+        )
+        metrics["eval_samples"] = min(max_eval_samples, len(eval_dataset))
+
+        trainer.log_metrics("eval", metrics)
+        trainer.save_metrics("eval", metrics)
+
+    kwargs = {
+        "finetuned_from": model_args.model_name_or_path,
+        "tasks": "text-classification",
+    }
+
+    if training_args.push_to_hub:
+        trainer.push_to_hub(**kwargs)
+    else:
+        trainer.create_model_card(**kwargs)
 
 
 if __name__ == "__main__":

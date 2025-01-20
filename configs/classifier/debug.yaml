@@ -20,7 +20,7 @@ trainer:
     eval_strategy: epoch
     per_device_train_batch_size: 2
     per_device_eval_batch_size: 2
-    num_train_epochs: 3
+    num_train_epochs: 1
     learning_rate: 1e-3
     max_grad_norm: 1.0
     lr_scheduler_type: linear
@@ -31,15 +31,16 @@ trainer:
     greater_is_better: True
     seed: 42
     bf16: True
-    push_to_hub: False
+    push_to_hub: True
     do_train: True
     do_eval: True
     skip_memory_metrics: True
     use_liger_kernel: False
     torch_compile: True
     save_strategy: epoch
+    hub_model_id: hugosousa/debug
 
 other:
     early_stopping_patience: 3
-    label_smoothing_factor: 0.1
+    label_smoothing_factor: 0.0
     init_bias: True
