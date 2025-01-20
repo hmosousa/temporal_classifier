@@ -22,8 +22,9 @@ class Trainer:
         data_collator,
         callbacks,
     ):
+        self.device = "cuda"
         self.config = config
-        self.model = model
+        self.model = model.to(self.device)
         self.optimizer = optim.AdamW(model.parameters(), lr=config.learning_rate)
         self.criterion = nn.CrossEntropyLoss(reduction="mean")
         self.callbacks = callbacks
@@ -65,52 +66,70 @@ class Trainer:
         logging.info("Training")
         for epoch in range(self.config.num_train_epochs):
             train_loss, train_acc = self.train_step(train_loader)
-            valid_loss = self.valid_step(valid_loader)
+            valid_loss, valid_acc = self.valid_step(valid_loader)
             self.run.log(
                 {
                     "epoch": epoch,
                     "train/loss": train_loss,
                     "train/acc": train_acc,
                     "valid/loss": valid_loss,
+                    "valid/acc": valid_acc,
                 },
                 step=self.global_step,
+            )
+            print(
+                f"Epoch {epoch} - Train Loss: {train_loss:.4f} - Train Acc: {train_acc:.4f} - Valid Loss: {valid_loss:.4f} - Valid Acc: {valid_acc:.4f}"
             )
 
     def train_step(self, train_loader: DataLoader):
         self.model.train()
 
         total_correct = 0
+        total_examples = 0
         total_loss = 0
+        n_steps = len(train_loader)
         for batch in train_loader:
             self.optimizer.zero_grad()
-            outputs = self.model.forward(**batch)
-            logits = outputs.logits
+            batch = {k: v.to(self.device) for k, v in batch.items()}
+            logits = self.model.forward(**batch)
             loss = self.criterion(logits, batch["labels"])
             loss.backward()
             self.optimizer.step()
+
+            # metrics
             total_loss += loss.item()
-            total_correct += (logits.argmax(dim=1) == batch["labels"]).sum().item()
+            total_correct += (
+                (logits.argmax(dim=1) == batch["labels"].argmax(dim=1)).sum().item()
+            )
+            total_examples += batch["labels"].shape[0]
+
+            # logging
             self.run.log({"train/loss": loss.item()}, step=self.global_step)
+            print(
+                f"Step {self.global_step} / {n_steps} - Loss: {loss.item():.4f} - Acc: {total_correct / total_examples:.4f}"
+            )
             self.global_step += 1
 
         loss = total_loss / len(train_loader)
-        acc = total_correct / (
-            len(train_loader) * self.config.per_device_train_batch_size
-        )
+        acc = total_correct / total_examples
         return loss, acc
 
     def valid_step(self, valid_loader: DataLoader):
         self.model.eval()
         total_correct = 0
+        total_examples = 0
         total_loss = 0
         with torch.no_grad():
             for batch in valid_loader:
-                outputs = self.model.forward(batch)
-                total_correct += (outputs.argmax(dim=1) == batch["label"]).sum().item()
-                loss = self.criterion(outputs, batch["label"])
+                batch = {k: v.to(self.device) for k, v in batch.items()}
+                logits = self.model.forward(**batch)
+                total_correct += (
+                    (logits.argmax(dim=1) == batch["labels"].argmax(dim=1)).sum().item()
+                )
+                loss = self.criterion(logits, batch["labels"])
                 total_loss += loss.item()
+                total_examples += batch["labels"].shape[0]
+
         loss = total_loss / len(valid_loader)
-        acc = total_correct / (
-            len(valid_loader) * self.config.per_device_eval_batch_size
-        )
+        acc = total_correct / total_examples
         return loss, acc

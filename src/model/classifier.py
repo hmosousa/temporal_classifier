@@ -14,7 +14,6 @@ from transformers.models.llama.modeling_llama import (
 
 class ContextClassifier(LlamaForSequenceClassification):
     def __init__(self, config):
-        config.loss_type = "ForSequenceClassification"
         super().__init__(config)
 
         self.num_special_tokens = 4  # the number of special tokens per sequence
@@ -93,26 +92,7 @@ class ContextClassifier(LlamaForSequenceClassification):
                 "Cannot handle batch sizes > 1 if no padding token is defined."
             )
 
-        loss = None
-        if labels is not None:
-            loss = self.loss_function(
-                logits=logits,
-                labels=labels,
-                pooled_logits=logits,
-                config=self.config,
-            )
-
-        if not return_dict:
-            output = (logits,) + transformer_outputs[1:]
-            return ((loss,) + output) if loss is not None else output
-
-        return SequenceClassifierOutputWithPast(
-            loss=loss,
-            logits=logits,
-            past_key_values=transformer_outputs.past_key_values,
-            hidden_states=transformer_outputs.hidden_states,
-            attentions=transformer_outputs.attentions,
-        )
+        return logits
 
 
 class ClassifierContext(LlamaForSequenceClassification):

@@ -94,7 +94,7 @@ def compute_confidence_intervals(
 
 
 def compute_loss_func(outputs, inputs, num_items_in_batch=None):
-    loss = F.binary_cross_entropy_with_logits(
+    loss = F.cross_entropy(
         input=outputs.logits,
         target=inputs,
         reduction="mean",
