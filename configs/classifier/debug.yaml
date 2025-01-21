@@ -28,3 +28,6 @@ trainer:
     label_smoothing_factor: 0.01
     early_stopping_patience: 3
     init_bias: False
+    lr_scheduler:
+        factor: 0.1
+        patience: 2

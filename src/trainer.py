@@ -67,6 +67,12 @@ class Trainer:
             self.model = torch.compile(self.model)
 
         self.optimizer = optim.AdamW(model.parameters(), lr=config.learning_rate)
+        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer,
+            mode="min",
+            factor=self.config.lr_scheduler.factor,
+            patience=self.config.lr_scheduler.patience,
+        )
         self.criterion = nn.CrossEntropyLoss(
             reduction="mean", label_smoothing=config.label_smoothing_factor
         )
@@ -112,6 +118,7 @@ class Trainer:
         for epoch in range(self.config.num_train_epochs):
             train_metrics = self.train_step(train_loader)
             valid_metrics = self.valid_step(valid_loader)
+
             self.run.log(
                 {
                     "epoch": epoch,
@@ -120,6 +127,8 @@ class Trainer:
                 },
                 step=self.global_step,
             )
+
+            self.scheduler.step(valid_metrics["valid/loss"])
 
             if valid_metrics["valid/loss"] < best_valid_loss:
                 best_valid_loss = valid_metrics["valid/loss"]
@@ -176,6 +185,8 @@ class Trainer:
 
         pb = tqdm(range(len(train_loader)))
 
+        total_correct = 0
+        total_examples = 0
         total_loss = 0
         y_preds, y_trues = [], []
         for batch in train_loader:
@@ -193,16 +204,34 @@ class Trainer:
 
             # metrics
             total_loss += loss.item()
+            total_correct += (logits.argmax(dim=1) == batch["labels"]).sum().item()
+            total_examples += batch["labels"].shape[0]
             y_preds += logits.argmax(dim=1).tolist()
             y_trues += batch["labels"].tolist()
-            metrics = self.compute_metrics(y_preds, y_trues)
-            metrics = {f"train/{k}": v for k, v in metrics.items()}
-            metrics["train/loss"] = loss.item()
 
-            # logging
-            self.run.log(metrics, step=self.global_step)
+            if (self.global_step + 1) % 200 == 0:
+                metrics = self.compute_metrics(y_preds, y_trues)
+                metrics = {f"train/{k}": v for k, v in metrics.items()}
+                metrics["train/loss"] = loss.item()
+
+                # logging
+                self.run.log(
+                    {
+                        **metrics,
+                        "lr": self.scheduler.get_last_lr()[0],
+                    },
+                    step=self.global_step,
+                )
+            else:
+                self.run.log(
+                    {
+                        "train/loss": loss.item(),
+                        "lr": self.scheduler.get_last_lr()[0],
+                    },
+                    step=self.global_step,
+                )
             pb.set_description(
-                f"Loss: {loss.item():.4f} - Acc: {metrics['train/accuracy']:4f}"
+                f"Loss: {loss.item():.4f} - Acc: {total_correct / total_examples:.4f}"
             )
             pb.update(1)
             self.global_step += 1

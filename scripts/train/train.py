@@ -262,6 +262,10 @@ class TrainingArguments:
         default=True,
         metadata={"help": "Whether to save the model in safetensors format."},
     )
+    lr_scheduler: Optional[dict] = field(
+        default=None,
+        metadata={"help": "The learning rate scheduler to use."},
+    )
 
 
 def main(

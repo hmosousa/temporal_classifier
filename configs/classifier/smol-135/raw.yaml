@@ -28,3 +28,6 @@ trainer:
     torch_compile: False
     early_stopping_patience: 3
     init_bias: True
+    lr_scheduler:
+        factor: 0.1
+        patience: 2
