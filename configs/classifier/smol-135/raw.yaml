@@ -3,9 +3,9 @@ model:
     trust_remote_code: True
 
 data:
-    dataset_name: matres
+    dataset_name: temporal_contexts
     train_split: train
-    valid_split: test
+    valid_split: valid
     max_seq_length: 2048
     augment: False
     pad_to_max_length: False # To pad each batch at runtime
@@ -17,7 +17,7 @@ trainer:
     per_device_train_batch_size: 16
     per_device_eval_batch_size: 64
     num_train_epochs: 30
-    learning_rate: 1e-5
+    learning_rate: 1e-3
     max_grad_norm: 1.0
     load_best_model_at_end: True
     seed: 42
