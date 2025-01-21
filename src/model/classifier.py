@@ -15,20 +15,23 @@ from transformers.models.llama.modeling_llama import (
 class ContextClassifier(LlamaForSequenceClassification):
     def __init__(self, config):
         super().__init__(config)
-        hidden_size = config.hidden_size * 5
+        self.n_features = (
+            len(config.tokens_to_encode_ids) + 1
+        )  # 4 special tokens +1 for the pooled hidden states
+        self.score_hidden_size = config.hidden_size * self.n_features
         self.num_labels = config.num_labels
         self.model = LlamaModel(config)
 
         self.hidden = nn.Linear(
-            hidden_size,
-            hidden_size,
+            self.score_hidden_size,
+            self.score_hidden_size,
             bias=True,
         )
 
         self.activation = nn.ReLU()
 
         self.score = nn.Linear(
-            hidden_size,
+            self.score_hidden_size,
             self.num_labels,
             bias=True,
         )
@@ -60,9 +63,6 @@ class ContextClassifier(LlamaForSequenceClassification):
         return_dict = (
             return_dict if return_dict is not None else self.config.use_return_dict
         )
-
-        batch_size, seq_len = input_ids.shape
-
         transformer_outputs = self.model(
             input_ids,
             attention_mask=attention_mask,
@@ -74,20 +74,25 @@ class ContextClassifier(LlamaForSequenceClassification):
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
         )
-        hidden_states = (
-            transformer_outputs.last_hidden_state
-        )  # (batch_size, seq_len, hidden_size)
-
-        # get a indexes of the special tokens in the input_ids
-        special_tkns_idxs = torch.zeros(
-            (batch_size, seq_len), dtype=torch.bool, device=hidden_states.device
-        )
-        for token_id in self.tokens_to_encode_ids:
-            special_tkns_idxs += input_ids == token_id
+        hidden_states = transformer_outputs.last_hidden_state
+        batch_size, _, hidden_size = hidden_states.shape
 
         # get the hidden states of the special tokens
-        special_tkns_hidden_state = hidden_states[special_tkns_idxs]
-        special_tkns_hidden_state = special_tkns_hidden_state.view(batch_size, -1)
+        hidden = torch.zeros(
+            (batch_size, self.n_features - 1, hidden_size),
+            device=hidden_states.device,
+            dtype=hidden_states.dtype,
+        )
+
+        for token_idx, token_id in enumerate(self.tokens_to_encode_ids):
+            embed_idxs = torch.eq(input_ids, token_id).int().nonzero()
+            if embed_idxs.shape[0] == 0:
+                continue
+            else:  # if there are multiple tokens to encode
+                for embed_idx in embed_idxs:
+                    embed = hidden_states[embed_idx[0], embed_idx[1], :]
+                    hidden[embed_idx[0], token_idx, :] = embed
+        hidden = hidden.view(batch_size, -1)
 
         # get a context representation by doing max pooling over the hidden states
         if self.config.pad_token_id is None and batch_size != 1:
@@ -103,7 +108,7 @@ class ContextClassifier(LlamaForSequenceClassification):
                     torch.eq(input_ids, self.config.pad_token_id).int().argmax(-1) - 1
                 )
                 sequence_lengths = sequence_lengths % input_ids.shape[-1]
-                sequence_lengths = sequence_lengths.to(special_tkns_hidden_state.device)
+                sequence_lengths = sequence_lengths.to(hidden_states.device)
             else:
                 sequence_lengths = -1
 
@@ -117,9 +122,9 @@ class ContextClassifier(LlamaForSequenceClassification):
         sum_hidden_states = torch.sum(masked_hidden_states, dim=1)
         sum_attention_mask = torch.sum(attention_mask, dim=1, keepdim=True)
         pooled_hidden_states = sum_hidden_states / sum_attention_mask
-        pooled_hidden_states = pooled_hidden_states.to(special_tkns_hidden_state.device)
+        pooled_hidden_states = pooled_hidden_states.to(hidden.device)
 
-        hidden = torch.cat([pooled_hidden_states, special_tkns_hidden_state], dim=1)
+        hidden = torch.cat([hidden, pooled_hidden_states], dim=1)
         hidden = self.hidden(hidden)
         hidden = self.activation(hidden)
         logits = self.score(hidden)

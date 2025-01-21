@@ -236,6 +236,8 @@ class Trainer:
             pb.update(1)
             self.global_step += 1
 
+        metrics = self.compute_metrics(y_preds, y_trues)
+        metrics = {f"train/{k}": v for k, v in metrics.items()}
         metrics["train/loss"] = total_loss / len(train_loader)
         return metrics
 
