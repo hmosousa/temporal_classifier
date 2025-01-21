@@ -77,21 +77,30 @@ class ContextClassifier(LlamaForSequenceClassification):
         hidden_states = transformer_outputs.last_hidden_state
         batch_size, _, hidden_size = hidden_states.shape
 
-        # get the hidden states of the special tokens
+        # get the hidden states of the special tokens - vectorized version
         hidden = torch.zeros(
             (batch_size, self.n_features - 1, hidden_size),
             device=hidden_states.device,
             dtype=hidden_states.dtype,
         )
 
-        for token_idx, token_id in enumerate(self.tokens_to_encode_ids):
-            embed_idxs = torch.eq(input_ids, token_id).int().nonzero()
-            if embed_idxs.shape[0] == 0:
-                continue
-            else:  # if there are multiple tokens to encode
-                for embed_idx in embed_idxs:
-                    embed = hidden_states[embed_idx[0], embed_idx[1], :]
-                    hidden[embed_idx[0], token_idx, :] = embed
+        # Create a mask for each special token (batch_size, seq_len, n_special_tokens)
+        token_masks = torch.stack(
+            [input_ids == token_id for token_id in self.tokens_to_encode_ids], dim=-1
+        )
+
+        # Use masked_select and reshape to gather all matching hidden states
+        # This avoids the Python-level loop and does everything in CUDA
+        for token_idx in range(len(self.tokens_to_encode_ids)):
+            mask = token_masks[..., token_idx]
+            if mask.any():
+                # Get the first occurrence of each special token
+                first_occurs = mask.float().nonzero()
+                # Gather the hidden states for these positions
+                hidden[first_occurs[:, 0], token_idx] = hidden_states[
+                    first_occurs[:, 0], first_occurs[:, 1]
+                ]
+
         hidden = hidden.view(batch_size, -1)
 
         # get a context representation by doing max pooling over the hidden states
