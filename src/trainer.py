@@ -1,5 +1,4 @@
 import collections
-import json
 import logging
 import multiprocessing as mp
 import pathlib
@@ -16,10 +15,27 @@ import transformers
 
 import wandb
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from src.constants import HF_TOKEN
 
 logger = logging.getLogger(__name__)
+
+
+class EarlyStopping:
+    def __init__(self, patience: int):
+        self.patience = patience
+        self.counter = 0
+        self.best_score = None
+        self.early_stop = False
+
+    def __call__(self, val_loss: float):
+        if self.best_score is None:
+            self.best_score = val_loss
+        elif val_loss > self.best_score:
+            self.counter += 1
+            if self.counter >= self.patience:
+                self.early_stop = True
 
 
 class Trainer:
@@ -63,6 +79,8 @@ class Trainer:
         self.run = None  # wandb run
         self.global_step = 0
 
+        self.early_stopping = EarlyStopping(patience=config.early_stopping_patience)
+
     def get_dataloaders(self, dataset: datasets.Dataset, batch_size: int):
         dataset = dataset.select_columns(self.features)
         dataloader = DataLoader(
@@ -91,38 +109,33 @@ class Trainer:
 
         logging.info("Training")
         best_valid_loss = float("inf")
-        patience = 0
         for epoch in range(self.config.num_train_epochs):
-            train_loss, train_acc = self.train_step(train_loader)
-            valid_loss, valid_acc = self.valid_step(valid_loader)
+            train_metrics = self.train_step(train_loader)
+            valid_metrics = self.valid_step(valid_loader)
             self.run.log(
                 {
                     "epoch": epoch,
-                    "train/loss": train_loss,
-                    "train/acc": train_acc,
-                    "valid/loss": valid_loss,
-                    "valid/acc": valid_acc,
+                    **train_metrics,
+                    **valid_metrics,
                 },
                 step=self.global_step,
             )
 
-            if valid_loss < best_valid_loss:
-                best_valid_loss = valid_loss
-                logger.info(f"Saving model. New best valid loss: {valid_loss:.4f}")
+            if valid_metrics["valid/loss"] < best_valid_loss:
+                best_valid_loss = valid_metrics["valid/loss"]
+                logger.info(f"Saving model. New best valid loss: {best_valid_loss:.4f}")
                 self.save_model(
                     output_dir=self.output_dir,
                     push_to_hub=False,
                 )
-                patience = 0
-            else:
-                patience += 1
-                if patience > self.config.early_stopping_patience:
-                    logger.info(
-                        "Early stopping since no improvement in validation loss"
-                    )
-                    break
-            print(
-                f"Epoch {epoch} - Train Loss: {train_loss:.4f} - Train Acc: {train_acc:.4f} - Valid Loss: {valid_loss:.4f} - Valid Acc: {valid_acc:.4f}"
+
+            self.early_stopping(valid_metrics["valid/loss"])
+            if self.early_stopping.early_stop:
+                logger.info("Early stopping since no improvement in validation loss")
+                break
+
+            logger.info(
+                f"Epoch {epoch} - Train Loss: {train_metrics['train/loss']:.4f} - Train Acc: {train_metrics['train/accuracy']:.4f} - Valid Loss: {valid_metrics['valid/loss']:.4f} - Valid Acc: {valid_metrics['valid/accuracy']:.4f}"
             )
 
         if self.config.load_best_model_at_end:
@@ -136,16 +149,16 @@ class Trainer:
                 blocking=True,
             )
 
-    def compute_metrics(self, y_pred, y_true):
-        preds = [self.model.id2label[int(pred)] for pred in y_pred.tolist()]
-        labels = [self.model.id2label[int(label)] for label in y_true.tolist()]
+    def compute_metrics(self, y_pred: list, y_true: list):
+        preds = [self.model.config.id2label[int(pred)] for pred in y_pred]
+        labels = [self.model.config.id2label[int(label)] for label in y_true]
 
         result = sklearn.metrics.classification_report(
             y_true=labels,
             y_pred=preds,
             output_dict=True,
             zero_division=0.0,
-            labels=list(self.model.id2label.keys()),
+            labels=list(self.model.config.label2id.keys()),
         )
 
         formatted_result = {}
@@ -156,17 +169,15 @@ class Trainer:
             else:
                 formatted_result[metric] = value
 
-        logger.info(json.dumps(formatted_result, indent=4))
-
         return formatted_result
 
     def train_step(self, train_loader: DataLoader):
         self.model.train()
 
-        total_correct = 0
-        total_examples = 0
+        pb = tqdm(range(len(train_loader)))
+
         total_loss = 0
-        n_steps = len(train_loader)
+        y_preds, y_trues = [], []
         for batch in train_loader:
             self.optimizer.zero_grad()
             batch = {k: v.to(self.device) for k, v in batch.items()}
@@ -182,37 +193,40 @@ class Trainer:
 
             # metrics
             total_loss += loss.item()
-            total_correct += (logits.argmax(dim=1) == batch["labels"]).sum().item()
-            total_examples += batch["labels"].shape[0]
+            y_preds += logits.argmax(dim=1).tolist()
+            y_trues += batch["labels"].tolist()
+            metrics = self.compute_metrics(y_preds, y_trues)
+            metrics = {f"train/{k}": v for k, v in metrics.items()}
+            metrics["train/loss"] = loss.item()
 
             # logging
-            self.run.log({"train/loss": loss.item()}, step=self.global_step)
-            print(
-                f"Step {self.global_step} / {n_steps} - Loss: {loss.item():.4f} - Acc: {total_correct / total_examples:.4f}"
+            self.run.log(metrics, step=self.global_step)
+            pb.set_description(
+                f"Loss: {loss.item():.4f} - Acc: {metrics['train/accuracy']:4f}"
             )
+            pb.update(1)
             self.global_step += 1
 
-        loss = total_loss / len(train_loader)
-        acc = total_correct / total_examples
-        return loss, acc
+        metrics["train/loss"] = total_loss / len(train_loader)
+        return metrics
 
     def valid_step(self, valid_loader: DataLoader):
         self.model.eval()
-        total_correct = 0
-        total_examples = 0
         total_loss = 0
+        y_preds, y_trues = [], []
         with torch.no_grad():
             for batch in valid_loader:
                 batch = {k: v.to(self.device) for k, v in batch.items()}
                 logits = self.model.forward(**batch)
-                total_correct += (logits.argmax(dim=1) == batch["labels"]).sum().item()
                 loss = self.criterion(logits, batch["labels"])
                 total_loss += loss.item()
-                total_examples += batch["labels"].shape[0]
+                y_preds += logits.argmax(dim=1).tolist()
+                y_trues += batch["labels"].tolist()
 
-        loss = total_loss / len(valid_loader)
-        acc = total_correct / total_examples
-        return loss, acc
+        metrics = self.compute_metrics(y_preds, y_trues)
+        metrics = {f"valid/{k}": v for k, v in metrics.items()}
+        metrics["valid/loss"] = total_loss / len(valid_loader)
+        return metrics
 
     def push_to_hub(
         self,
