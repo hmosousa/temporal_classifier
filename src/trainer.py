@@ -103,7 +103,7 @@ class Trainer:
             self.valid_dataset, self.config.per_device_eval_batch_size
         )
 
-        self.run = wandb.init(project="TemporalClassifier")
+        self.run = wandb.init(project="TemporalClassifier", name=self.output_dir.stem)
         self.run.watch(self.model)
         self.run.config.update(self.config)
 
