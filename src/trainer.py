@@ -18,6 +18,8 @@ from tqdm import tqdm
 
 from src.constants import HF_TOKEN
 
+from src.metrics import compute_metrics
+
 logger = logging.getLogger(__name__)
 
 
@@ -121,16 +123,16 @@ class Trainer:
             self.run.log(
                 {
                     "epoch": epoch,
-                    **train_metrics,
-                    **valid_metrics,
+                    "train": train_metrics,
+                    "valid": valid_metrics,
                 },
                 step=self.global_step,
             )
 
-            self.scheduler.step(valid_metrics["valid/loss"])
+            self.scheduler.step(valid_metrics["loss"])
 
-            if valid_metrics["valid/loss"] < best_valid_loss:
-                best_valid_loss = valid_metrics["valid/loss"]
+            if valid_metrics["loss"] < best_valid_loss:
+                best_valid_loss = valid_metrics["loss"]
                 logger.info(f"Saving model. New best valid loss: {best_valid_loss:.4f}")
                 self.save_model(
                     output_dir=self.output_dir,
@@ -144,13 +146,13 @@ class Trainer:
                         blocking=True,
                     )
 
-            self.early_stopping(valid_metrics["valid/loss"])
+            self.early_stopping(valid_metrics["loss"])
             if self.early_stopping.early_stop:
                 logger.info("Early stopping since no improvement in validation loss")
                 break
 
             logger.info(
-                f"Epoch {epoch} - Train Loss: {train_metrics['train/loss']:.4f} - Train Acc: {train_metrics['train/accuracy']:.4f} - Valid Loss: {valid_metrics['valid/loss']:.4f} - Valid Acc: {valid_metrics['valid/accuracy']:.4f}"
+                f"Epoch {epoch} - Train Loss: {train_metrics['loss']:.4f} - Train Acc: {train_metrics['accuracy']:.4f} - Valid Loss: {valid_metrics['loss']:.4f} - Valid Acc: {valid_metrics['accuracy']:.4f}"
             )
 
         if self.config.load_best_model_at_end:
@@ -168,23 +170,26 @@ class Trainer:
         preds = [self.model.config.id2label[int(pred)] for pred in y_pred]
         labels = [self.model.config.id2label[int(label)] for label in y_true]
 
-        result = sklearn.metrics.classification_report(
+        # unique labels sorted by id
+        unique_labels = sorted(
+            list(self.model.config.id2label.values()),
+            key=lambda x: self.model.config.label2id[x],
+        )
+        metrics = compute_metrics(y_true=labels, y_pred=preds, labels=unique_labels)
+
+        per_label = sklearn.metrics.classification_report(
             y_true=labels,
             y_pred=preds,
             output_dict=True,
             zero_division=0.0,
-            labels=list(self.model.config.label2id.keys()),
+            labels=unique_labels,
         )
-
-        formatted_result = {}
-        for metric, value in result.items():
-            if isinstance(value, dict):
-                for k, v in value.items():
-                    formatted_result[f"{metric}_{k}".replace(" ", "_")] = v
-            else:
-                formatted_result[metric] = value
-
-        return formatted_result
+        per_label.pop("accuracy", None)
+        per_label.pop("micro avg", None)
+        per_label.pop("macro avg", None)
+        per_label.pop("weighted avg", None)
+        metrics["per_label"] = per_label
+        return metrics
 
     def train_step(self, train_loader: DataLoader):
         self.model.train()
@@ -217,13 +222,12 @@ class Trainer:
 
             if (self.global_step + 1) % 200 == 0:
                 metrics = self.compute_metrics(y_preds, y_trues)
-                metrics = {f"train/{k}": v for k, v in metrics.items()}
-                metrics["train/loss"] = loss.item()
+                metrics["loss"] = loss.item()
 
                 # logging
                 self.run.log(
                     {
-                        **metrics,
+                        "train": metrics,
                         "lr": self.scheduler.get_last_lr()[0],
                     },
                     step=self.global_step,
@@ -231,7 +235,7 @@ class Trainer:
             else:
                 self.run.log(
                     {
-                        "train/loss": loss.item(),
+                        "train": {"loss": loss.item()},
                         "lr": self.scheduler.get_last_lr()[0],
                     },
                     step=self.global_step,
@@ -243,8 +247,7 @@ class Trainer:
             self.global_step += 1
 
         metrics = self.compute_metrics(y_preds, y_trues)
-        metrics = {f"train/{k}": v for k, v in metrics.items()}
-        metrics["train/loss"] = total_loss / len(train_loader)
+        metrics["loss"] = total_loss / len(train_loader)
         return metrics
 
     def valid_step(self, valid_loader: DataLoader):
@@ -261,8 +264,8 @@ class Trainer:
                 y_trues += batch["labels"].tolist()
 
         metrics = self.compute_metrics(y_preds, y_trues)
-        metrics = {f"valid/{k}": v for k, v in metrics.items()}
-        metrics["valid/loss"] = total_loss / len(valid_loader)
+        metrics = {f"{k}": v for k, v in metrics.items()}
+        metrics["loss"] = total_loss / len(valid_loader)
         return metrics
 
     def push_to_hub(

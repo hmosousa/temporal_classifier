@@ -290,10 +290,8 @@ def main(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
         datefmt="%m/%d/%Y %H:%M:%S",
         handlers=[logging.StreamHandler(sys.stdout)],
+        level=logging.INFO,
     )
-
-    # The default of training_args.log_level is passive, so we set log level at info here to have that default.
-    logger.setLevel(logging.INFO)
 
     # Log on each process the small summary:
     logger.info(f"Training/evaluation parameters {training_args}")
