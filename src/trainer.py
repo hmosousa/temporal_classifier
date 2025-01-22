@@ -6,7 +6,6 @@ from typing import Optional
 
 import datasets
 import huggingface_hub
-
 import sklearn
 import torch
 import torch.nn as nn
@@ -137,6 +136,13 @@ class Trainer:
                     output_dir=self.output_dir,
                     push_to_hub=False,
                 )
+
+                if self.config.push_to_hub:
+                    self.save_tokenizer(self.output_dir)
+                    self.push_to_hub(
+                        commit_message=f"Epoch {epoch} Best valid loss: {best_valid_loss:.4f}",
+                        blocking=True,
+                    )
 
             self.early_stopping(valid_metrics["valid/loss"])
             if self.early_stopping.early_stop:
