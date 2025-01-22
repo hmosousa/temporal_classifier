@@ -261,6 +261,10 @@ class TrainingArguments:
         default=None,
         metadata={"help": "The learning rate scheduler to use."},
     )
+    freeze_backbone: bool = field(
+        default=False,
+        metadata={"help": "Whether to freeze the backbone."},
+    )
 
 
 def main(

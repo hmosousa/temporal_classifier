@@ -17,7 +17,7 @@ trainer:
     per_device_train_batch_size: 16
     per_device_eval_batch_size: 64
     num_train_epochs: 30
-    learning_rate: 5e-5
+    learning_rate: 5e-4
     max_grad_norm: 1.0
     load_best_model_at_end: True
     seed: 42
@@ -30,6 +30,7 @@ trainer:
     init_bias: True
     lr_scheduler:
         warmup_factor: 0.001
-        warmup_steps_pct: 0.05
+        warmup_steps_pct: 0.02
         factor: 0.1
         patience: 2
+    freeze_backbone: True

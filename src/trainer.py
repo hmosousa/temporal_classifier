@@ -80,6 +80,17 @@ class Trainer:
             init_bias = torch.log(torch.tensor(fqs))
             init_bias = init_bias.to(model.score.bias.dtype)
             model.score.bias.data = init_bias
+
+        if config.freeze_backbone:
+            logger.info(
+                "Freezing backbone. That is, only the new embeddings and the score layer are trainable."
+            )
+            model.model.requires_grad_(False)
+            # activate gradient for the embeddings of the special tokens
+            model.model.embed_tokens.weight[model.tokens_to_encode_ids].requires_grad_(
+                True
+            )
+
         self.model = model
 
         if self.config.torch_compile:
