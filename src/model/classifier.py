@@ -138,4 +138,4 @@ class ContextClassifier(LlamaForSequenceClassification):
         hidden = self.activation(hidden)
         logits = self.score(hidden)
 
-        return logits
+        return SequenceClassifierOutputWithPast(logits=logits)

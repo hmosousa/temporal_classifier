@@ -214,7 +214,7 @@ class Trainer:
         epoch_frac = 1 / len(train_loader)
         for batch in train_loader:
             self.optimizer.zero_grad()
-            logits = self.model.forward(**batch)
+            logits = self.model.forward(**batch).logits
             loss = self.criterion(logits, batch["labels"])
 
             self.accelerator.backward(loss)
@@ -270,7 +270,7 @@ class Trainer:
         y_preds, y_trues = [], []
         with torch.no_grad():
             for batch in valid_loader:
-                logits = self.model.forward(**batch)
+                logits = self.model.forward(**batch).logits
                 loss = self.criterion(logits, batch["labels"])
                 total_loss += loss.item()
                 y_preds += logits.argmax(dim=1).tolist()
