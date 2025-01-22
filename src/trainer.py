@@ -96,6 +96,8 @@ class Trainer:
         self.warmup_steps = int(
             self.total_train_steps * self.config.lr_scheduler.warmup_steps_pct
         )
+        logger.info(f"Total train steps: {self.total_train_steps}")
+        logger.info(f"Warmup steps: {self.warmup_steps}")
         self.warmup_scheduler = optim.lr_scheduler.LinearLR(
             self.optimizer,
             start_factor=self.config.lr_scheduler.warmup_factor,
