@@ -29,5 +29,7 @@ trainer:
     early_stopping_patience: 3
     init_bias: True
     lr_scheduler:
+        warmup_factor: 0.001
+        warmup_steps_pct: 0.05
         factor: 0.1
         patience: 2

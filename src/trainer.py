@@ -87,15 +87,35 @@ class Trainer:
             self.model = torch.compile(self.model)
 
         self.optimizer = optim.AdamW(model.parameters(), lr=config.learning_rate)
-        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+
+        self.total_train_steps = (
+            self.config.num_train_epochs
+            * len(train_dataset)
+            // self.config.per_device_train_batch_size
+        )
+        self.warmup_steps = int(
+            self.total_train_steps * self.config.lr_scheduler.warmup_steps_pct
+        )
+        self.warmup_scheduler = optim.lr_scheduler.LinearLR(
+            self.optimizer,
+            start_factor=self.config.lr_scheduler.warmup_factor,
+            total_iters=self.warmup_steps,
+        )
+
+        self.reduce_lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
             self.optimizer,
             mode="max",
             factor=self.config.lr_scheduler.factor,
             patience=self.config.lr_scheduler.patience,
         )
 
-        self.model, self.optimizer, self.scheduler = self.accelerator.prepare(
-            self.model, self.optimizer, self.scheduler
+        self.model, self.optimizer, self.warmup_scheduler, self.reduce_lr_scheduler = (
+            self.accelerator.prepare(
+                self.model,
+                self.optimizer,
+                self.warmup_scheduler,
+                self.reduce_lr_scheduler,
+            )
         )
 
         self.criterion = nn.CrossEntropyLoss(
@@ -154,7 +174,8 @@ class Trainer:
                 step=self.global_step,
             )
 
-            self.scheduler.step(valid_metrics["f1-score"])
+            if self.global_step >= self.warmup_steps:
+                self.reduce_lr_scheduler.step(valid_metrics["f1-score"])
 
             if valid_metrics["f1-score"] > best_valid_f1:
                 best_valid_f1 = valid_metrics["f1-score"]
@@ -225,6 +246,9 @@ class Trainer:
                 )
             self.optimizer.step()
 
+            if self.global_step <= self.warmup_steps:
+                self.warmup_scheduler.step()
+
             # metrics
             total_loss += loss.item()
             total_correct += (logits.argmax(dim=1) == batch["labels"]).sum().item()
@@ -232,6 +256,7 @@ class Trainer:
             y_preds += logits.argmax(dim=1).tolist()
             y_trues += batch["labels"].tolist()
 
+            lr = self.optimizer.param_groups[0]["lr"]
             if (self.global_step + 1) % 200 == 0:
                 metrics = self.compute_metrics(y_preds, y_trues)
                 metrics["loss"] = loss.item()
@@ -240,7 +265,7 @@ class Trainer:
                 self.run.log(
                     {
                         "train": metrics,
-                        "lr": self.scheduler.get_last_lr()[0],
+                        "lr": lr,
                         "epoch": epoch_frac * self.global_step,
                     },
                     step=self.global_step,
@@ -249,7 +274,7 @@ class Trainer:
                 self.run.log(
                     {
                         "train": {"loss": loss.item()},
-                        "lr": self.scheduler.get_last_lr()[0],
+                        "lr": lr,
                         "epoch": epoch_frac * self.global_step,
                     },
                     step=self.global_step,
