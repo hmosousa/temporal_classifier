@@ -14,8 +14,8 @@ data:
 
 trainer:
     output_dir: models/smol-135-tq
-    per_device_train_batch_size: 16
-    per_device_eval_batch_size: 64
+    per_device_train_batch_size: 128
+    per_device_eval_batch_size: 128
     num_train_epochs: 30
     learning_rate: 5e-4
     max_grad_norm: 1.0
@@ -30,7 +30,7 @@ trainer:
     init_bias: True
     lr_scheduler:
         warmup_factor: 0.001
-        warmup_steps_pct: 0.02
+        warmup_steps_pct: 0.05
         factor: 0.1
         patience: 2
     freeze_backbone: True

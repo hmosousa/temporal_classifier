@@ -99,11 +99,10 @@ class Trainer:
 
         self.optimizer = optim.AdamW(model.parameters(), lr=config.learning_rate)
 
-        self.total_train_steps = (
-            self.config.num_train_epochs
-            * len(train_dataset)
-            // self.config.per_device_train_batch_size
+        self.steps_per_epoch = (
+            len(train_dataset) // self.config.per_device_train_batch_size
         )
+        self.total_train_steps = self.config.num_train_epochs * self.steps_per_epoch
         self.warmup_steps = int(
             self.total_train_steps * self.config.lr_scheduler.warmup_steps_pct
         )
@@ -145,6 +144,8 @@ class Trainer:
         self.early_stopping = EarlyStopping(
             patience=config.early_stopping_patience, greater_is_better=True
         )
+
+        self.log_every = self.steps_per_epoch // 5
 
     def get_dataloaders(self, dataset: datasets.Dataset, batch_size: int):
         dataset = dataset.select_columns(self.features)
@@ -270,7 +271,7 @@ class Trainer:
             y_trues += batch["labels"].tolist()
 
             lr = self.optimizer.param_groups[0]["lr"]
-            if (self.global_step + 1) % 200 == 0:
+            if (self.global_step + 1) % self.log_every == 0:
                 metrics = self.compute_metrics(y_preds, y_trues)
                 metrics["loss"] = loss.item()
 
