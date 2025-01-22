@@ -92,7 +92,6 @@ class Trainer:
 
         self.run = None  # wandb run
         self.global_step = 0
-
         self.early_stopping = EarlyStopping(patience=config.early_stopping_patience)
 
     def get_dataloaders(self, dataset: datasets.Dataset, batch_size: int):
@@ -173,31 +172,6 @@ class Trainer:
                 blocking=True,
             )
 
-    def compute_metrics(self, y_pred: list, y_true: list):
-        preds = [self.model.config.id2label[int(pred)] for pred in y_pred]
-        labels = [self.model.config.id2label[int(label)] for label in y_true]
-
-        # unique labels sorted by id
-        unique_labels = sorted(
-            list(self.model.config.id2label.values()),
-            key=lambda x: self.model.config.label2id[x],
-        )
-        metrics = compute_metrics(y_true=labels, y_pred=preds, labels=unique_labels)
-
-        per_label = sklearn.metrics.classification_report(
-            y_true=labels,
-            y_pred=preds,
-            output_dict=True,
-            zero_division=0.0,
-            labels=unique_labels,
-        )
-        per_label.pop("accuracy", None)
-        per_label.pop("micro avg", None)
-        per_label.pop("macro avg", None)
-        per_label.pop("weighted avg", None)
-        metrics["per_label"] = per_label
-        return metrics
-
     def train_step(self, train_loader: DataLoader):
         self.model.train()
         pb = tqdm(
@@ -208,6 +182,7 @@ class Trainer:
         total_examples = 0
         total_loss = 0
         y_preds, y_trues = [], []
+        epoch_frac = 1 / len(train_loader)
         for batch in train_loader:
             self.optimizer.zero_grad()
             logits = self.model.forward(**batch)
@@ -237,6 +212,7 @@ class Trainer:
                     {
                         "train": metrics,
                         "lr": self.scheduler.get_last_lr()[0],
+                        "epoch": epoch_frac * self.global_step,
                     },
                     step=self.global_step,
                 )
@@ -245,6 +221,7 @@ class Trainer:
                     {
                         "train": {"loss": loss.item()},
                         "lr": self.scheduler.get_last_lr()[0],
+                        "epoch": epoch_frac * self.global_step,
                     },
                     step=self.global_step,
                 )
@@ -360,3 +337,28 @@ class Trainer:
                 torch.load(output_dir / transformers.utils.WEIGHTS_NAME)
             )
         return model
+
+    def compute_metrics(self, y_pred: list, y_true: list):
+        preds = [self.model.config.id2label[int(pred)] for pred in y_pred]
+        labels = [self.model.config.id2label[int(label)] for label in y_true]
+
+        # unique labels sorted by id
+        unique_labels = sorted(
+            list(self.model.config.id2label.values()),
+            key=lambda x: self.model.config.label2id[x],
+        )
+        metrics = compute_metrics(y_true=labels, y_pred=preds, labels=unique_labels)
+
+        per_label = sklearn.metrics.classification_report(
+            y_true=labels,
+            y_pred=preds,
+            output_dict=True,
+            zero_division=0.0,
+            labels=unique_labels,
+        )
+        per_label.pop("accuracy", None)
+        per_label.pop("micro avg", None)
+        per_label.pop("macro avg", None)
+        per_label.pop("weighted avg", None)
+        metrics["per_label"] = per_label
+        return metrics

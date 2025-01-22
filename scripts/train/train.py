@@ -7,6 +7,7 @@ from typing import Optional
 
 import datasets
 import torch
+import transformers
 from fire import Fire
 from omegaconf import OmegaConf
 
@@ -15,12 +16,6 @@ from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
 from src.data import augment_dataset, load_dataset
 from src.model.classifier import ContextClassifier
 from src.trainer import Trainer
-from transformers import (
-    AutoTokenizer,
-    DataCollatorWithPadding,
-    default_data_collator,
-    set_seed,
-)
 from transformers.models.llama.configuration_llama import LlamaConfig
 from transformers.utils import send_example_telemetry
 
@@ -281,23 +276,27 @@ def main(
 
     training_args = TrainingArguments(**config.trainer)
 
-    # Sending telemetry. Tracking the example usage helps us better allocate resources to maintain them. The
-    # information sent is the one passed as arguments along with your Python/PyTorch versions.
     send_example_telemetry("run_classification", model_args, data_args)
 
     # Setup logging
+    log_level = logging.INFO
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
         datefmt="%m/%d/%Y %H:%M:%S",
         handlers=[logging.StreamHandler(sys.stdout)],
-        level=logging.INFO,
+        level=log_level,
     )
 
     # Log on each process the small summary:
     logger.info(f"Training/evaluation parameters {training_args}")
     logger.info(f"Model arguments: {model_args}")
+
     # Set seed before initializing model.
-    set_seed(training_args.seed)
+    transformers.set_seed(training_args.seed)
+    datasets.utils.logging.set_verbosity(log_level)
+    transformers.utils.logging.set_verbosity(log_level)
+    transformers.utils.logging.enable_default_handler()
+    transformers.utils.logging.enable_explicit_format()
 
     # Downloading and loading a dataset from the hub.
     trainset = load_dataset(
@@ -329,7 +328,7 @@ def main(
     # Load pretrained model and tokenizer
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
-    tokenizer = AutoTokenizer.from_pretrained(
+    tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=model_args.cache_dir,
         use_fast=model_args.use_fast_tokenizer,
@@ -448,9 +447,11 @@ def main(
     # Data collator will default to DataCollatorWithPadding when the tokenizer is passed to Trainer, so we change it if
     # we already did the padding.
     if data_args.pad_to_max_length:
-        data_collator = default_data_collator
+        data_collator = transformers.default_data_collator
     elif training_args.bf16:
-        data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8)
+        data_collator = transformers.DataCollatorWithPadding(
+            tokenizer, pad_to_multiple_of=8
+        )
     else:
         data_collator = None
 

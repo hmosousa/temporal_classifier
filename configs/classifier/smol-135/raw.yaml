@@ -3,7 +3,7 @@ model:
     trust_remote_code: True
 
 data:
-    dataset_name: temporal_contexts
+    dataset_name: matres
     train_split: train
     valid_split: valid
     max_seq_length: 2048

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import datasets
 import fire
+import pandas as pd
 
 from src.constants import HF_TOKEN
 from src.data import load_dataset
@@ -59,19 +60,29 @@ def main():
 
     train_dataset = datasets.concatenate_datasets(train_datasets)
     train_df = train_dataset.to_pandas()
-    train_df.drop_duplicates(subset="text", keep="last", inplace=True)
     train_df = train_df[["dataset", "doc", "text", "label"]]
 
     valid_dataset = datasets.concatenate_datasets(valid_datasets)
     valid_df = valid_dataset.to_pandas()
-    valid_df.drop_duplicates(subset="text", keep="last", inplace=True)
-    valid_df = valid_df[~valid_df["text"].isin(train_df["text"])]
     valid_df = valid_df[["dataset", "doc", "text", "label"]]
 
     test_dataset = datasets.concatenate_datasets(test_datasets)
     test_df = test_dataset.to_pandas()
-    test_df.drop_duplicates(subset="text", keep="last", inplace=True)
     test_df = test_df[["dataset", "doc", "text", "label"]]
+
+    logging.info(
+        "Dropping from train and valid any doc that appears in testset",
+    )
+    train_df = train_df[~train_df["doc"].isin(test_df["doc"])]
+    valid_df = valid_df[~valid_df["doc"].isin(test_df["doc"])]
+
+    logging.info("Moving from valid to train any doc that appears in trainset")
+    train_df = pd.concat([train_df, valid_df[valid_df["doc"].isin(train_df["doc"])]])
+    valid_df = valid_df[~valid_df["doc"].isin(train_df["doc"])]
+
+    logging.info("Dropping duplicates from trainset, validset")
+    train_df.drop_duplicates(subset="text", keep="last", inplace=True)
+    valid_df.drop_duplicates(subset="text", keep="last", inplace=True)
 
     logging.info("Pushing to hub")
     trainset = datasets.Dataset.from_pandas(train_df, preserve_index=False)
