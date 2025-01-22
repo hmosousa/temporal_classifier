@@ -25,19 +25,36 @@ logger = logging.getLogger(__name__)
 
 
 class EarlyStopping:
-    def __init__(self, patience: int):
+    def __init__(self, patience: int, greater_is_better: bool):
         self.patience = patience
         self.counter = 0
         self.best_score = None
         self.early_stop = False
+        self.greater_is_better = greater_is_better
 
-    def __call__(self, val_loss: float):
+    def __call__(
+        self,
+        score: float,
+    ):
         if self.best_score is None:
-            self.best_score = val_loss
-        elif val_loss > self.best_score:
-            self.counter += 1
-            if self.counter >= self.patience:
-                self.early_stop = True
+            self.best_score = score
+
+        elif self.greater_is_better:
+            if score > self.best_score:
+                self.counter = 0
+                self.best_score = score
+            else:
+                self.counter += 1
+                if self.counter >= self.patience:
+                    self.early_stop = True
+        else:
+            if score < self.best_score:
+                self.counter = 0
+                self.best_score = score
+            else:
+                self.counter += 1
+                if self.counter >= self.patience:
+                    self.early_stop = True
 
 
 class Trainer:
@@ -72,7 +89,7 @@ class Trainer:
         self.optimizer = optim.AdamW(model.parameters(), lr=config.learning_rate)
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
             self.optimizer,
-            mode="min",
+            mode="max",
             factor=self.config.lr_scheduler.factor,
             patience=self.config.lr_scheduler.patience,
         )
@@ -92,7 +109,9 @@ class Trainer:
 
         self.run = None  # wandb run
         self.global_step = 0
-        self.early_stopping = EarlyStopping(patience=config.early_stopping_patience)
+        self.early_stopping = EarlyStopping(
+            patience=config.early_stopping_patience, greater_is_better=True
+        )
 
     def get_dataloaders(self, dataset: datasets.Dataset, batch_size: int):
         dataset = dataset.select_columns(self.features)
@@ -121,7 +140,7 @@ class Trainer:
         self.run.config.update(self.config)
 
         logging.info("Training")
-        best_valid_loss = float("inf")
+        best_valid_f1 = float("-inf")
         for epoch in range(self.config.num_train_epochs):
             train_metrics = self.train_step(train_loader)
             valid_metrics = self.valid_step(valid_loader)
@@ -135,11 +154,13 @@ class Trainer:
                 step=self.global_step,
             )
 
-            self.scheduler.step(valid_metrics["loss"])
+            self.scheduler.step(valid_metrics["f1-score"])
 
-            if valid_metrics["loss"] < best_valid_loss:
-                best_valid_loss = valid_metrics["loss"]
-                logger.info(f"Saving model. New best valid loss: {best_valid_loss:.4f}")
+            if valid_metrics["f1-score"] > best_valid_f1:
+                best_valid_f1 = valid_metrics["f1-score"]
+                logger.info(
+                    f"Saving model. New best valid f1-score: {best_valid_f1:.4f}"
+                )
                 self.save_model(
                     output_dir=self.output_dir,
                     push_to_hub=False,
@@ -148,17 +169,25 @@ class Trainer:
                 if self.config.push_to_hub:
                     self.save_tokenizer(self.output_dir)
                     self.push_to_hub(
-                        commit_message=f"Epoch {epoch} Best valid loss: {best_valid_loss:.4f}",
+                        commit_message=f"Epoch {epoch} Best valid f1-score: {best_valid_f1:.4f}",
                         blocking=True,
                     )
 
-            self.early_stopping(valid_metrics["loss"])
+            self.early_stopping(valid_metrics["f1-score"])
             if self.early_stopping.early_stop:
-                logger.info("Early stopping since no improvement in validation loss")
+                logger.info(
+                    "Early stopping since no improvement in validation f1-score"
+                )
                 break
 
             logger.info(
-                f"Epoch {epoch} - Train Loss: {train_metrics['loss']:.4f} - Train Acc: {train_metrics['accuracy']:.4f} - Valid Loss: {valid_metrics['loss']:.4f} - Valid Acc: {valid_metrics['accuracy']:.4f}"
+                f"Epoch {epoch}\n"
+                f"\tTrain Loss: {train_metrics['loss']:.4f}\n"
+                f"\tTrain Acc: {train_metrics['accuracy']:.4f}\n"
+                f"\tTrain F1-score: {train_metrics['f1-score']:.4f}\n"
+                f"\tValid Loss: {valid_metrics['loss']:.4f}\n"
+                f"\tValid Acc: {valid_metrics['accuracy']:.4f}\n"
+                f"\tValid F1-score: {valid_metrics['f1-score']:.4f}"
             )
 
         if self.config.load_best_model_at_end:
