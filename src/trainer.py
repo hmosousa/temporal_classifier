@@ -13,6 +13,7 @@ import torch.optim as optim
 import transformers
 
 import wandb
+from accelerate import Accelerator
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -49,9 +50,10 @@ class Trainer:
         valid_dataset: datasets.Dataset,
         data_collator,
     ):
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.config = config
         self.output_dir = pathlib.Path(config.output_dir)
+
+        self.accelerator = Accelerator()
 
         if config.init_bias:
             logger.info("Initializing bias of the last layer")
@@ -61,7 +63,7 @@ class Trainer:
             init_bias = torch.log(torch.tensor(fqs))
             init_bias = init_bias.to(model.score.bias.dtype)
             model.score.bias.data = init_bias
-        self.model = model.to(self.device)
+        self.model = model
 
         if self.config.torch_compile:
             logger.info("Compiling model")
@@ -74,6 +76,11 @@ class Trainer:
             factor=self.config.lr_scheduler.factor,
             patience=self.config.lr_scheduler.patience,
         )
+
+        self.model, self.optimizer, self.scheduler = self.accelerator.prepare(
+            self.model, self.optimizer, self.scheduler
+        )
+
         self.criterion = nn.CrossEntropyLoss(
             reduction="mean", label_smoothing=config.label_smoothing_factor
         )
@@ -99,7 +106,7 @@ class Trainer:
             num_workers=mp.cpu_count(),
             drop_last=True,
         )
-        return dataloader
+        return self.accelerator.prepare(dataloader)
 
     def train(self):
         logging.info("Getting dataloaders")
@@ -193,8 +200,9 @@ class Trainer:
 
     def train_step(self, train_loader: DataLoader):
         self.model.train()
-
-        pb = tqdm(range(len(train_loader)))
+        pb = tqdm(
+            range(len(train_loader)), disable=not self.accelerator.is_local_main_process
+        )
 
         total_correct = 0
         total_examples = 0
@@ -202,13 +210,13 @@ class Trainer:
         y_preds, y_trues = [], []
         for batch in train_loader:
             self.optimizer.zero_grad()
-            batch = {k: v.to(self.device) for k, v in batch.items()}
             logits = self.model.forward(**batch)
             loss = self.criterion(logits, batch["labels"])
-            loss.backward()
+
+            self.accelerator.backward(loss)
 
             if self.config.max_grad_norm is not None:
-                nn.utils.clip_grad_norm_(
+                self.accelerator.clip_grad_norm_(
                     self.model.parameters(), self.config.max_grad_norm
                 )
             self.optimizer.step()
@@ -256,7 +264,6 @@ class Trainer:
         y_preds, y_trues = [], []
         with torch.no_grad():
             for batch in valid_loader:
-                batch = {k: v.to(self.device) for k, v in batch.items()}
                 logits = self.model.forward(**batch)
                 loss = self.criterion(logits, batch["labels"])
                 total_loss += loss.item()
