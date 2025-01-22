@@ -108,26 +108,26 @@ class Trainer:
         )
         logger.info(f"Total train steps: {self.total_train_steps}")
         logger.info(f"Warmup steps: {self.warmup_steps}")
-        self.warmup_scheduler = optim.lr_scheduler.LinearLR(
+        warmup_scheduler = optim.lr_scheduler.LinearLR(
             self.optimizer,
             start_factor=self.config.lr_scheduler.warmup_factor,
             total_iters=self.warmup_steps,
         )
-
-        self.reduce_lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+        cosine_scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
             self.optimizer,
-            mode="max",
-            factor=self.config.lr_scheduler.factor,
-            patience=self.config.lr_scheduler.patience,
+            T_0=self.total_train_steps - self.warmup_steps,
+            T_mult=1,
+        )
+        self.scheduler = optim.lr_scheduler.SequentialLR(
+            self.optimizer,
+            schedulers=[warmup_scheduler, cosine_scheduler],
+            milestones=[self.warmup_steps],
         )
 
-        self.model, self.optimizer, self.warmup_scheduler, self.reduce_lr_scheduler = (
-            self.accelerator.prepare(
-                self.model,
-                self.optimizer,
-                self.warmup_scheduler,
-                self.reduce_lr_scheduler,
-            )
+        self.model, self.optimizer, self.scheduler = self.accelerator.prepare(
+            self.model,
+            self.optimizer,
+            self.scheduler,
         )
 
         self.criterion = nn.CrossEntropyLoss(
@@ -187,9 +187,6 @@ class Trainer:
                 },
                 step=self.global_step,
             )
-
-            if self.global_step >= self.warmup_steps:
-                self.reduce_lr_scheduler.step(valid_metrics["f1-score"])
 
             if valid_metrics["f1-score"] > best_valid_f1:
                 best_valid_f1 = valid_metrics["f1-score"]
@@ -259,9 +256,7 @@ class Trainer:
                     self.model.parameters(), self.config.max_grad_norm
                 )
             self.optimizer.step()
-
-            if self.global_step <= self.warmup_steps:
-                self.warmup_scheduler.step()
+            self.scheduler.step()
 
             # metrics
             total_loss += loss.item()
