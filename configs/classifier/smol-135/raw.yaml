@@ -32,3 +32,4 @@ trainer:
         warmup_factor: 0.001
         warmup_steps_pct: 0.05
     freeze_backbone: True
+    hp_search: True

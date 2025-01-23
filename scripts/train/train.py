@@ -475,8 +475,21 @@ def main(
     )
 
     if training_args.hp_search:
+        # Put large objects in Ray's object store
+        tokenizer_ref = ray.put(tokenizer)
+        train_dataset_ref = ray.put(train_dataset)
+        eval_dataset_ref = ray.put(eval_dataset)
+        data_collator_ref = ray.put(data_collator)
+        model_config_ref = ray.put(model_config)
 
         def train_func(config):
+            # Get objects from Ray's object store
+            tokenizer = ray.get(tokenizer_ref)
+            train_dataset = ray.get(train_dataset_ref)
+            eval_dataset = ray.get(eval_dataset_ref)
+            data_collator = ray.get(data_collator_ref)
+            model_config = ray.get(model_config_ref)
+
             # Create a new config with the hyperparameters
             trial_config = TrainingArguments(**vars(training_args))
             trial_config.learning_rate = config["learning_rate"]
@@ -511,18 +524,26 @@ def main(
             trial_trainer.train()
 
         search_space = {
-            "learning_rate": ray.tune.loguniform(1e-6, 1e-4),
+            "learning_rate": ray.tune.loguniform(1e-6, 1e-2),
             "max_grad_norm": ray.tune.uniform(0.1, 1.0),
         }
 
         if not ray.is_initialized():
             ray.init()
 
-        tuner = ray.tune.Tuner(
-            train_func,
-            param_space=search_space,
+        ray.tune.run(
+            run_or_experiment=train_func,
+            config=search_space,
+            resources_per_trial={"cpu": mp.cpu_count() // 4, "gpu": 1},
+            num_samples=10,
+            max_concurrent_trials=4,
+            scheduler=ray.tune.schedulers.AsyncHyperBandScheduler(
+                metric="f1-score",
+                mode="max",
+            ),
+            log_to_file=True,
         )
-        tuner.fit()
+
     else:
         # Training
         trainer.train()
