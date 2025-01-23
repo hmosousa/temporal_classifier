@@ -1,4 +1,3 @@
-import functools
 import logging
 import multiprocessing as mp
 import random
@@ -7,7 +6,6 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import datasets
-import numpy as np
 import ray
 import ray.tune
 import torch
@@ -478,24 +476,50 @@ def main(
 
     if training_args.hp_search:
 
-        def train_func(config, trainer):
-            # Only modify the config parameters we want to tune
-            trainer.config.learning_rate = config["learning_rate"]
-            trainer.config.max_grad_norm = config["max_grad_norm"]
-            trainer.train()
+        def train_func(config):
+            # Create a new config with the hyperparameters
+            trial_config = TrainingArguments(**vars(training_args))
+            trial_config.learning_rate = config["learning_rate"]
+            trial_config.max_grad_norm = config["max_grad_norm"]
+
+            # Create a fresh model
+            trial_model = ContextClassifier.from_pretrained(
+                model_args.model_name_or_path,
+                from_tf=bool(".ckpt" in model_args.model_name_or_path),
+                config=model_config,
+                cache_dir=model_args.cache_dir,
+                revision=model_args.model_revision,
+                token=model_args.token,
+                ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
+                torch_dtype=torch.bfloat16,
+            )
+            trial_model.config.pad_token_id = trial_model.config.eos_token_id
+            trial_model.resize_token_embeddings(
+                len(tokenizer), pad_to_multiple_of=8, mean_resizing=True
+            )
+
+            # Create a new trainer instance
+            trial_trainer = Trainer(
+                config=trial_config,
+                model=trial_model,
+                tokenizer=tokenizer,
+                train_dataset=train_dataset,
+                valid_dataset=eval_dataset,
+                data_collator=data_collator,
+            )
+
+            trial_trainer.train()
 
         search_space = {
-            "learning_rate": ray.tune.sample_from(
-                lambda spec: 10 ** (-10 * np.random.rand())
-            ),
-            "max_grad_norm": ray.tune.uniform(0.1, 0.9),
+            "learning_rate": ray.tune.loguniform(1e-6, 1e-4),
+            "max_grad_norm": ray.tune.uniform(0.1, 1.0),
         }
 
         if not ray.is_initialized():
             ray.init()
 
         tuner = ray.tune.Tuner(
-            functools.partial(train_func, trainer=trainer),
+            train_func,
             param_space=search_space,
         )
         tuner.fit()

@@ -147,7 +147,7 @@ class Trainer:
             patience=config.early_stopping_patience, greater_is_better=True
         )
 
-        self.log_every = self.steps_per_epoch // 5
+        self.log_every = max(self.steps_per_epoch // 10, 1)
 
     def get_dataloaders(self, dataset: datasets.Dataset, batch_size: int):
         dataset = dataset.select_columns(self.features)
@@ -214,7 +214,7 @@ class Trainer:
                 )
                 break
 
-            if self.hp_search:
+            if self.config.hp_search:
                 with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
                     temp_checkpoint_dir = pathlib.Path(temp_checkpoint_dir)
 
