@@ -465,15 +465,6 @@ def main(
     else:
         data_collator = None
 
-    trainer = Trainer(
-        config=training_args,
-        model=model,
-        tokenizer=tokenizer,
-        train_dataset=train_dataset,
-        valid_dataset=eval_dataset,
-        data_collator=data_collator,
-    )
-
     if training_args.hp_search:
         # Put large objects in Ray's object store
         tokenizer_ref = ray.put(tokenizer)
@@ -526,6 +517,9 @@ def main(
         search_space = {
             "learning_rate": ray.tune.loguniform(1e-6, 1e-2),
             "max_grad_norm": ray.tune.uniform(0.1, 1.0),
+            "num_train_epochs": ray.tune.randint(5, 30),
+            "per_device_train_batch_size": ray.tune.choice([16, 32, 64, 128]),
+            "label_smoothing_factor": ray.tune.uniform(0.0, 0.1),
         }
 
         if not ray.is_initialized():
@@ -535,7 +529,7 @@ def main(
             run_or_experiment=train_func,
             config=search_space,
             resources_per_trial={"cpu": mp.cpu_count() // 4, "gpu": 1},
-            num_samples=10,
+            num_samples=20,
             max_concurrent_trials=4,
             scheduler=ray.tune.schedulers.AsyncHyperBandScheduler(
                 metric="f1-score",
@@ -545,7 +539,15 @@ def main(
         )
 
     else:
-        # Training
+        trainer = Trainer(
+            config=training_args,
+            model=model,
+            tokenizer=tokenizer,
+            train_dataset=train_dataset,
+            valid_dataset=eval_dataset,
+            data_collator=data_collator,
+        )
+
         trainer.train()
 
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+import uuid
 from typing import Any, Dict
 
 import yaml
@@ -12,5 +12,5 @@ def load_config(config_name: str) -> Dict[str, Any]:
         return yaml.load(f, Loader=yaml.FullLoader)
 
 
-def generate_run_id() -> str:
-    return datetime.now().strftime("%Y%m%d%H%M%S")
+def generate_id():
+    return str(uuid.uuid4())[:8]

@@ -1,11 +1,12 @@
 import random
+from typing import Callable
 
 import numpy as np
 import sklearn
 import torch.nn.functional as F
 
 
-def compute_metrics(
+def compute_metrics_with_vague(
     y_true,
     y_pred,
     labels=None,
@@ -14,7 +15,7 @@ def compute_metrics(
     # Compute the metrics as in https://cogcomp.seas.upenn.edu/papers/NingSuRo19.pdf
     if labels[-1] != "-":
         raise ValueError(
-            f"The last label is {labels[-1]} not '-' (none relation) but it would be treated as none relation. This method is only for the case where the last label is none relation."
+            f"The last label is {labels[-1]} not '-' (none relation). This method is only for the case where the last label is none relation."
         )
 
     confusion_matrix = sklearn.metrics.confusion_matrix(
@@ -50,8 +51,29 @@ def compute_metrics(
     }
 
 
+def compute_metrics(
+    y_true,
+    y_pred,
+    labels=None,
+    zero_division=0.0,
+):
+    report = sklearn.metrics.classification_report(
+        y_true, y_pred, labels=labels, zero_division=zero_division, output_dict=True
+    )
+    return {
+        "accuracy": report["accuracy"],
+        "precision": report["macro avg"]["precision"],
+        "recall": report["macro avg"]["recall"],
+        "f1-score": report["macro avg"]["f1-score"],
+    }
+
+
 def compute_confidence_intervals(
-    y_true, y_pred, n_trials: int = 1_000, labels: list[str] = None
+    y_true,
+    y_pred,
+    n_trials: int = 1_000,
+    labels: list[str] = None,
+    compute_metrics_func: Callable = compute_metrics,
 ):
     """Compute confidence intervals with bootstrap
     Args:
@@ -67,7 +89,7 @@ def compute_confidence_intervals(
         sample_y_true, sample_y_pred = zip(*sample)
 
         # Compute metrics
-        sample_metrics = compute_metrics(
+        sample_metrics = compute_metrics_func(
             y_true=sample_y_true,
             y_pred=sample_y_pred,
             labels=labels,

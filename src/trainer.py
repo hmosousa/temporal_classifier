@@ -20,8 +20,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from src.constants import HF_TOKEN
-
-from src.metrics import compute_metrics
+from src.metrics import compute_metrics, compute_metrics_with_vague
+from src.utils import generate_id
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +92,18 @@ class Trainer:
             model.model.embed_tokens.weight[model.tokens_to_encode_ids].requires_grad_(
                 True
             )
+
+        # unique labels sorted by id
+        self.unique_labels = sorted(
+            list(model.config.id2label.values()),
+            key=lambda x: model.config.label2id[x],
+        )
+
+        # Define the metrics function
+        if "-" in self.unique_labels:
+            self._metrics_func = compute_metrics_with_vague
+        else:
+            self._metrics_func = compute_metrics
 
         self.model = model
 
@@ -164,6 +176,7 @@ class Trainer:
 
     def train(self):
         logging.info("Getting dataloaders")
+        run_id = generate_id()
         train_loader = self.get_dataloaders(
             self.train_dataset, self.config.per_device_train_batch_size
         )
@@ -171,7 +184,9 @@ class Trainer:
             self.valid_dataset, self.config.per_device_eval_batch_size
         )
 
-        self.run = wandb.init(project="TemporalClassifier", name=self.output_dir.stem)
+        self.run = wandb.init(
+            project="TemporalClassifier", name=f"{self.output_dir.stem}-{run_id}"
+        )
         self.run.watch(self.model)
         self.run.config.update(self.config)
 
@@ -195,14 +210,13 @@ class Trainer:
                 logger.info(
                     f"Saving model. New best valid f1-score: {best_valid_f1:.4f}"
                 )
-                self.save_model(
-                    output_dir=self.output_dir,
-                    push_to_hub=False,
-                )
+                self.save_model(output_dir=self.output_dir / run_id)
 
                 if self.config.push_to_hub:
-                    self.save_tokenizer(self.output_dir)
+                    self.save_tokenizer(self.output_dir / run_id)
                     self.push_to_hub(
+                        repo_id=f"{self.config.hub_model_id}-{run_id}",
+                        folder_path=self.output_dir / run_id,
                         commit_message=f"Epoch {epoch} Best valid f1-score: {best_valid_f1:.4f}",
                         blocking=True,
                     )
@@ -246,11 +260,13 @@ class Trainer:
 
         if self.config.load_best_model_at_end:
             logger.info("Loading best model")
-            self.load_model(self.output_dir)
+            self.load_model(self.output_dir / run_id)
 
         if self.config.push_to_hub:
-            self.save_tokenizer(self.output_dir)
+            self.save_tokenizer(self.output_dir / run_id)
             self.push_to_hub(
+                repo_id=f"{self.config.hub_model_id}-{run_id}",
+                folder_path=self.output_dir / run_id,
                 commit_message="End of training",
                 blocking=True,
             )
@@ -337,8 +353,10 @@ class Trainer:
         metrics["loss"] = total_loss / len(valid_loader)
         return metrics
 
+    @staticmethod
     def push_to_hub(
-        self,
+        repo_id: str,
+        folder_path: pathlib.Path,
         commit_message: Optional[str] = "End of training",
         blocking: bool = True,
     ) -> str:
@@ -357,12 +375,12 @@ class Trainer:
         """
 
         # Create the repo if it doesn't exist
-        if not huggingface_hub.repo_exists(self.config.hub_model_id):
-            huggingface_hub.create_repo(self.config.hub_model_id, token=HF_TOKEN)
+        if not huggingface_hub.repo_exists(repo_id):
+            huggingface_hub.create_repo(repo_id, token=HF_TOKEN)
 
         return huggingface_hub.upload_folder(
-            repo_id=self.config.hub_model_id,
-            folder_path=self.output_dir,
+            repo_id=repo_id,
+            folder_path=folder_path,
             commit_message=commit_message,
             token=HF_TOKEN,
             run_as_future=not blocking,
@@ -375,8 +393,6 @@ class Trainer:
     def save_model(
         self,
         output_dir: pathlib.Path,
-        push_to_hub: bool = False,
-        commit_message: Optional[str] = "Model save",
     ):
         """
         Will save the model, so you can reload it using `from_pretrained()`.
@@ -407,10 +423,6 @@ class Trainer:
                 output_dir / transformers.utils.WEIGHTS_NAME,
             )
 
-        # Push to the Hub when `save_model` is called by the user.
-        if push_to_hub:
-            self.push_to_hub(commit_message=commit_message)
-
     def save_tokenizer(self, output_dir: pathlib.Path):
         self.tokenizer.save_pretrained(output_dir)
 
@@ -427,19 +439,16 @@ class Trainer:
         preds = [self.model.config.id2label[int(pred)] for pred in y_pred]
         labels = [self.model.config.id2label[int(label)] for label in y_true]
 
-        # unique labels sorted by id
-        unique_labels = sorted(
-            list(self.model.config.id2label.values()),
-            key=lambda x: self.model.config.label2id[x],
+        metrics = self._metrics_func(
+            y_true=labels, y_pred=preds, labels=self.unique_labels
         )
-        metrics = compute_metrics(y_true=labels, y_pred=preds, labels=unique_labels)
 
         per_label = sklearn.metrics.classification_report(
             y_true=labels,
             y_pred=preds,
             output_dict=True,
             zero_division=0.0,
-            labels=unique_labels,
+            labels=self.unique_labels,
         )
         per_label.pop("accuracy", None)
         per_label.pop("micro avg", None)

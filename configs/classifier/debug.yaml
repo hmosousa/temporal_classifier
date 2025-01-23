@@ -3,7 +3,9 @@ model:
     trust_remote_code: True
 
 data:
-    dataset_name: temporal_contexts
+    dataset_name: point_tempeval
+    train_split: train
+    valid_split: valid
     max_seq_length: 1024
     augment: False
     pad_to_max_length: False # To pad each batch at runtime
@@ -34,4 +36,4 @@ trainer:
         factor: 0.1
         patience: 2
     freeze_backbone: True
-    hp_search: True
+    hp_search: False
