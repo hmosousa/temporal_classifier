@@ -271,6 +271,8 @@ class Trainer:
                 blocking=True,
             )
 
+        self.run.finish(exit_code=0)  # success
+
     def train_step(self, train_loader: DataLoader):
         self.model.train()
         pb = tqdm(
