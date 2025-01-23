@@ -34,3 +34,4 @@ trainer:
         factor: 0.1
         patience: 2
     freeze_backbone: True
+    hp_search: True

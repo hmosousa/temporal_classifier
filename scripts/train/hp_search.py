@@ -1,4 +1,3 @@
-import functools
 import logging
 import multiprocessing as mp
 import random
@@ -7,13 +6,12 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import datasets
-import numpy as np
-import ray
-import ray.tune
 import torch
 import transformers
 from fire import Fire
 from omegaconf import OmegaConf
+from ray import tune
+from ray.tune.schedulers import ASHAScheduler
 
 from src.base import RELATIONS2ID
 from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
@@ -22,6 +20,7 @@ from src.model.classifier import ContextClassifier
 from src.trainer import Trainer
 from transformers.models.llama.configuration_llama import LlamaConfig
 from transformers.utils import send_example_telemetry
+
 
 logger = logging.getLogger(__name__)
 
@@ -269,10 +268,6 @@ class TrainingArguments:
         default=False,
         metadata={"help": "Whether to freeze the backbone."},
     )
-    hp_search: bool = field(
-        default=False,
-        metadata={"help": "Whether to perform hyperparameter search."},
-    )
 
 
 def main(
@@ -467,6 +462,7 @@ def main(
     else:
         data_collator = None
 
+    # Initialize our Trainer
     trainer = Trainer(
         config=training_args,
         model=model,
@@ -476,32 +472,27 @@ def main(
         data_collator=data_collator,
     )
 
-    if training_args.hp_search:
+    # Training
 
-        def train_func(config, trainer):
-            # Only modify the config parameters we want to tune
-            trainer.config.learning_rate = config["learning_rate"]
-            trainer.config.max_grad_norm = config["max_grad_norm"]
-            trainer.train()
-
-        search_space = {
-            "learning_rate": ray.tune.sample_from(
-                lambda spec: 10 ** (-10 * np.random.rand())
+    search_space = {
+        "learning_rate": [1e-6, 1e-5, 1e-4, 1e-3],
+        "per_device_train_batch_size": [16, 32, 64, 128],
+        "num_train_epochs": tune.uniform(1, 30),
+    }
+    tuner = tune.Tuner(
+        trainer.train,
+        param_space=search_space,
+        tune_config=tune.TuneConfig(
+            num_samples=10,
+            scheduler=ASHAScheduler(
+                metric="valid.f1-score",
+                mode="max",
             ),
-            "max_grad_norm": ray.tune.uniform(0.1, 0.9),
-        }
-
-        if not ray.is_initialized():
-            ray.init()
-
-        tuner = ray.tune.Tuner(
-            functools.partial(train_func, trainer=trainer),
-            param_space=search_space,
-        )
-        tuner.fit()
-    else:
-        # Training
-        trainer.train()
+        ),
+    )
+    results = tuner.fit()
+    dfs = {result.path: result.metrics_dataframe for result in results}
+    print(dfs)
 
 
 if __name__ == "__main__":
