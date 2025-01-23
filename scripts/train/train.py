@@ -483,8 +483,8 @@ def main(
 
             # Create a new config with the hyperparameters
             trial_config = TrainingArguments(**vars(training_args))
-            trial_config.learning_rate = config["learning_rate"]
-            trial_config.max_grad_norm = config["max_grad_norm"]
+            for k, v in config.items():
+                setattr(trial_config, k, v)
 
             # Create a fresh model
             trial_model = ContextClassifier.from_pretrained(
@@ -518,7 +518,7 @@ def main(
             "learning_rate": ray.tune.loguniform(1e-6, 1e-2),
             "max_grad_norm": ray.tune.uniform(0.1, 1.0),
             "num_train_epochs": ray.tune.randint(5, 30),
-            "per_device_train_batch_size": ray.tune.choice([16, 32, 64, 128]),
+            "per_device_train_batch_size": ray.tune.choice([16, 32, 64, 128, 256]),
             "label_smoothing_factor": ray.tune.uniform(0.0, 0.1),
         }
 

@@ -30,6 +30,6 @@ trainer:
     init_bias: True
     lr_scheduler:
         warmup_factor: 0.001
-        warmup_steps_pct: 0.05
+        warmup_steps_pct: 0.02
     freeze_backbone: True
     hp_search: True
