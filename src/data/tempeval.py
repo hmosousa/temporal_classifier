@@ -13,6 +13,7 @@ from src.data.utils import (
 
 def load_interval_tempeval(
     split: Literal["train", "valid", "test"],
+    closure: bool = False,
     **kwargs,
 ) -> datasets.Dataset:
     """Load TempEval-3 dataset."""
@@ -31,7 +32,12 @@ def load_interval_tempeval(
 
     examples = []
     for doc in docs:
-        for tlink in set(doc.tlinks):
+        if closure:
+            tlinks = doc.temporal_closure
+        else:
+            tlinks = doc.tlinks
+
+        for tlink in tlinks:
             if tlink.source.id == tlink.target.id:
                 continue
 
@@ -58,6 +64,7 @@ def load_interval_tempeval(
 
 def load_point_tempeval(
     split: Literal["train", "valid", "test"],
+    closure: bool = False,
     **kwargs,
 ) -> datasets.Dataset:
     """Load TempEval-3 dataset."""
@@ -76,7 +83,12 @@ def load_point_tempeval(
 
     examples = []
     for doc in docs:
-        for tlink in set(doc.tlinks):
+        if closure:
+            tlinks = doc.temporal_closure
+        else:
+            tlinks = doc.tlinks
+
+        for tlink in tlinks:
             context = get_tlink_context(doc, tlink)
             relations = tlink_to_point_relations(tlink)
             for relation in relations:
