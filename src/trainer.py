@@ -173,6 +173,7 @@ class Trainer:
             pin_memory=True,
             num_workers=mp.cpu_count(),
             drop_last=True,
+            prefetch_factor=4,
         )
         return self.accelerator.prepare(dataloader)
 
