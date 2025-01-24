@@ -1,3 +1,7 @@
+"""
+This script is intended to delete a list of models from the Hugging Face Hub.
+"""
+
 import huggingface_hub
 
 
