@@ -4008,13 +4008,13 @@ files = [
 
 [[package]]
 name = "tieval"
-version = "0.1.4"
+version = "0.1.5"
 description = "A framework for evaluation and development of temporal-aware models."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "tieval-0.1.4-py3-none-any.whl", hash = "sha256:ef4d3123501114344039d12bfde1455008f51e08a739297a8e435f3e73c6efb6"},
-    {file = "tieval-0.1.4.tar.gz", hash = "sha256:e5254dacce26642f9e1d946439ff569a1b5ee46789e31b90f199b34ecba534e3"},
+    {file = "tieval-0.1.5-py3-none-any.whl", hash = "sha256:bf5ae6d64b1c082567befb54f60889ccb94d1df7f17c2088c7ee11a49a656d68"},
+    {file = "tieval-0.1.5.tar.gz", hash = "sha256:e8717d736fb39d986bee0a43e8cd5d034cc5bfb533d6d808cf6585325789a055"},
 ]
 
 [package.dependencies]
@@ -4617,4 +4617,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "bf62121486872e3506ec2c1aa16de56a1c0973b14e7c35e8146ea4b7e2d9d75e"
+content-hash = "90b0d0ee7e0501b15d7ee64abe3091095b359c8183cf315632455e65348425af"

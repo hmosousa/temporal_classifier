@@ -90,6 +90,22 @@ class PointRelation:
             "type": self.type,
         }
 
+    @property
+    def source_endpoint(self) -> str:
+        return self.source.split(" ")[0]
+
+    @property
+    def source_id(self) -> str:
+        return self.source.split(" ")[1]
+
+    @property
+    def target_endpoint(self) -> str:
+        return self.target.split(" ")[0]
+
+    @property
+    def target_id(self) -> str:
+        return self.target.split(" ")[1]
+
 
 class Timeline:
     def __init__(
@@ -266,3 +282,16 @@ def tlinks2relations(tlinks):
         ]
 
     return set(relations)
+
+
+def tlink_to_point_relations(tlink: TLink) -> List[PointRelation]:
+    pr = [r if r is not None else "-" for r in tlink.relation.point.relation]
+
+    return [
+        PointRelation(f"start {tlink.source_id}", f"start {tlink.target_id}", pr[0]),
+        PointRelation(f"start {tlink.source_id}", f"end {tlink.target_id}", pr[1]),
+        PointRelation(f"end {tlink.source_id}", f"start {tlink.target_id}", pr[2]),
+        PointRelation(f"end {tlink.source_id}", f"end {tlink.target_id}", pr[3]),
+        PointRelation(f"start {tlink.source_id}", f"end {tlink.source_id}", "<"),
+        PointRelation(f"start {tlink.target_id}", f"end {tlink.target_id}", "<"),
+    ]
