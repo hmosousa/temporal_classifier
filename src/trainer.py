@@ -67,6 +67,7 @@ class Trainer:
         tokenizer: transformers.PreTrainedTokenizer,
         train_dataset: datasets.Dataset,
         valid_dataset: datasets.Dataset,
+        test_dataset: datasets.Dataset,
         data_collator,
     ):
         self.config = config
@@ -150,6 +151,7 @@ class Trainer:
         self.tokenizer = tokenizer
         self.train_dataset = train_dataset
         self.valid_dataset = valid_dataset
+        self.test_dataset = test_dataset
         self.data_collator = data_collator
         self.features = ["input_ids", "attention_mask", "label"]
 
@@ -183,6 +185,9 @@ class Trainer:
         valid_loader = self.get_dataloaders(
             self.valid_dataset, self.config.per_device_eval_batch_size
         )
+        test_loader = self.get_dataloaders(
+            self.test_dataset, self.config.per_device_eval_batch_size
+        )
 
         self.run = wandb.init(
             project="TemporalClassifier", name=f"{self.output_dir.stem}-{run_id}"
@@ -194,13 +199,15 @@ class Trainer:
         best_valid_f1 = float("-inf")
         for epoch in range(self.config.num_train_epochs):
             train_metrics = self.train_step(train_loader)
-            valid_metrics = self.valid_step(valid_loader)
+            valid_metrics = self.eval_step(valid_loader)
+            test_metrics = self.eval_step(test_loader)
 
             self.run.log(
                 {
                     "epoch": epoch,
                     "train": train_metrics,
                     "valid": valid_metrics,
+                    "test": test_metrics,
                 },
                 step=self.global_step,
             )
@@ -335,12 +342,12 @@ class Trainer:
         metrics["loss"] = total_loss / len(train_loader)
         return metrics
 
-    def valid_step(self, valid_loader: DataLoader):
+    def eval_step(self, dataloader: DataLoader):
         self.model.eval()
         total_loss = 0
         y_preds, y_trues = [], []
         with torch.no_grad():
-            for batch in valid_loader:
+            for batch in dataloader:
                 logits = self.model.forward(**batch).logits
                 loss = self.criterion(logits, batch["labels"])
                 total_loss += loss.item()
@@ -349,7 +356,7 @@ class Trainer:
 
         metrics = self.compute_metrics(y_preds, y_trues)
         metrics = {f"{k}": v for k, v in metrics.items()}
-        metrics["loss"] = total_loss / len(valid_loader)
+        metrics["loss"] = total_loss / len(dataloader)
         return metrics
 
     @staticmethod

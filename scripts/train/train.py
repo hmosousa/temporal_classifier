@@ -109,11 +109,11 @@ class DataTrainingArguments:
             )
         },
     )
-    max_predict_samples: Optional[int] = field(
+    max_test_samples: Optional[int] = field(
         default=None,
         metadata={
             "help": (
-                "For debugging purposes or quicker training, truncate the number of prediction examples to this "
+                "For debugging purposes or quicker training, truncate the number of test examples to this "
                 "value if set."
             )
         },
@@ -319,11 +319,17 @@ def main(
         split=data_args.valid_split,
         config=data_args.dataset_config_name,
     )
+    testset = load_dataset(
+        data_args.dataset_name,
+        split=data_args.test_split,
+        config=data_args.dataset_config_name,
+    )
 
     raw_datasets = datasets.DatasetDict(
         {
             "train": trainset,
             "valid": validset,
+            "test": testset,
         }
     )
 
@@ -429,6 +435,13 @@ def main(
         eval_dataset = augment_dataset(eval_dataset)
     raw_datasets["valid"] = eval_dataset
 
+    # Test data
+    test_dataset = raw_datasets["test"]
+    if data_args.max_test_samples is not None:
+        max_test_samples = min(len(test_dataset), data_args.max_test_samples)
+        test_dataset = test_dataset.select(range(max_test_samples))
+    raw_datasets["test"] = test_dataset
+
     # Running the preprocessing pipeline on all the datasets
     raw_datasets = raw_datasets.map(
         preprocess_function,
@@ -439,7 +452,7 @@ def main(
     )
     train_dataset = raw_datasets["train"]
     eval_dataset = raw_datasets["valid"]
-
+    test_dataset = raw_datasets["test"]
     logger.info(
         f"Dropping rows in the training dataset with more than {max_seq_length} tokens"
     )
@@ -470,6 +483,7 @@ def main(
         tokenizer_ref = ray.put(tokenizer)
         train_dataset_ref = ray.put(train_dataset)
         eval_dataset_ref = ray.put(eval_dataset)
+        test_dataset_ref = ray.put(test_dataset)
         data_collator_ref = ray.put(data_collator)
         model_config_ref = ray.put(model_config)
 
@@ -478,6 +492,7 @@ def main(
             tokenizer = ray.get(tokenizer_ref)
             train_dataset = ray.get(train_dataset_ref)
             eval_dataset = ray.get(eval_dataset_ref)
+            test_dataset = ray.get(test_dataset_ref)
             data_collator = ray.get(data_collator_ref)
             model_config = ray.get(model_config_ref)
 
@@ -509,6 +524,7 @@ def main(
                 tokenizer=tokenizer,
                 train_dataset=train_dataset,
                 valid_dataset=eval_dataset,
+                test_dataset=test_dataset,
                 data_collator=data_collator,
             )
 
@@ -545,6 +561,7 @@ def main(
             tokenizer=tokenizer,
             train_dataset=train_dataset,
             valid_dataset=eval_dataset,
+            test_dataset=test_dataset,
             data_collator=data_collator,
         )
 
