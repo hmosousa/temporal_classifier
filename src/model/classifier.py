@@ -22,19 +22,17 @@ class ContextClassifier(LlamaForSequenceClassification):
         self.num_labels = config.num_labels
         self.model = LlamaModel(config)
 
-        self.hidden = nn.Linear(
-            self.score_hidden_size,
-            self.score_hidden_size,
-            bias=True,
+        n_score_hidden_layers = self.config.n_score_hidden_layers
+        score_layers = []
+        for _ in range(max(n_score_hidden_layers - 1, 0)):
+            score_layers.append(
+                nn.Linear(self.score_hidden_size, self.score_hidden_size, bias=True)
+            )
+            score_layers.append(nn.ReLU())
+        score_layers.append(
+            nn.Linear(self.score_hidden_size, self.num_labels, bias=True)
         )
-
-        self.activation = nn.ReLU()
-
-        self.score = nn.Linear(
-            self.score_hidden_size,
-            self.num_labels,
-            bias=True,
-        )
+        self.score = nn.Sequential(*score_layers)
 
         self.tokens_to_encode_ids = config.tokens_to_encode_ids
 
@@ -134,8 +132,6 @@ class ContextClassifier(LlamaForSequenceClassification):
         pooled_hidden_states = pooled_hidden_states.to(hidden.device)
 
         hidden = torch.cat([hidden, pooled_hidden_states], dim=1)
-        hidden = self.hidden(hidden)
-        hidden = self.activation(hidden)
         logits = self.score(hidden)
 
         return SequenceClassifierOutputWithPast(logits=logits)

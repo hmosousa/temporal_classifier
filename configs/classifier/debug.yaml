@@ -1,7 +1,8 @@
 model:
     model_name_or_path: HuggingFaceTB/SmolLM2-135M
     trust_remote_code: True
-
+    n_score_hidden_layers: 2
+    
 data:
     dataset_name: point_tempeval
     train_split: train

@@ -187,6 +187,10 @@ class ModelArguments:
             "help": "Will enable to load a pretrained model whose head dimensions are different."
         },
     )
+    n_score_hidden_layers: int = field(
+        default=1,
+        metadata={"help": "The number of hidden layers to use in the score function."},
+    )
 
 
 @dataclass
@@ -373,6 +377,7 @@ def main(
 
     logger.info(f"Adding new tokens to the model: {new_token_ids}")
     model_config.tokens_to_encode_ids = new_token_ids
+    model_config.n_score_hidden_layers = config.model.n_score_hidden_layers
 
     model = ContextClassifier.from_pretrained(
         model_args.model_name_or_path,
