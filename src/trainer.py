@@ -211,9 +211,8 @@ class Trainer:
                     f"Saving model. New best valid f1-score: {best_valid_f1:.4f}"
                 )
                 self.save_model(output_dir=self.output_dir / run_id)
-
+                self.save_tokenizer(self.output_dir / run_id)
                 if self.config.push_to_hub:
-                    self.save_tokenizer(self.output_dir / run_id)
                     self.push_to_hub(
                         repo_id=f"{self.config.hub_model_id}-{run_id}",
                         folder_path=self.output_dir / run_id,
@@ -270,8 +269,6 @@ class Trainer:
                 commit_message="End of training",
                 blocking=True,
             )
-
-        self.run.finish(exit_code=0)  # success
 
     def train_step(self, train_loader: DataLoader):
         self.model.train()

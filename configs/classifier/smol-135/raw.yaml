@@ -22,7 +22,7 @@ trainer:
     load_best_model_at_end: True
     seed: 42
     bf16: True
-    push_to_hub: False
+    push_to_hub: True
     hub_model_id: hugosousa/smol-135
     label_smoothing_factor: 0.01
     torch_compile: False
