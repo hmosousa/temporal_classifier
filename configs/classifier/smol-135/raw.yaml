@@ -1,7 +1,7 @@
 model:
     model_name_or_path: HuggingFaceTB/SmolLM2-135M
     trust_remote_code: True
-    n_score_hidden_layers: 2
+    n_score_hidden_layers: 5
 
 data:
     dataset_name: point_tempeval
@@ -15,8 +15,8 @@ data:
 
 trainer:
     output_dir: models/smol-135
-    per_device_train_batch_size: 128
-    per_device_eval_batch_size: 128
+    per_device_train_batch_size: 16
+    per_device_eval_batch_size: 16
     num_train_epochs: 10
     learning_rate: 4e-4
     max_grad_norm: 0.5

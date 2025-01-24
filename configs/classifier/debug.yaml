@@ -30,7 +30,7 @@ trainer:
     hub_model_id: hugosousa/debug
     label_smoothing_factor: 0.01
     early_stopping_patience: 3
-    init_bias: False
+    init_bias: True
     lr_scheduler:
         warmup_factor: 0.001
         warmup_steps_pct: 0.05

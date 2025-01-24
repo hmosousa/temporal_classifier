@@ -81,8 +81,8 @@ class Trainer:
             counter = collections.Counter(lids)
             fqs = [counter[i] / len(train_dataset) for i in range(len(counter))]
             init_bias = torch.log(torch.tensor(fqs))
-            init_bias = init_bias.to(model.score.bias.dtype)
-            model.score.bias.data = init_bias
+            init_bias = init_bias.to(model.score[-1].bias.dtype)
+            model.score[-1].bias.data = init_bias
 
         if config.freeze_backbone:
             logger.info(
