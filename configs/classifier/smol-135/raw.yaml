@@ -1,7 +1,7 @@
 model:
     model_name_or_path: HuggingFaceTB/SmolLM2-135M
     trust_remote_code: True
-    n_score_hidden_layers: 5
+    n_score_hidden_layers: 2
 
 data:
     dataset_name: point_tempeval
@@ -25,12 +25,12 @@ trainer:
     bf16: True
     push_to_hub: True
     hub_model_id: hugosousa/smol-135
-    label_smoothing_factor: 0.05
+    label_smoothing_factor: 0.03
     torch_compile: False
     early_stopping_patience: 5
     init_bias: True
     lr_scheduler:
         warmup_factor: 0.001
         warmup_steps_pct: 0.02
-    freeze_backbone: True
-    hp_search: False
+    freeze_backbone: False
+    hp_search: True

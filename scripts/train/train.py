@@ -13,6 +13,9 @@ import transformers
 from fire import Fire
 from omegaconf import OmegaConf
 
+# from ray.tune.search.bayesopt import BayesOptSearch
+from ray.tune.search.optuna import OptunaSearch
+
 from src.base import RELATIONS2ID
 from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
 from src.data import augment_dataset, load_dataset
@@ -539,8 +542,7 @@ def main(
             "learning_rate": ray.tune.loguniform(1e-6, 1e-2),
             "max_grad_norm": ray.tune.uniform(0.1, 1.0),
             "num_train_epochs": ray.tune.randint(5, 30),
-            "per_device_train_batch_size": ray.tune.choice([16, 32, 64, 128, 256]),
-            "label_smoothing_factor": ray.tune.uniform(0.0, 0.1),
+            "per_device_train_batch_size": ray.tune.choice([4, 8, 16]),
         }
 
         if not ray.is_initialized():
@@ -550,13 +552,17 @@ def main(
             run_or_experiment=train_func,
             config=search_space,
             resources_per_trial={"cpu": mp.cpu_count() // 4, "gpu": 1},
-            num_samples=20,
+            num_samples=50,
             max_concurrent_trials=4,
             scheduler=ray.tune.schedulers.AsyncHyperBandScheduler(
                 metric="f1-score",
                 mode="max",
             ),
             log_to_file=True,
+            search_alg=OptunaSearch(
+                metric="f1-score",
+                mode="max",
+            ),
         )
 
     else:
