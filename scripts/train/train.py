@@ -15,7 +15,7 @@ from omegaconf import OmegaConf
 
 from ray.tune.search.optuna import OptunaSearch
 
-from src.base import RELATIONS2ID
+from src.base import MODEL_ID2RELATIONS, MODEL_RELATIONS, MODEL_RELATIONS2ID
 from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
 from src.data import augment_dataset, load_dataset
 from src.model.classifier import ContextClassifier
@@ -342,11 +342,6 @@ def main(
     # Print some info about the dataset
     logger.info(f"Dataset loaded: {raw_datasets}")
 
-    relations = set(raw_datasets["train"]["label"])
-    num_labels = len(relations)
-    label2id = {r: RELATIONS2ID[r] for r in relations}
-    id2label = {RELATIONS2ID[r]: r for r in relations}
-
     # Load pretrained model and tokenizer
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
@@ -368,13 +363,13 @@ def main(
 
     model_config = LlamaConfig.from_pretrained(
         model_args.model_name_or_path,
-        num_labels=num_labels,
+        num_labels=len(MODEL_RELATIONS),
         finetuning_task="text-classification",
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         token=model_args.token,
-        label2id=label2id,
-        id2label=id2label,
+        label2id=MODEL_RELATIONS2ID,
+        id2label=MODEL_ID2RELATIONS,
     )
 
     logger.info(f"Adding new tokens to the model: {new_token_ids}")
@@ -415,8 +410,8 @@ def main(
 
     def preprocess_function(examples):
         result = tokenizer(examples["text"], padding=padding)
-        if label2id is not None and "label" in examples:
-            result["label"] = [label2id[label] for label in examples["label"]]
+        if MODEL_RELATIONS2ID is not None and "label" in examples:
+            result["label"] = [MODEL_RELATIONS2ID[label] for label in examples["label"]]
         return result
 
     # Train data

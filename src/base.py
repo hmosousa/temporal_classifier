@@ -2,8 +2,8 @@ from typing import Dict, List, Literal
 
 from tieval.links import TLink
 
-RELATIONS = ["<", ">", "="]
-
+RELATIONS = ["<", ">", "=", "-"]
+MODEL_RELATIONS = ["<", ">", "="]
 
 N_RELATIONS = len(RELATIONS)
 
@@ -11,14 +11,19 @@ INVERT_RELATION = {
     "<": ">",
     ">": "<",
     "=": "=",
+    "-": "-",
 }
 
 RELATIONS2ID = {
     ">": 0,
     "<": 1,
     "=": 2,
+    "-": 3,
 }
 ID2RELATIONS = {v: k for k, v in RELATIONS2ID.items()}
+
+MODEL_RELATIONS2ID = {k: RELATIONS2ID[k] for k in MODEL_RELATIONS}
+MODEL_ID2RELATIONS = {v: k for k, v in MODEL_RELATIONS2ID.items()}
 
 ENDPOINT_TYPES = ["start", "end"]
 

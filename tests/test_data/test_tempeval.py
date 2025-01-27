@@ -92,7 +92,7 @@ def test_load_point_tempeval_train_closure():
 
     assert isinstance(trainset, Dataset)
     assert set(trainset.column_names) == {"doc", "text", "label"}
-    assert len(trainset) > 270_000
+    assert len(trainset) == 376_818
 
 
 def test_load_point_tempeval_valid_closure():
@@ -100,7 +100,7 @@ def test_load_point_tempeval_valid_closure():
 
     assert isinstance(validset, Dataset)
     assert set(validset.column_names) == {"doc", "text", "label"}
-    assert len(validset) > 32_400
+    assert len(validset) == 47_125
 
 
 def test_load_point_tempeval_test_closure():
@@ -108,7 +108,7 @@ def test_load_point_tempeval_test_closure():
 
     assert isinstance(testset, Dataset)
     assert set(testset.column_names) == {"doc", "text", "label"}
-    assert len(testset) == 13_832
+    assert len(testset) == 23_220
 
 
 def test_load_dataset_point_tempeval_closure():
@@ -124,6 +124,6 @@ def test_load_dataset_point_tempeval_closure():
     assert set(validset.column_names) == {"doc", "text", "label"}
     assert set(trainset.column_names) == {"doc", "text", "label"}
 
-    assert len(testset) == 13_832
-    assert len(validset) > 32_400
-    assert len(trainset) > 270_000
+    assert len(testset) == 23_220
+    assert len(validset) == 47_125
+    assert len(trainset) == 376_818
