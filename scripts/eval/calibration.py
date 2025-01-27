@@ -1,16 +1,15 @@
+import json
 import logging
 from typing import Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 from fire import Fire
 from sklearn.calibration import calibration_curve
 
-from src.base import ID2RELATIONS, RELATIONS
-from src.constants import IMGS_DIR
+from src.constants import CACHE_DIR, IMGS_DIR
 from src.data import load_dataset
-from transformers import pipeline
+from src.model import load_model
 
 logging.basicConfig(level=logging.INFO)
 
@@ -49,13 +48,18 @@ def expected_calibration_error(y_true, y_prob, n_bins=5):
 
 
 def main(
-    model_name: str = "hugosousa/smol-135-tq",
+    model_name: str = "hugosousa/smol-135-fe09845a",
     revision: str = "main",
-    dataset_name: Literal["temporal_questions", "timeset"] = "temporal_questions",
-    config_name: str = None,
+    dataset_name: Literal[
+        "point_tempeval",
+        "timeset",
+        "matres",
+        "point_tddiscourse",
+        "point_timebank_dense",
+    ] = "point_tempeval",
     batch_size: int = 512,
-    n_bins: int = 15,
-    strategy: Literal["uniform", "quantile"] = "uniform",
+    n_bins: int = 20,
+    strategy: Literal["uniform", "quantile"] = "quantile",
 ):
     """Evaluate a model with a given configuration.
 
@@ -65,49 +69,59 @@ def main(
         dataset_name: The name of the dataset to evaluate on.
         strategy: The strategy to use for calibration.
     """
-    if dataset_name == "temporal_questions" and config_name is None:
-        config_name = "closure"
-
     IMGS_DIR.mkdir(parents=True, exist_ok=True)
 
     logging.info("Running calibration with the following parameters:")
     logging.info(f"  model_name: {model_name}")
     logging.info(f"  revision: {revision}")
     logging.info(f"  dataset_name: {dataset_name}")
-    logging.info(f"  config_name: {config_name}")
     logging.info(f"  batch_size: {batch_size}")
     logging.info(f"  n_bins: {n_bins}")
     logging.info(f"  strategy: {strategy}")
     logging.info(f"Loading dataset {dataset_name}")
-    dataset = load_dataset(dataset_name, split="test", config=config_name)
 
-    logging.info(f"Loading model {model_name}")
-    classifier = pipeline(
-        "text-classification",
-        model=model_name,
-        torch_dtype=torch.bfloat16,
-        device_map="auto",
-        revision=revision,
-    )
+    cachepath = CACHE_DIR / "results" / "point" / dataset_name / f"{model_name}.json"
 
-    logging.info("Getting predictions")
-    preds = classifier(dataset["text"], batch_size=batch_size, top_k=len(RELATIONS))
+    dataset = load_dataset(dataset_name, split="test")
+
+    classifier = load_model("classifier", model_name, revision)
+
+    id2label = classifier.model.config.id2label
+    label2id = classifier.model.config.label2id
+    unique_labels = list(id2label.values())
+
+    if cachepath.exists():
+        logging.info(f"Loading predictions from {cachepath}")
+        with open(cachepath, "r") as f:
+            preds = json.load(f)
+    else:
+        logging.info(f"Loading model {model_name}")
+
+        logging.info("Getting predictions")
+        preds = classifier(
+            dataset["text"], batch_size=batch_size, top_k=len(unique_labels)
+        )
+
+        logging.info(f"Saving predictions to {cachepath}")
+        cachepath.parent.mkdir(parents=True, exist_ok=True)
+        with open(cachepath, "w") as f:
+            json.dump(preds, f)
 
     # Convert pipeline predictions to a matrix of probabilities
-    y_prob = np.zeros((len(dataset), len(RELATIONS)))
+    y_prob = np.zeros((len(dataset), len(unique_labels)))
     for i, p in enumerate(preds):
         for pred in p:
-            y_prob[i, RELATIONS.index(pred["label"])] = pred["score"]
+            y_prob[i, label2id[pred["label"]]] = pred["score"]
 
     # Convert dataset labels to label idxs
-    y_true = np.array([RELATIONS.index(label) for label in dataset["label"]])
+    y_true = np.array([label2id[label] for label in dataset["label"]])
 
     ece = expected_calibration_error(y_true, y_prob, n_bins=n_bins)
     logging.info(f"ECE: {ece}")
 
     plt.figure(figsize=(8, 6))
     plt.plot([0, 1], [0, 1], "k--", label="Perfect calibration")
-    for label_idx, label in ID2RELATIONS.items():
+    for label_idx, label in id2label.items():
         # transform dataset to binary classification
         y_true_binary = (y_true == label_idx).astype(int)
         y_prob_binary = y_prob[:, label_idx]
@@ -133,10 +147,7 @@ def main(
     plt.title(f"ECE: {ece:.4f}")
     plt.grid()
     plt.legend()
-    fout = (
-        IMGS_DIR
-        / f"calibration_{model_name.split('/')[-1]}_{dataset_name}_{config_name}.png"
-    )
+    fout = IMGS_DIR / f"calibration_{model_name.split('/')[-1]}_{dataset_name}.png"
     plt.savefig(fout, bbox_inches="tight", dpi=300)
     plt.close()
 

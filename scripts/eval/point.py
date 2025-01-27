@@ -2,7 +2,7 @@ import json
 import logging
 from typing import Literal
 
-import datasets
+import numpy as np
 
 from fire import Fire
 from sklearn.metrics import classification_report
@@ -36,7 +36,7 @@ def add_text_type(example: dict):
 
 
 def main(
-    model_name: str = "majority",
+    model_name: str = "hugosousa/smol-135-0dd0da37",
     revision: str = "main",
     dataset_name: Literal[
         "point_tempeval",
@@ -44,7 +44,7 @@ def main(
         "matres",
         "point_tddiscourse",
         "point_timebank_dense",
-    ] = "timeset",
+    ] = "point_tempeval",
     batch_size: int = 32,
     confidence: bool = True,
 ):
@@ -66,33 +66,54 @@ def main(
     logging.info(f"  confidence: {confidence}")
 
     outpath = RESULTS_DIR / "point" / dataset_name / f"{model_name}.json"
-    cachepath = CACHE_DIR / "results" / "point" / dataset_name / f"{model_name}"
+    cachepath = CACHE_DIR / "results" / "point" / dataset_name / f"{model_name}.json"
 
-    if cachepath.exists():
-        dataset = datasets.load_from_disk(cachepath)
-    else:
-        logging.info(f"Loading dataset {dataset_name}")
-        dataset = load_dataset(dataset_name, split="test")
-        dataset = dataset.map(add_text_type)
+    logging.info(f"Loading dataset {dataset_name}")
+    dataset = load_dataset(dataset_name, split="test")
+    dataset = dataset.map(add_text_type)
 
-        logging.info(f"Loading model {model_name}")
-        if model_name == "random":
-            classifier = RandomClassifier(RELATIONS)
-        elif model_name == "majority":
-            classifier = MajorityClassifier(dataset["label"])
-        else:
-            classifier = load_model("classifier", model_name, revision)
-
-        logging.info("Getting predictions")
-        preds = classifier(dataset["text"], batch_size=batch_size)
-        preds = [p["label"] for p in preds]
-        dataset = dataset.add_column("pred", preds)
-
-        dataset.save_to_disk(cachepath)
-
-    logging.info("Calculating metrics")
     unique_labels = list(set(dataset["label"]))
     unique_labels.sort()
+
+    logging.info(f"Loading model {model_name}")
+    if model_name == "random":
+        classifier = RandomClassifier(RELATIONS)
+    elif model_name == "majority":
+        classifier = MajorityClassifier(dataset["label"])
+    else:
+        classifier = load_model("classifier", model_name, revision)
+
+    if cachepath.exists():
+        logging.info(f"Loading predictions from {cachepath}")
+        with open(cachepath, "r") as f:
+            preds = json.load(f)
+    else:
+        logging.info("Getting predictions")
+        preds = classifier(
+            dataset["text"], batch_size=batch_size, top_k=len(unique_labels)
+        )
+
+        logging.info(f"Saving predictions to {cachepath}")
+        cachepath.parent.mkdir(parents=True, exist_ok=True)
+        with open(cachepath, "w") as f:
+            json.dump(preds, f)
+
+    if isinstance(preds[0], dict):
+        preds = [p["label"] for p in preds]
+    else:
+        label2id = classifier.model.config.label2id
+        id2label = classifier.model.config.id2label
+        y_prob = np.zeros((len(dataset), len(unique_labels)))
+        for i, p in enumerate(preds):
+            for pred in p:
+                y_prob[i, label2id[pred["label"]]] = pred["score"]
+        y_pred = np.argmax(y_prob, axis=1)
+        preds = [id2label[i] for i in y_pred]
+
+    dataset = dataset.add_column("pred", preds)
+
+    logging.info("Calculating metrics")
+
     metrics = compute_metrics(dataset["label"], dataset["pred"], labels=unique_labels)
     if confidence:
         metrics["confidence"] = compute_confidence_intervals(
