@@ -3,8 +3,7 @@ from typing import Literal
 import datasets
 import tieval.datasets
 
-from src.base import Timeline
-
+from src.base import tlink_to_point_relations
 from src.data.utils import (
     get_tlink_context,
     INTERVAL_EXPECTED_TAGS,
@@ -75,8 +74,9 @@ def load_interval_tddiscourse(
 
     examples = []
     for doc in docs:
-        for tlink in doc.tlinks:
-            if tlink.source.id == tlink.target.id:
+        tlinks = doc.tlinks
+        for tlink in tlinks:
+            if tlink.source_id == tlink.target_id:
                 continue
 
             context = get_tlink_context(doc, tlink)
@@ -122,30 +122,29 @@ def load_point_tddiscourse(
 
     examples = []
     for doc in docs:
-        for tlink in set(doc.tlinks):
+        tlinks = doc.tlinks
+        for tlink in tlinks:
             context = get_tlink_context(doc, tlink)
-            timeline = Timeline(tlinks=[tlink]).to_dict()
-            for relation in timeline["relations"]:
-                src_endpoint, srcid = relation["source"].split(" ")
-                tgt_endpoint, tgtid = relation["target"].split(" ")
-                if srcid == tgtid:
+            relations = tlink_to_point_relations(tlink)
+            for relation in relations:
+                if relation.source_id == relation.target_id:
                     continue
 
-                if src_endpoint == "start":
+                if relation.source_endpoint == "start":
                     new_src_tags = "<start_source>", "</start_source>"
                 else:
                     new_src_tags = "<end_source>", "</end_source>"
 
-                if tgt_endpoint == "start":
+                if relation.target_endpoint == "start":
                     new_tgt_tags = "<start_target>", "</start_target>"
                 else:
                     new_tgt_tags = "<end_target>", "</end_target>"
 
                 text = (
-                    context.replace(f"<{srcid}>", new_src_tags[0])
-                    .replace(f"</{srcid}>", new_src_tags[1])
-                    .replace(f"<{tgtid}>", new_tgt_tags[0])
-                    .replace(f"</{tgtid}>", new_tgt_tags[1])
+                    context.replace(f"<{relation.source_id}>", new_src_tags[0])
+                    .replace(f"</{relation.source_id}>", new_src_tags[1])
+                    .replace(f"<{relation.target_id}>", new_tgt_tags[0])
+                    .replace(f"</{relation.target_id}>", new_tgt_tags[1])
                 )
 
                 tag_count = sum(1 for tag in POINT_EXPECTED_TAGS if tag in text)
@@ -156,8 +155,6 @@ def load_point_tddiscourse(
                 if "(PROFILE" in text:
                     text, _ = text.split("(PROFILE")
                     text = text.strip()
-                examples.append(
-                    {"doc": doc.name, "text": text, "label": relation["type"]}
-                )
+                examples.append({"doc": doc.name, "text": text, "label": relation.type})
 
     return datasets.Dataset.from_list(examples)
