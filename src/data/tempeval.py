@@ -1,3 +1,4 @@
+import random
 from typing import Literal
 
 import datasets
@@ -123,6 +124,11 @@ def load_point_tempeval(
                 relation["type"] = relation.pop("relation")
                 relation = PointRelation(**relation)
 
+                if random.random() < 0.5:
+                    # Point temporal closure returns all labels to either be = or <
+                    # We randomly invert the relation to have a more balanced dataset
+                    relation = ~relation
+
                 source_entity = entity_map[relation.source_id]
                 target_entity = entity_map[relation.target_id]
                 if source_entity == target_entity:
@@ -135,14 +141,14 @@ def load_point_tempeval(
                 )
                 context = get_tlink_context(doc, tlink)
                 point_relations.append((context, relation))
-            else:
-                for tlink in doc.tlinks:
-                    context = get_tlink_context(doc, tlink)
-                    relations = tlink_to_point_relations(tlink)
-                    for relation in relations:
-                        if relation.source_id == relation.target_id:
-                            continue
-                        point_relations.append((context, relation))
+        else:
+            for tlink in doc.tlinks:
+                context = get_tlink_context(doc, tlink)
+                relations = tlink_to_point_relations(tlink)
+                for relation in relations:
+                    if relation.source_id == relation.target_id:
+                        continue
+                    point_relations.append((context, relation))
 
     # Change the context tags according to the point relation
     examples = []

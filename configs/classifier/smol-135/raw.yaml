@@ -8,7 +8,8 @@ data:
     train_split: train
     valid_split: valid
     max_seq_length: 4096
-    augment: True
+    augment: False
+    closure: False
     pad_to_max_length: False # To pad each batch at runtime
     shuffle_train_dataset: True
     shuffle_seed: 42
@@ -18,7 +19,7 @@ trainer:
     per_device_train_batch_size: 16
     per_device_eval_batch_size: 16
     num_train_epochs: 10
-    learning_rate: 4e-4
+    learning_rate: 3e-4
     max_grad_norm: 0.5
     load_best_model_at_end: True
     seed: 42
@@ -33,4 +34,4 @@ trainer:
         warmup_factor: 0.001
         warmup_steps_pct: 0.02
     freeze_backbone: False
-    hp_search: True
+    hp_search: False

@@ -126,6 +126,10 @@ class DataTrainingArguments:
     augment: bool = field(
         default=False, metadata={"help": "Whether to augment the dataset or not."}
     )
+    closure: bool = field(
+        default=False,
+        metadata={"help": "Whether to compute the temporal closure of the annotation."},
+    )
 
 
 @dataclass
@@ -319,11 +323,13 @@ def main(
         data_args.dataset_name,
         split=data_args.train_split,
         config=data_args.dataset_config_name,
+        closure=data_args.closure,
     )
     validset = load_dataset(
         data_args.dataset_name,
         split=data_args.valid_split,
         config=data_args.dataset_config_name,
+        closure=data_args.closure,
     )
     testset = load_dataset(
         data_args.dataset_name,
