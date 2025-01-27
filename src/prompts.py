@@ -8,7 +8,6 @@ Options:
 <, in case the {source} happens before the {target}
 >, in case the {source} happens after the {target}
 =, in case the {source} happens the same time as the {target}
--, in case the {source} happens not related to the {target}
 
 Answer:
 """
@@ -18,7 +17,6 @@ RELATIONS2STR = {
     "<": "occurs before",
     ">": "occurs after",
     "=": "occurs at the same time",
-    "-": "is not related",
 }
 
 

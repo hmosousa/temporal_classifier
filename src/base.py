@@ -2,7 +2,7 @@ from typing import Dict, List, Literal
 
 from tieval.links import TLink
 
-RELATIONS = ["<", ">", "=", "-"]
+RELATIONS = ["<", ">", "="]
 
 
 N_RELATIONS = len(RELATIONS)
@@ -11,19 +11,16 @@ INVERT_RELATION = {
     "<": ">",
     ">": "<",
     "=": "=",
-    "-": "-",
 }
 
 RELATIONS2ID = {
     ">": 0,
     "<": 1,
     "=": 2,
-    "-": 3,
 }
+ID2RELATIONS = {v: k for k, v in RELATIONS2ID.items()}
 
 ENDPOINT_TYPES = ["start", "end"]
-
-ID2RELATIONS = {v: k for k, v in RELATIONS2ID.items()}
 
 
 class PointRelation:
