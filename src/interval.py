@@ -3,6 +3,8 @@ from typing import Dict, List, Literal
 import numpy as np
 from tieval.temporal_relation import _INTERVAL_TO_POINT_RELATION, PointRelation
 
+from src.base import ID2RELATIONS, RELATIONS2ID
+
 PAIRS = [
     ("start_source", "start_target"),
     ("start_source", "end_target"),
@@ -50,12 +52,11 @@ def get_interval_relation(
 def _high_to_low(
     y_prob: np.ndarray,
     point_to_interval_relation: Dict[PointRelation, str],
-    label2id: Dict[str, int],
 ) -> str:
     """Try to form an interval relation with the highest confidence point relation."""
-    id2label = {v: k for k, v in label2id.items()}
+
     point_relations = [
-        {"label": id2label[y_pred], "score": y_prob[i, y_pred].item()}
+        {"label": ID2RELATIONS[y_pred], "score": y_prob[i, y_pred].item()}
         for i, y_pred in enumerate(y_prob.argmax(axis=1))
     ]
 
@@ -88,18 +89,17 @@ def _high_to_low(
 def _most_likely(
     y_prob: np.ndarray,
     point_to_interval_relation: Dict[PointRelation, str],
-    label2id: Dict[str, int],
 ) -> str:
     """Try to form an interval relation with the highest confidence point relation."""
 
-    highest_prob, interval_relation = 0, None
-
+    highest_prob, interval_relation = 0.0, None
     for relation, relation_name in point_to_interval_relation.items():
         relation_probs = [
-            y_prob[row_idx, label2id[point_relation]]
+            y_prob[row_idx, RELATIONS2ID[point_relation]]
             for row_idx, point_relation in enumerate(relation.relation)
+            if point_relation is not None
         ]
-        relation_prob = np.prod(relation_probs)
+        relation_prob = np.prod(relation_probs) if relation_probs else 0.0
         if relation_prob > highest_prob:
             highest_prob = relation_prob
             interval_relation = relation_name

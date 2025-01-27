@@ -61,7 +61,9 @@ def compute_metrics(
         y_true, y_pred, labels=labels, zero_division=zero_division, output_dict=True
     )
     return {
-        "accuracy": report["accuracy"],
+        "accuracy": report["accuracy"]
+        if "accuracy" in report
+        else report["micro avg"]["f1-score"],
         "precision": report["macro avg"]["precision"],
         "recall": report["macro avg"]["recall"],
         "f1-score": report["macro avg"]["f1-score"],

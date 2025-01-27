@@ -7,7 +7,7 @@ import numpy as np
 from fire import Fire
 from sklearn.metrics import classification_report
 
-from src.base import RELATIONS
+from src.base import ID2RELATIONS, RELATIONS, RELATIONS2ID
 from src.constants import CACHE_DIR, RESULTS_DIR
 from src.data import load_dataset
 from src.metrics import compute_confidence_intervals, compute_metrics
@@ -44,7 +44,7 @@ def main(
         "matres",
         "point_tddiscourse",
         "point_timebank_dense",
-    ] = "point_tempeval",
+    ] = "matres",
     batch_size: int = 32,
     confidence: bool = True,
 ):
@@ -71,9 +71,6 @@ def main(
     dataset = load_dataset(dataset_name, split="test")
     dataset = dataset.map(add_text_type)
 
-    unique_labels = list(set(dataset["label"]))
-    unique_labels.sort()
-
     logging.info(f"Loading model {model_name}")
     if model_name == "random":
         classifier = RandomClassifier(RELATIONS)
@@ -88,9 +85,7 @@ def main(
             preds = json.load(f)
     else:
         logging.info("Getting predictions")
-        preds = classifier(
-            dataset["text"], batch_size=batch_size, top_k=len(unique_labels)
-        )
+        preds = classifier(dataset["text"], batch_size=batch_size, top_k=len(RELATIONS))
 
         logging.info(f"Saving predictions to {cachepath}")
         cachepath.parent.mkdir(parents=True, exist_ok=True)
@@ -100,23 +95,21 @@ def main(
     if isinstance(preds[0], dict):
         preds = [p["label"] for p in preds]
     else:
-        label2id = classifier.model.config.label2id
-        id2label = classifier.model.config.id2label
-        y_prob = np.zeros((len(dataset), len(unique_labels)))
+        y_prob = np.zeros((len(dataset), len(RELATIONS)))
         for i, p in enumerate(preds):
             for pred in p:
-                y_prob[i, label2id[pred["label"]]] = pred["score"]
+                y_prob[i, RELATIONS2ID[pred["label"]]] = pred["score"]
         y_pred = np.argmax(y_prob, axis=1)
-        preds = [id2label[i] for i in y_pred]
+        preds = [ID2RELATIONS[i] for i in y_pred]
 
     dataset = dataset.add_column("pred", preds)
 
     logging.info("Calculating metrics")
 
-    metrics = compute_metrics(dataset["label"], dataset["pred"], labels=unique_labels)
+    metrics = compute_metrics(dataset["label"], dataset["pred"], labels=RELATIONS)
     if confidence:
         metrics["confidence"] = compute_confidence_intervals(
-            dataset["label"], dataset["pred"], labels=unique_labels
+            dataset["label"], dataset["pred"], labels=RELATIONS
         )
 
     logging.info("Calculating metrics for each label")
@@ -125,7 +118,7 @@ def main(
         y_pred=dataset["pred"],
         output_dict=True,
         zero_division=0.0,
-        labels=unique_labels,
+        labels=RELATIONS,
     )
     per_label.pop("accuracy", None)
     per_label.pop("micro avg", None)
@@ -140,12 +133,12 @@ def main(
     for text_type in dataset_text_types:
         dataset_type = dataset.filter(lambda x: x["type"] == text_type)
         type_metrics[text_type] = compute_metrics(
-            dataset_type["label"], dataset_type["pred"], labels=unique_labels
+            dataset_type["label"], dataset_type["pred"], labels=RELATIONS
         )
         type_metrics[text_type]["support"] = len(dataset_type)
         if confidence:
             type_metrics[text_type]["confidence"] = compute_confidence_intervals(
-                dataset_type["label"], dataset_type["pred"], labels=unique_labels
+                dataset_type["label"], dataset_type["pred"], labels=RELATIONS
             )
     metrics["pre_type"] = type_metrics
 

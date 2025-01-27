@@ -24,7 +24,7 @@ def main(
     revision: str = "main",
     dataset_name: Literal[
         "interval_tempeval", "interval_tddiscourse"
-    ] = "interval_tempeval",
+    ] = "interval_timebank_dense",
     verbose: bool = False,
     strategy: Literal["high_to_low", "most_likely"] = "most_likely",
 ):
