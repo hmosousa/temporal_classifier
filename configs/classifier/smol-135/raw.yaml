@@ -8,7 +8,7 @@ data:
     train_split: train
     valid_split: valid
     max_seq_length: 4096
-    augment: False
+    augment: True
     pad_to_max_length: False # To pad each batch at runtime
     shuffle_train_dataset: True
     shuffle_seed: 42

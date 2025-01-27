@@ -13,7 +13,6 @@ import transformers
 from fire import Fire
 from omegaconf import OmegaConf
 
-# from ray.tune.search.bayesopt import BayesOptSearch
 from ray.tune.search.optuna import OptunaSearch
 
 from src.base import RELATIONS2ID

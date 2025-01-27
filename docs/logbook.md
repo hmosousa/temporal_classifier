@@ -79,3 +79,6 @@ Start-start and end-end relations are actually the ones that the classifier ends
 Something seems to be wrong with the timebank dense data. The tieval package has 12k relations, but the github [repo](https://github.com/muk343/TimeBank-dense) only has 10k.  The number reported in the paper is 12k.
 
 
+## 2025-01-26
+
+Last run without augmentation: "smol-135-83de7f1b"
