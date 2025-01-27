@@ -2,11 +2,13 @@ import json
 import logging
 from typing import Literal
 
+import datasets
+
 from fire import Fire
 from sklearn.metrics import classification_report
 
 from src.base import RELATIONS
-from src.constants import RESULTS_DIR
+from src.constants import CACHE_DIR, RESULTS_DIR
 from src.data import load_dataset
 from src.metrics import compute_confidence_intervals, compute_metrics
 from src.model import load_model, MajorityClassifier, RandomClassifier
@@ -63,28 +65,39 @@ def main(
     logging.info(f"  batch_size: {batch_size}")
     logging.info(f"  confidence: {confidence}")
 
-    logging.info(f"Loading dataset {dataset_name}")
-    dataset = load_dataset(dataset_name, split="test")
-    dataset = dataset.map(add_text_type)
+    outpath = RESULTS_DIR / "point" / dataset_name / f"{model_name}.json"
+    cachepath = CACHE_DIR / "results" / "point" / dataset_name / f"{model_name}"
 
-    logging.info(f"Loading model {model_name}")
-    if model_name == "random":
-        classifier = RandomClassifier(RELATIONS)
-    elif model_name == "majority":
-        classifier = MajorityClassifier(dataset["label"])
+    if cachepath.exists():
+        with open(cachepath, "r") as f:
+            dataset = datasets.load_dataset(cachepath)
     else:
-        classifier = load_model("classifier", model_name, revision)
+        logging.info(f"Loading dataset {dataset_name}")
+        dataset = load_dataset(dataset_name, split="test")
+        dataset = dataset.map(add_text_type)
 
-    logging.info("Getting predictions")
-    preds = classifier(dataset["text"], batch_size=batch_size)
-    preds = [p["label"] for p in preds]
-    dataset = dataset.add_column("pred", preds)
+        logging.info(f"Loading model {model_name}")
+        if model_name == "random":
+            classifier = RandomClassifier(RELATIONS)
+        elif model_name == "majority":
+            classifier = MajorityClassifier(dataset["label"])
+        else:
+            classifier = load_model("classifier", model_name, revision)
+
+        logging.info("Getting predictions")
+        preds = classifier(dataset["text"], batch_size=batch_size)
+        preds = [p["label"] for p in preds]
+        dataset = dataset.add_column("pred", preds)
+
+        dataset.save_to_disk(cachepath)
 
     logging.info("Calculating metrics")
-    metrics = compute_metrics(dataset["label"], dataset["pred"], labels=RELATIONS)
+    unique_labels = list(set(dataset["label"]))
+    unique_labels.sort()
+    metrics = compute_metrics(dataset["label"], dataset["pred"], labels=unique_labels)
     if confidence:
         metrics["confidence"] = compute_confidence_intervals(
-            dataset["label"], dataset["pred"], labels=RELATIONS
+            dataset["label"], dataset["pred"], labels=unique_labels
         )
 
     logging.info("Calculating metrics for each label")
@@ -93,7 +106,7 @@ def main(
         y_pred=dataset["pred"],
         output_dict=True,
         zero_division=0.0,
-        labels=RELATIONS,
+        labels=unique_labels,
     )
     per_label.pop("accuracy", None)
     per_label.pop("micro avg", None)
@@ -108,11 +121,12 @@ def main(
     for text_type in dataset_text_types:
         dataset_type = dataset.filter(lambda x: x["type"] == text_type)
         type_metrics[text_type] = compute_metrics(
-            dataset_type["label"], dataset_type["pred"], labels=RELATIONS
+            dataset_type["label"], dataset_type["pred"], labels=unique_labels
         )
+        type_metrics[text_type]["support"] = len(dataset_type)
         if confidence:
             type_metrics[text_type]["confidence"] = compute_confidence_intervals(
-                dataset_type["label"], dataset_type["pred"], labels=RELATIONS
+                dataset_type["label"], dataset_type["pred"], labels=unique_labels
             )
     metrics["pre_type"] = type_metrics
 
