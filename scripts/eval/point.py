@@ -54,7 +54,6 @@ def main(
         model_name: The HuggingFace name of the model to evaluate.
         revision: The revision of the model to evaluate.
         dataset_name: The name of the dataset to evaluate on.
-        config_name: The name of the config to evaluate on.
         batch_size: The batch size to use for evaluation.
         confidence: Whether to calculate confidence intervals.
     """
