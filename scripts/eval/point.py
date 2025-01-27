@@ -69,8 +69,7 @@ def main(
     cachepath = CACHE_DIR / "results" / "point" / dataset_name / f"{model_name}"
 
     if cachepath.exists():
-        with open(cachepath, "r") as f:
-            dataset = datasets.load_dataset(cachepath)
+        dataset = datasets.load_from_disk(cachepath)
     else:
         logging.info(f"Loading dataset {dataset_name}")
         dataset = load_dataset(dataset_name, split="test")
