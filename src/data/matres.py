@@ -33,6 +33,9 @@ def load_matres(
     examples = []
     for doc in docs:
         for tlink in doc.tlinks:
+            if tlink.relation.interval == "VAGUE":
+                continue
+
             context = get_tlink_context(doc, tlink)
 
             # Matres only has start-start annotations

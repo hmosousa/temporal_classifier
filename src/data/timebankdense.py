@@ -77,6 +77,9 @@ def load_interval_timebank_dense(
     examples = []
     for doc in docs:
         for tlink in set(doc.tlinks):
+            if tlink.relation.interval == "VAGUE":
+                continue
+
             if tlink.source.id == tlink.target.id:
                 continue
 
@@ -122,6 +125,10 @@ def load_point_timebank_dense(
         tlinks = doc.tlinks
         for tlink in tlinks:
             context = get_tlink_context(doc, tlink)
+
+            if tlink.relation.interval == "VAGUE":
+                continue
+
             relations = tlink_to_point_relations(tlink)
             for relation in relations:
                 if relation.source_id == relation.target_id:
