@@ -82,3 +82,23 @@ Something seems to be wrong with the timebank dense data. The tieval package has
 ## 2025-01-26
 
 Last run without augmentation: "smol-135-83de7f1b"
+
+## 2025-01-28
+
+Tempeval-3 uses the following labels:
+- BEFORE
+- AFTER
+- INCLUDES
+- IS_INCLUDED
+- DURING
+- DURING_INV
+- SIMULTANEOUS
+- IAFTER
+- IBEFORE
+- IDENTITY
+- BEGINS
+- ENDS
+- BEGUN_BY
+- ENDED_BY
+
+However, by reading the TimeML guidelines, one can infer that SIMULTANEOUS, IDENTITY are the same temporal relation. Furthermore, the DURING and the IS_INCLUDED are also the same relation. Same is true for  DURING_INV and INCLUDES. This is corroborated by Table 1 of the paper "A Survey on Temporal Reasoning forTemporal Information Extraction from Text" and the "Temporal Evaluation" paper, with one of the authors being Allen himself. This means that the number of unique relations in tempeval-3 is in fact 11.
