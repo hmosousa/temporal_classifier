@@ -7,7 +7,7 @@ import numpy as np
 from fire import Fire
 from sklearn.metrics import classification_report
 
-from src.base import ID2RELATIONS, RELATIONS, RELATIONS2ID
+from src.base import MODEL_ID2RELATIONS, MODEL_RELATIONS, MODEL_RELATIONS2ID
 from src.constants import CACHE_DIR, RESULTS_DIR
 from src.data import load_dataset
 from src.metrics import compute_confidence_intervals, compute_metrics
@@ -73,7 +73,7 @@ def main(
 
     logging.info(f"Loading model {model_name}")
     if model_name == "random":
-        classifier = RandomClassifier(RELATIONS)
+        classifier = RandomClassifier(MODEL_RELATIONS)
     elif model_name == "majority":
         classifier = MajorityClassifier(dataset["label"])
     else:
@@ -85,7 +85,9 @@ def main(
             preds = json.load(f)
     else:
         logging.info("Getting predictions")
-        preds = classifier(dataset["text"], batch_size=batch_size, top_k=len(RELATIONS))
+        preds = classifier(
+            dataset["text"], batch_size=batch_size, top_k=len(MODEL_RELATIONS)
+        )
 
         logging.info(f"Saving predictions to {cachepath}")
         cachepath.parent.mkdir(parents=True, exist_ok=True)
@@ -95,21 +97,21 @@ def main(
     if isinstance(preds[0], dict):
         preds = [p["label"] for p in preds]
     else:
-        y_prob = np.zeros((len(dataset), len(RELATIONS)))
+        y_prob = np.zeros((len(dataset), len(MODEL_RELATIONS)))
         for i, p in enumerate(preds):
             for pred in p:
-                y_prob[i, RELATIONS2ID[pred["label"]]] = pred["score"]
+                y_prob[i, MODEL_RELATIONS2ID[pred["label"]]] = pred["score"]
         y_pred = np.argmax(y_prob, axis=1)
-        preds = [ID2RELATIONS[i] for i in y_pred]
+        preds = [MODEL_ID2RELATIONS[i] for i in y_pred]
 
     dataset = dataset.add_column("pred", preds)
 
     logging.info("Calculating metrics")
 
-    metrics = compute_metrics(dataset["label"], dataset["pred"], labels=RELATIONS)
+    metrics = compute_metrics(dataset["label"], dataset["pred"], labels=MODEL_RELATIONS)
     if confidence:
         metrics["confidence"] = compute_confidence_intervals(
-            dataset["label"], dataset["pred"], labels=RELATIONS
+            dataset["label"], dataset["pred"], labels=MODEL_RELATIONS
         )
 
     logging.info("Calculating metrics for each label")
@@ -118,7 +120,7 @@ def main(
         y_pred=dataset["pred"],
         output_dict=True,
         zero_division=0.0,
-        labels=RELATIONS,
+        labels=MODEL_RELATIONS,
     )
     per_label.pop("accuracy", None)
     per_label.pop("micro avg", None)
@@ -133,12 +135,12 @@ def main(
     for text_type in dataset_text_types:
         dataset_type = dataset.filter(lambda x: x["type"] == text_type)
         type_metrics[text_type] = compute_metrics(
-            dataset_type["label"], dataset_type["pred"], labels=RELATIONS
+            dataset_type["label"], dataset_type["pred"], labels=MODEL_RELATIONS
         )
         type_metrics[text_type]["support"] = len(dataset_type)
         if confidence:
             type_metrics[text_type]["confidence"] = compute_confidence_intervals(
-                dataset_type["label"], dataset_type["pred"], labels=RELATIONS
+                dataset_type["label"], dataset_type["pred"], labels=MODEL_RELATIONS
             )
     metrics["pre_type"] = type_metrics
 

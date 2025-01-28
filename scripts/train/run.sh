@@ -1,12 +1,12 @@
 export OMP_NUM_THREADS=$(nproc)
 
 # 135 model
-accelerate launch --config_file configs/accelerate/zero2.yaml scripts/train/train.py --config_file configs/classifier/smol-135/raw.yaml
-accelerate launch --config_file configs/accelerate/zero2.yaml scripts/train/train.py --config_file configs/classifier/smol-135/closure.yaml
-accelerate launch --config_file configs/accelerate/zero2.yaml scripts/train/train.py --config_file configs/classifier/smol-135/augment.yaml
-accelerate launch --config_file configs/accelerate/zero2.yaml scripts/train/train.py --config_file configs/classifier/smol-135/synthetic.yaml 
-accelerate launch --config_file configs/accelerate/zero2.yaml scripts/train/train.py --config_file configs/classifier/smol-135/closure-augment.yaml
-accelerate launch --config_file configs/accelerate/zero2.yaml scripts/train/train.py --config_file configs/classifier/smol-135/closure-synthetic.yaml
+CUDA_VISIBLE_DEVICES=0 accelerate launch scripts/train/train.py --config_file configs/classifier/smol-135/raw.yaml
+CUDA_VISIBLE_DEVICES=1 accelerate launch scripts/train/train.py --config_file configs/classifier/smol-135/closure.yaml
+CUDA_VISIBLE_DEVICES=2 accelerate launch scripts/train/train.py --config_file configs/classifier/smol-135/augment.yaml
+CUDA_VISIBLE_DEVICES=3 accelerate launch scripts/train/train.py --config_file configs/classifier/smol-135/synthetic.yaml 
+CUDA_VISIBLE_DEVICES=3 accelerate launch scripts/train/train.py --config_file configs/classifier/smol-135/closure-augment.yaml
+CUDA_VISIBLE_DEVICES=1 accelerate launch scripts/train/train.py --config_file configs/classifier/smol-135/closure-synthetic.yaml
 accelerate launch --config_file configs/accelerate/zero2.yaml scripts/train/train.py --config_file configs/classifier/smol-135/augment-synthetic.yaml
 accelerate launch --config_file configs/accelerate/zero2.yaml scripts/train/train.py --config_file configs/classifier/smol-135/closure-augment-synthetic.yaml
 

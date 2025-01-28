@@ -3,7 +3,7 @@ from typing import Dict, List, Literal
 import numpy as np
 from tieval.temporal_relation import _INTERVAL_TO_POINT_RELATION, PointRelation
 
-from src.base import ID2RELATIONS, RELATIONS2ID
+from src.base import MODEL_ID2RELATIONS, MODEL_RELATIONS2ID
 
 PAIRS = [
     ("start_source", "start_target"),
@@ -56,7 +56,7 @@ def _high_to_low(
     """Try to form an interval relation with the highest confidence point relation."""
 
     point_relations = [
-        {"label": ID2RELATIONS[y_pred], "score": y_prob[i, y_pred].item()}
+        {"label": MODEL_ID2RELATIONS[y_pred], "score": y_prob[i, y_pred].item()}
         for i, y_pred in enumerate(y_prob.argmax(axis=1))
     ]
 
@@ -95,7 +95,7 @@ def _most_likely(
     highest_prob, interval_relation = 0.0, None
     for relation, relation_name in point_to_interval_relation.items():
         relation_probs = [
-            y_prob[row_idx, RELATIONS2ID[point_relation]]
+            y_prob[row_idx, MODEL_RELATIONS2ID[point_relation]]
             for row_idx, point_relation in enumerate(relation.relation)
             if point_relation is not None
         ]

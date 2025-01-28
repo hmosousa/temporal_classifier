@@ -8,7 +8,7 @@ import datasets
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-from src.base import ENDPOINT_TYPES, RELATIONS
+from src.base import ENDPOINT_TYPES, MODEL_RELATIONS
 from src.constants import CACHE_DIR, DATA_DIR, HF_TOKEN
 from src.data.utils import get_entity_mapping
 from src.model.gemini import GeminiAPI
@@ -48,13 +48,13 @@ def generate_prompts(dataset: datasets.Dataset) -> list[str]:
             and x["target_type"] == target_type
             and x["label"] == relation
         )
-        for relation in RELATIONS
+        for relation in MODEL_RELATIONS
         for source_type in ENDPOINT_TYPES
         for target_type in ENDPOINT_TYPES
     }
 
     # log the number of examples for each relation, source_type, target_type
-    for relation in RELATIONS:
+    for relation in MODEL_RELATIONS:
         for source_type in ENDPOINT_TYPES:
             for target_type in ENDPOINT_TYPES:
                 few_shot_examples = examples_datasets[
@@ -65,10 +65,10 @@ def generate_prompts(dataset: datasets.Dataset) -> list[str]:
                 )
 
     # create a progress bar
-    pb = tqdm(total=len(pairs) * len(RELATIONS) * len(ENDPOINT_TYPES) ** 2)
+    pb = tqdm(total=len(pairs) * len(MODEL_RELATIONS) * len(ENDPOINT_TYPES) ** 2)
     examples = []
     for pair in pairs:
-        for relation in RELATIONS:
+        for relation in MODEL_RELATIONS:
             for source_type in ENDPOINT_TYPES:
                 for target_type in ENDPOINT_TYPES:
                     few_shot_examples = examples_datasets[

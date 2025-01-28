@@ -1,0 +1,81 @@
+{
+    "AFTER": {
+        "precision": 0.7023809523809523,
+        "recall": 0.5959595959595959,
+        "f1-score": 0.644808743169399,
+        "support": 198.0
+    },
+    "IS_INCLUDED": {
+        "precision": 0.5726872246696035,
+        "recall": 0.7386363636363636,
+        "f1-score": 0.6451612903225806,
+        "support": 176.0
+    },
+    "IAFTER": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 9.0
+    },
+    "BEGINS": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 2.0
+    },
+    "SIMULTANEOUS": {
+        "precision": 0.5142857142857142,
+        "recall": 0.4909090909090909,
+        "f1-score": 0.5023255813953489,
+        "support": 110.0
+    },
+    "INCLUDES": {
+        "precision": 0.4016393442622951,
+        "recall": 0.5568181818181818,
+        "f1-score": 0.4666666666666667,
+        "support": 88.0
+    },
+    "BEGUN_BY": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 3.0
+    },
+    "ENDED_BY": {
+        "precision": 0.058823529411764705,
+        "recall": 0.5,
+        "f1-score": 0.10526315789473684,
+        "support": 2.0
+    },
+    "ENDS": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 3.0
+    },
+    "IBEFORE": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 8.0
+    },
+    "BEFORE": {
+        "precision": 0.8028673835125448,
+        "recall": 0.6787878787878788,
+        "f1-score": 0.735632183908046,
+        "support": 330.0
+    },
+    "accuracy": 0.620021528525296,
+    "macro avg": {
+        "precision": 0.27751674077480676,
+        "recall": 0.3237373737373737,
+        "f1-score": 0.2818052384869798,
+        "support": 929.0
+    },
+    "weighted avg": {
+        "precision": 0.6424585087166336,
+        "recall": 0.620021528525296,
+        "f1-score": 0.6248785208502852,
+        "support": 929.0
+    }
+}

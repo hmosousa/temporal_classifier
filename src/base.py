@@ -2,10 +2,10 @@ from typing import Dict, List, Literal
 
 from tieval.links import TLink
 
-RELATIONS = ["<", ">", "=", "-"]
+MODEL_RELATIONS = ["<", ">", "=", "-"]
 MODEL_RELATIONS = ["<", ">", "="]
 
-N_RELATIONS = len(RELATIONS)
+N_RELATIONS = len(MODEL_RELATIONS)
 
 INVERT_RELATION = {
     "<": ">",
@@ -14,15 +14,15 @@ INVERT_RELATION = {
     "-": "-",
 }
 
-RELATIONS2ID = {
+MODEL_RELATIONS2ID = {
     ">": 0,
     "<": 1,
     "=": 2,
     "-": 3,
 }
-ID2RELATIONS = {v: k for k, v in RELATIONS2ID.items()}
+MODEL_ID2RELATIONS = {v: k for k, v in MODEL_RELATIONS2ID.items()}
 
-MODEL_RELATIONS2ID = {k: RELATIONS2ID[k] for k in MODEL_RELATIONS}
+MODEL_RELATIONS2ID = {k: MODEL_RELATIONS2ID[k] for k in MODEL_RELATIONS}
 MODEL_ID2RELATIONS = {v: k for k, v in MODEL_RELATIONS2ID.items()}
 
 ENDPOINT_TYPES = ["start", "end"]
@@ -40,7 +40,7 @@ class PointRelation:
                 f"Invalid target: {target}. It must start with 'start' or 'end'."
             )
 
-        if type not in RELATIONS:
+        if type not in MODEL_RELATIONS:
             raise ValueError(f"Invalid relation type: {type}")
         self.source = source
         self.target = target
