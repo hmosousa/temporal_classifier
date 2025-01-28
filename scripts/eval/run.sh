@@ -4,7 +4,7 @@
 python scripts/eval/point.py -m random -d point_tempeval
 python scripts/eval/point.py -m majority -d point_tempeval
 python scripts/eval/point.py -m hugosousa/smol-135-0dd0da37 -d point_tempeval
-python scripts/eval/point.py -m hugosousa/smol-135-191329ff -d point_tempeval -r 1ff5f6858121b10d5aeab1bf1d64024f33400435
+python scripts/eval/point.py -m hugosousa/smol-135-191329ff -d point_tempeval
 python scripts/eval/point.py -m hugosousa/smol-135-tq-closure -d point_tempeval
 python scripts/eval/point.py -m hugosousa/smol-135-tq-synthetic -d point_tempeval
 python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment -d point_tempeval
@@ -16,7 +16,7 @@ python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment-synthetic 
 python scripts/eval/point.py -m random -d timeset
 python scripts/eval/point.py -m majority -d timeset
 python scripts/eval/point.py -m hugosousa/smol-135-0dd0da37 -d timeset
-python scripts/eval/point.py -m hugosousa/smol-135-191329ff -d timeset -r 1ff5f6858121b10d5aeab1bf1d64024f33400435
+python scripts/eval/point.py -m hugosousa/smol-135-191329ff -d timeset
 python scripts/eval/point.py -m hugosousa/smol-135-tq-closure -d timeset
 python scripts/eval/point.py -m hugosousa/smol-135-tq-synthetic -d timeset
 python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment -d timeset
@@ -28,7 +28,7 @@ python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment-synthetic 
 python scripts/eval/point.py -m random -d matres
 python scripts/eval/point.py -m majority -d matres
 python scripts/eval/point.py -m hugosousa/smol-135-0dd0da37 -d matres
-python scripts/eval/point.py -m hugosousa/smol-135-191329ff -d matres -r 1ff5f6858121b10d5aeab1bf1d64024f33400435
+python scripts/eval/point.py -m hugosousa/smol-135-191329ff -d matres
 python scripts/eval/point.py -m hugosousa/smol-135-tq-closure -d matres
 python scripts/eval/point.py -m hugosousa/smol-135-tq-synthetic -d matres
 python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment -d matres
@@ -40,7 +40,7 @@ python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment-synthetic 
 python scripts/eval/point.py -m random -d point_tddiscourse
 python scripts/eval/point.py -m majority -d point_tddiscourse
 python scripts/eval/point.py -m hugosousa/smol-135-0dd0da37 -d point_tddiscourse
-python scripts/eval/point.py -m hugosousa/smol-135-191329ff -d point_tddiscourse -r 1ff5f6858121b10d5aeab1bf1d64024f33400435
+python scripts/eval/point.py -m hugosousa/smol-135-191329ff -d point_tddiscourse
 python scripts/eval/point.py -m hugosousa/smol-135-tq-closure -d point_tddiscourse
 python scripts/eval/point.py -m hugosousa/smol-135-tq-synthetic -d point_tddiscourse
 python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment -d point_tddiscourse
@@ -52,7 +52,7 @@ python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment-synthetic 
 python scripts/eval/point.py -m random -d point_timebank_dense
 python scripts/eval/point.py -m majority -d point_timebank_dense
 python scripts/eval/point.py -m hugosousa/smol-135-0dd0da37 -d point_timebank_dense
-python scripts/eval/point.py -m hugosousa/smol-135-191329ff -d point_timebank_dense -r 1ff5f6858121b10d5aeab1bf1d64024f33400435
+python scripts/eval/point.py -m hugosousa/smol-135-191329ff -d point_timebank_dense
 python scripts/eval/point.py -m hugosousa/smol-135-tq-closure -d point_timebank_dense
 python scripts/eval/point.py -m hugosousa/smol-135-tq-synthetic -d point_timebank_dense
 python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment -d point_timebank_dense
@@ -66,7 +66,7 @@ python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment-synthetic 
 python scripts/eval/interval.py -m random -d interval_tempeval -s most_likely
 python scripts/eval/interval.py -m majority -d interval_tempeval -s most_likely
 python scripts/eval/interval.py -m hugosousa/smol-135-0dd0da37 -d interval_tempeval -s most_likely
-python scripts/eval/interval.py -m hugosousa/smol-135-191329ff -d interval_tempeval -s most_likely -r 1ff5f6858121b10d5aeab1bf1d64024f33400435
+python scripts/eval/interval.py -m hugosousa/smol-135-191329ff -d interval_tempeval -s most_likely
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure -d interval_tempeval -s most_likely
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-synthetic -d interval_tempeval -s most_likely
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-augment -d interval_tempeval -s most_likely
@@ -78,7 +78,7 @@ python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-augment-synthet
 python scripts/eval/interval.py -m random -d interval_timebank_dense -s most_likely
 python scripts/eval/interval.py -m majority -d interval_timebank_dense -s most_likely
 python scripts/eval/interval.py -m hugosousa/smol-135-0dd0da37 -d interval_timebank_dense -s most_likely
-python scripts/eval/interval.py -m hugosousa/smol-135-191329ff -d interval_timebank_dense -s most_likely -r 1ff5f6858121b10d5aeab1bf1d64024f33400435
+python scripts/eval/interval.py -m hugosousa/smol-135-191329ff -d interval_timebank_dense -s most_likely
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure -d interval_timebank_dense -s most_likely
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-synthetic -d interval_timebank_dense -s most_likely
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-augment -d interval_timebank_dense -s most_likely
@@ -90,7 +90,7 @@ python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-augment-synthet
 python scripts/eval/interval.py -m random -d tddiscourse
 python scripts/eval/interval.py -m majority -d tddiscourse
 python scripts/eval/interval.py -m hugosousa/smol-135-0dd0da37 -d tddiscourse
-python scripts/eval/interval.py -m hugosousa/smol-135-191329ff -d tddiscourse -r 1ff5f6858121b10d5aeab1bf1d64024f33400435
+python scripts/eval/interval.py -m hugosousa/smol-135-191329ff -d tddiscourse
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure -d tddiscourse
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-synthetic -d tddiscourse
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-augment -d tddiscourse
