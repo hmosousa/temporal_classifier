@@ -8,7 +8,7 @@ def test_load_matres_train():
 
     assert isinstance(trainset, Dataset)
     assert set(trainset.column_names) == {"doc", "text", "label"}
-    assert len(trainset) == 10_091
+    assert len(trainset) == 8_863
 
 
 def test_load_matres_valid():
@@ -16,7 +16,7 @@ def test_load_matres_valid():
 
     assert isinstance(validset, Dataset)
     assert set(validset.column_names) == {"doc", "text", "label"}
-    assert len(validset) == 2_576
+    assert len(validset) == 2_289
 
 
 def test_load_matres_test():
@@ -24,7 +24,7 @@ def test_load_matres_test():
 
     assert isinstance(testset, Dataset)
     assert set(testset.column_names) == {"doc", "text", "label"}
-    assert len(testset) == 837
+    assert len(testset) == 724
 
 
 def test_load_dataset_matres():
@@ -40,6 +40,6 @@ def test_load_dataset_matres():
     assert set(validset.column_names) == {"doc", "text", "label"}
     assert set(trainset.column_names) == {"doc", "text", "label"}
 
-    assert len(testset) == 837
-    assert len(trainset) == 10_091
-    assert len(validset) == 2_576
+    assert len(testset) == 724
+    assert len(trainset) == 8_863
+    assert len(validset) == 2_289

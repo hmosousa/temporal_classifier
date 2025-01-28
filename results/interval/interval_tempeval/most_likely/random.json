@@ -1,15 +1,57 @@
 {
-    "IS_INCLUDED": {
-        "precision": 0.24615384615384617,
-        "recall": 0.09090909090909091,
-        "f1-score": 0.13278008298755187,
-        "support": 176.0
+    "BEGUN_BY": {
+        "precision": 0.01282051282051282,
+        "recall": 0.3333333333333333,
+        "f1-score": 0.024691358024691357,
+        "support": 3.0
+    },
+    "SIMULTANEOUS": {
+        "precision": 0.10975609756097561,
+        "recall": 0.08181818181818182,
+        "f1-score": 0.09375,
+        "support": 110.0
+    },
+    "IAFTER": {
+        "precision": 0.01020408163265306,
+        "recall": 0.1111111111111111,
+        "f1-score": 0.018691588785046728,
+        "support": 9.0
+    },
+    "INCLUDES": {
+        "precision": 0.08,
+        "recall": 0.06818181818181818,
+        "f1-score": 0.0736196319018405,
+        "support": 88.0
+    },
+    "ENDED_BY": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 2.0
+    },
+    "BEFORE": {
+        "precision": 0.3770491803278688,
+        "recall": 0.0696969696969697,
+        "f1-score": 0.11764705882352941,
+        "support": 330.0
     },
     "BEGINS": {
-        "precision": 0.011494252873563218,
-        "recall": 0.5,
-        "f1-score": 0.02247191011235955,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
         "support": 2.0
+    },
+    "IS_INCLUDED": {
+        "precision": 0.25287356321839083,
+        "recall": 0.125,
+        "f1-score": 0.16730038022813687,
+        "support": 176.0
+    },
+    "IBEFORE": {
+        "precision": 0.012195121951219513,
+        "recall": 0.125,
+        "f1-score": 0.022222222222222223,
+        "support": 8.0
     },
     "ENDS": {
         "precision": 0.0,
@@ -18,64 +60,22 @@
         "support": 3.0
     },
     "AFTER": {
-        "precision": 0.20930232558139536,
-        "recall": 0.09090909090909091,
-        "f1-score": 0.1267605633802817,
+        "precision": 0.21978021978021978,
+        "recall": 0.10101010101010101,
+        "f1-score": 0.1384083044982699,
         "support": 198.0
     },
-    "BEFORE": {
-        "precision": 0.3541666666666667,
-        "recall": 0.10303030303030303,
-        "f1-score": 0.1596244131455399,
-        "support": 330.0
-    },
-    "SIMULTANEOUS": {
-        "precision": 0.125,
-        "recall": 0.08181818181818182,
-        "f1-score": 0.0989010989010989,
-        "support": 110.0
-    },
-    "BEGUN_BY": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1-score": 0.0,
-        "support": 3.0
-    },
-    "ENDED_BY": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1-score": 0.0,
-        "support": 2.0
-    },
-    "INCLUDES": {
-        "precision": 0.10377358490566038,
-        "recall": 0.125,
-        "f1-score": 0.1134020618556701,
-        "support": 88.0
-    },
-    "IBEFORE": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1-score": 0.0,
-        "support": 8.0
-    },
-    "IAFTER": {
-        "precision": 0.036585365853658534,
-        "recall": 0.3333333333333333,
-        "f1-score": 0.06593406593406594,
-        "support": 9.0
-    },
-    "accuracy": 0.09903121636167922,
+    "accuracy": 0.08934337997847147,
     "macro avg": {
-        "precision": 0.09877054927589005,
-        "recall": 0.12045454545454545,
-        "f1-score": 0.06544310875605164,
+        "precision": 0.09769807066289458,
+        "recall": 0.09228650137741047,
+        "f1-score": 0.05966641313488519,
         "support": 929.0
     },
     "weighted avg": {
-        "precision": 0.24206057013812848,
-        "recall": 0.09903121636167922,
-        "f1-score": 0.13201377312075804,
+        "precision": 0.24950429508244296,
+        "recall": 0.08934337997847147,
+        "f1-score": 0.12151167317637616,
         "support": 929.0
     }
 }

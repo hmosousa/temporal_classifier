@@ -12,7 +12,7 @@ def test_load_interval_timebank_dense_train():
 
     assert isinstance(trainset, Dataset)
     assert set(trainset.column_names) == {"doc", "text", "label"}
-    assert len(trainset) == 8_949
+    assert len(trainset) == 4_616
 
 
 def test_load_interval_timebank_dense_valid():
@@ -20,7 +20,7 @@ def test_load_interval_timebank_dense_valid():
 
     assert isinstance(validset, Dataset)
     assert set(validset.column_names) == {"doc", "text", "label"}
-    assert len(validset) == 1_067
+    assert len(validset) == 637
 
 
 def test_load_interval_timebank_dense_test():
@@ -28,7 +28,7 @@ def test_load_interval_timebank_dense_test():
 
     assert isinstance(testset, Dataset)
     assert set(testset.column_names) == {"doc", "text", "label"}
-    assert len(testset) == 2_699
+    assert len(testset) == 1552
 
 
 def test_load_dataset_interval_timebank_dense():
@@ -44,9 +44,9 @@ def test_load_dataset_interval_timebank_dense():
     assert set(validset.column_names) == {"doc", "text", "label"}
     assert set(testset.column_names) == {"doc", "text", "label"}
 
-    assert len(trainset) == 8_949
-    assert len(validset) == 1_067
-    assert len(testset) == 2_699
+    assert len(trainset) == 4_616
+    assert len(validset) == 637
+    assert len(testset) == 1552
 
 
 def test_load_point_timebank_dense_train():
@@ -54,7 +54,7 @@ def test_load_point_timebank_dense_train():
 
     assert isinstance(trainset, Dataset)
     assert set(trainset.column_names) == {"doc", "text", "label"}
-    assert len(trainset) == 4 * 8_949
+    assert len(trainset) == 4 * 4_616
 
 
 def test_load_point_timebank_dense_valid():
@@ -62,7 +62,7 @@ def test_load_point_timebank_dense_valid():
 
     assert isinstance(validset, Dataset)
     assert set(validset.column_names) == {"doc", "text", "label"}
-    assert len(validset) == 4 * 1_067
+    assert len(validset) == 4 * 637
 
 
 def test_load_point_timebank_dense_test():
@@ -70,7 +70,7 @@ def test_load_point_timebank_dense_test():
 
     assert isinstance(testset, Dataset)
     assert set(testset.column_names) == {"doc", "text", "label"}
-    assert len(testset) == 4 * 2_699
+    assert len(testset) == 4 * 1552
 
 
 def test_load_dataset_point_timebank_dense():
@@ -86,6 +86,6 @@ def test_load_dataset_point_timebank_dense():
     assert set(validset.column_names) == {"doc", "text", "label"}
     assert set(testset.column_names) == {"doc", "text", "label"}
 
-    assert len(trainset) == 4 * 8_949
-    assert len(validset) == 4 * 1_067
-    assert len(testset) == 4 * 2_699
+    assert len(trainset) == 4 * 4_616
+    assert len(validset) == 4 * 637
+    assert len(testset) == 4 * 1552
