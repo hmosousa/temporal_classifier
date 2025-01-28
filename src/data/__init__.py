@@ -3,8 +3,9 @@ from typing import Any, Dict, Tuple
 from torch.utils.data import Dataset
 
 from src.data.matres import load_matres
-from src.data.synthetic import load_synthetic
 
+from src.data.meantime import load_interval_meantime, load_point_meantime
+from src.data.synthetic import load_synthetic
 from src.data.tddiscourse import load_interval_tddiscourse, load_point_tddiscourse
 from src.data.tempeval import load_interval_tempeval, load_point_tempeval
 from src.data.temporal_contexts import load_temporal_contexts
@@ -26,6 +27,8 @@ DATASETS = {
     "point_tempeval": load_point_tempeval,
     "interval_timebank_dense": load_interval_timebank_dense,
     "point_timebank_dense": load_point_timebank_dense,
+    "interval_meantime": load_interval_meantime,
+    "point_meantime": load_point_meantime,
 }
 
 
@@ -50,6 +53,8 @@ __all__ = [
     "load_point_tempeval",
     "load_interval_timebank_dense",
     "load_point_timebank_dense",
+    "load_interval_meantime",
+    "load_point_meantime",
     "balance_dataset_classes",
     "augment_dataset",
 ]
