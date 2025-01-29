@@ -97,22 +97,26 @@ sh scripts/utils/semeval.sh
 
 This script will print the results presented in the table below.
 
-| model                                                                            | A    | C    | S    |   $F_1$ |       P |       R |
-| :------------------------------------------------------------------------------- | :--- | :--- | :--- | ------: | ------: | ------: |
-| random                                                                           |      |      |      | 11.5662 | 10.9426 | 12.2652 |
-| majority                                                                         |      |      |      | 35.7143 | 35.5191 | 35.9116 |
-|                                                                                  |      |      |      |         |         |         |
-| UTTime [link](https://aclanthology.org/S13-2015.pdf)                             |      |      |      |   56.45 |   55.58 |   57.35 |
-| Graph Staking [link](https://www.jstage.jst.go.jp/article/jnlp/22/3/22_171/_pdf) |      |      |      |   57.78 |   57.63 |   57.92 |
-| CATENA [link](https://aclanthology.org/C16-1007/)                                |      |      |      |    61.9 |    62.6 |    61.3 |
-|                                                                                  |      |      |      |         |         |         |
-| SmolLM2-135M                                                                     |      |      |      | 57.5846 | 57.3807 | 57.7901 |
-|                                                                                  | ✓    |      |      | 59.4381 | 59.5395 | 59.3377 |
-|                                                                                  |      | ✓    |      |         |         |         |
-|                                                                                  |      |      | ✓    |         |         |         |
-|                                                                                  | ✓    | ✓    |      |         |         |         |
-|                                                                                  | ✓    |      | ✓    |         |         |         |
-|                                                                                  |      | ✓    | ✓    |         |         |         |
+
+
+| model                                                                            | A    | C    | S    | $F_1$ |     P |     R |
+| :------------------------------------------------------------------------------- | :--- | :--- | :--- | ----: | ----: | ----: |
+| random                                                                           |      |      |      | 11.57 | 10.94 | 12.27 |
+| majority                                                                         |      |      |      | 35.71 | 35.52 | 35.91 |
+|                                                                                  |      |      |      |       |       |       |
+| UTTime [link](https://aclanthology.org/S13-2015.pdf)                             |      |      |      | 56.45 | 55.58 | 57.35 |
+| Graph Staking [link](https://www.jstage.jst.go.jp/article/jnlp/22/3/22_171/_pdf) |      |      |      | 57.78 | 57.63 | 57.92 |
+| TRelPro [link](https://aclanthology.org/E14-1033.pdf)                            |      |      |      | 58.48 | 58.80 | 58.27 |
+| CATENA [link](https://aclanthology.org/C16-1007/)                                |      |      |      |  61.9 |  62.6 |  61.3 |
+| SP+ILP [link](https://aclanthology.org/D17-1108.pdf)                             |      |      |      |  67.2 |  69.1 |  65.5 |
+|                                                                                  |      |      |      |       |       |       |
+| SmolLM2-135M                                                                     |      |      |      | 57.58 | 57.38 | 57.79 |
+|                                                                                  | ✓    |      |      | 59.44 | 59.54 | 59.34 |
+|                                                                                  |      | ✓    |      |       |       |       |
+|                                                                                  |      |      | ✓    |       |       |       |
+|                                                                                  | ✓    | ✓    |      |       |       |       |
+|                                                                                  | ✓    |      | ✓    |       |       |       |
+|                                                                                  |      | ✓    | ✓    |       |       |       |
 
 
 ## Load Models from Hugging Face
