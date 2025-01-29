@@ -73,7 +73,7 @@ def create_distribution_subplot(
             ncols=3,
             borderaxespad=0.0,
         )
-        ax.set_xlabel("Log Count")
+        ax.set_xlabel("Count (log scale)")
 
 
 # Create figure with two vertically stacked subplots
