@@ -81,7 +81,13 @@ def load_interval_tempeval(
 
             text = text.replace("\n", " ").strip()
             examples.append(
-                {"doc": doc.name, "text": text, "label": tlink.relation.interval}
+                {
+                    "doc": doc.name,
+                    "text": text,
+                    "source": tlink.source.id,
+                    "target": tlink.target.id,
+                    "label": tlink.relation.interval,
+                }
             )
     return datasets.Dataset.from_list(examples)
 

@@ -97,3 +97,10 @@ python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-augment -d tddi
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-synthetic -d tddiscourse
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-augment-synthetic -d tddiscourse
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-augment-synthetic -d tddiscourse
+
+
+# With the original semeval script
+python scripts/eval/semeval_eval.py -m random
+python scripts/eval/semeval_eval.py -m majority
+python scripts/eval/semeval_eval.py -m hugosousa/smol-135
+python scripts/eval/semeval_eval.py -m hugosousa/smol-135-a

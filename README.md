@@ -49,7 +49,7 @@ snakeviz profile.prof
 
 ## Results
 
-### Classifier
+### Point-wise Evaluation
 
 To get the tables below run:
 
@@ -65,21 +65,49 @@ A: augmented
 S: synthetic
 
 
-| model        | R    | A    | S    | TQ   |       Acc |     $F_1$ | TS     |       Acc |     $F_1$ |
-| :----------- | :--- | :--- | :--- | :--- | --------: | --------: | :----- | --------: | --------: |
-| random       | ✓    |      |      |      |     33.07 |     29.38 |        |      33.7 |     32.41 |
-| majority     | ✓    |      |      |      |     53.71 |      23.3 |        |     41.32 |     19.49 |
-|              |      |      |      |      |           |           |        |           |           |
-| SmolLM2-135M | ✓    |      |      |      |     66.33 | **53.66** |        |     41.32 |     34.63 |
-|              | ✓    | ✓    |      |      |     61.41 |     38.33 |        |     34.05 |     31.46 |
-|              | ✓    |      | ✓    |      | **67.71** |      42.2 |        |     41.94 | **37.61** |
-|              | ✓    | ✓    | ✓    |      | **67.71** |     40.34 |        |     41.77 |     37.21 |
-|              |      |      | ✓    |      |     43.22 |     27.29 |        |     39.64 |     23.59 |
-|              |      | ✓    | ✓    |      |     34.58 |     23.54 |        | **46.32** |      25.5 |
-|              |      |      |      |      |           |           |        |           |           |
-| SmolLM2-360M | ✓    |      |      |      | **72.28** |     45.43 |        | **48.57** | **42.26** |
-|              |      |      |      |      |           |           |        |           |           |
-| SmolLM2-1.7B | ✓    |      |      |      |     71.96 | **60.37** |        |     46.88 |     41.38 |
+| model        | R    | A    | S    | TQ   |       Acc |     $F_1$ | TS   |       Acc |     $F_1$ |
+| :----------- | :--- | :--- | :--- | :--- | --------: | --------: | :--- | --------: | --------: |
+| random       | ✓    |      |      |      |     33.07 |     29.38 |      |      33.7 |     32.41 |
+| majority     | ✓    |      |      |      |     53.71 |      23.3 |      |     41.32 |     19.49 |
+|              |      |      |      |      |           |           |      |           |           |
+| SmolLM2-135M | ✓    |      |      |      |     66.33 | **53.66** |      |     41.32 |     34.63 |
+|              | ✓    | ✓    |      |      |     61.41 |     38.33 |      |     34.05 |     31.46 |
+|              | ✓    |      | ✓    |      | **67.71** |      42.2 |      |     41.94 | **37.61** |
+|              | ✓    | ✓    | ✓    |      | **67.71** |     40.34 |      |     41.77 |     37.21 |
+|              |      |      | ✓    |      |     43.22 |     27.29 |      |     39.64 |     23.59 |
+|              |      | ✓    | ✓    |      |     34.58 |     23.54 |      | **46.32** |      25.5 |
+|              |      |      |      |      |           |           |      |           |           |
+| SmolLM2-360M | ✓    |      |      |      | **72.28** |     45.43 |      | **48.57** | **42.26** |
+|              |      |      |      |      |           |           |      |           |           |
+| SmolLM2-1.7B | ✓    |      |      |      |     71.96 | **60.37** |      |     46.88 |     41.38 |
+
+
+### Interval Evaluation
+
+#### Our Evaluation
+
+
+#### SemEval Evaluation
+
+To run the interval evaluation with the original SemEval script (available [here](https://github.com/naushadzaman/tempeval3_toolkit)) run the following steps.
+
+```sh
+sh scripts/utils/semeval.sh
+```
+
+This script will print the results presented in the table below.
+
+| model        | A    | C    | S    |   $F_1$ |       P | R       |
+| :----------- | :--- | :--- | :--- | ------: | ------: | :------ |
+| random       |      |      |      | 11.5662 | 10.9426 | 12.2652 |
+| majority     |      |      |      | 35.7143	35.5191	35.9116	        |         |         |
+| SmolLM2-135M |      |      |      |         |         |         |
+|              | ✓    |      |      |         |         |         |
+|              |      | ✓    |      |         |         |         |
+|              |      |      | ✓    |         |         |         |
+|              | ✓    | ✓    |      |         |         |         |
+|              | ✓    |      | ✓    |         |         |         |
+|              |      | ✓    | ✓    |         |         |         |
 
 
 ## Load Models from Hugging Face
@@ -113,13 +141,4 @@ classifier = pipeline(
 )
 print(classifier(["Hello, world!"]))
 
-```
-
-
-## Demo Application
-
-To lunch the app run:
-
-```sh
-python app/app.py
 ```

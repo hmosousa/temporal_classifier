@@ -5,3 +5,5 @@ models/*
 logs/*
 data/*
 notebooks/data/
+other/
+tempeval3_toolkit/
