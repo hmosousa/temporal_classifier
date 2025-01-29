@@ -38,9 +38,9 @@ def create_distribution_subplot(
     valid_counts = [valid_labels_counter[label] for label in label_order]
     train_counts = [train_labels_counter[label] for label in label_order]
 
-    ax.barh(y_pos - width, test_counts, width, label="Test", alpha=0.8)
-    ax.barh(y_pos, valid_counts, width, label="Valid", alpha=0.8)
     ax.barh(y_pos + width, train_counts, width, label="Train", alpha=0.8)
+    ax.barh(y_pos, valid_counts, width, label="Valid", alpha=0.8)
+    ax.barh(y_pos - width, test_counts, width, label="Test", alpha=0.8)
 
     # Add value labels at the end of each bar
     for i, (test, valid, train) in enumerate(
@@ -69,10 +69,11 @@ def create_distribution_subplot(
 
     if legend:
         ax.legend(
-            bbox_to_anchor=(1, 0, 0, 1),
+            bbox_to_anchor=(0.75, -0.2),
             ncols=3,
             borderaxespad=0.0,
         )
+        ax.set_xlabel("Log Count")
 
 
 # Create figure with two vertically stacked subplots
@@ -81,11 +82,11 @@ fig, (ax1, ax2) = plt.subplots(
 )
 
 # Create the interval relations distribution plot
-create_distribution_subplot(ax1, "interval", "Interval Relations Distribution")
+create_distribution_subplot(ax1, "interval", "Interval Relations")
 
 # Create the point relations distribution plot
-create_distribution_subplot(ax2, "point", "Point Relations Distribution", legend=True)
+create_distribution_subplot(ax2, "point", "Point Relations", legend=True)
 
 
 plt.tight_layout()
-plt.savefig(IMGS_DIR / "tempeval_labels_distribution.png", dpi=300, bbox_inches="tight")
+plt.savefig(IMGS_DIR / "tempeval_labels_distribution.png", dpi=600, bbox_inches="tight")
