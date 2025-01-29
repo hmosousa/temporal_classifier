@@ -148,12 +148,20 @@ class Trainer:
         self.criterion = nn.CrossEntropyLoss(
             reduction="mean", label_smoothing=config.label_smoothing_factor
         )
+
         self.tokenizer = tokenizer
-        self.train_dataset = train_dataset
-        self.valid_dataset = valid_dataset
-        self.test_dataset = test_dataset
         self.data_collator = data_collator
         self.features = ["input_ids", "attention_mask", "label"]
+        self.train_loader = self.get_dataloaders(
+            train_dataset, self.config.per_device_train_batch_size
+        )
+        self.valid_loader = self.get_dataloaders(
+            valid_dataset, self.config.per_device_eval_batch_size
+        )
+        self.test_loader = self.get_dataloaders(
+            test_dataset, self.config.per_device_eval_batch_size
+        )
+        self.epoch_frac = 1 / len(self.train_loader)
 
         self.run = None  # wandb run
         self.global_step = 0
@@ -162,6 +170,12 @@ class Trainer:
         )
 
         self.log_every = max(self.steps_per_epoch // 10, 1)
+        if self.steps_per_epoch > 3_000:
+            self.eval_every = 1_500  # eval every 1,500 steps
+        else:
+            self.eval_every = None
+
+        self.run_id = None
 
     def get_dataloaders(self, dataset: datasets.Dataset, batch_size: int):
         dataset = dataset.select_columns(self.features)
@@ -179,19 +193,10 @@ class Trainer:
 
     def train(self):
         logging.info("Getting dataloaders")
-        run_id = generate_id()
-        train_loader = self.get_dataloaders(
-            self.train_dataset, self.config.per_device_train_batch_size
-        )
-        valid_loader = self.get_dataloaders(
-            self.valid_dataset, self.config.per_device_eval_batch_size
-        )
-        test_loader = self.get_dataloaders(
-            self.test_dataset, self.config.per_device_eval_batch_size
-        )
 
+        self.run_id = generate_id()
         self.run = wandb.init(
-            project="TemporalClassifier", name=f"{self.output_dir.stem}-{run_id}"
+            project="TemporalClassifier", name=f"{self.output_dir.stem}-{self.run_id}"
         )
         self.run.watch(self.model)
         self.run.config.update(self.config)
@@ -199,9 +204,9 @@ class Trainer:
         logging.info("Training")
         best_valid_f1 = float("-inf")
         for epoch in range(self.config.num_train_epochs):
-            train_metrics = self.train_step(train_loader)
-            valid_metrics = self.eval_step(valid_loader)
-            test_metrics = self.eval_step(test_loader)
+            train_metrics = self.train_step(self.train_loader)
+            valid_metrics = self.eval_step(self.valid_loader)
+            test_metrics = self.eval_step(self.test_loader)
 
             self.run.log(
                 {
@@ -218,15 +223,16 @@ class Trainer:
                 logger.info(
                     f"Saving model. New best valid f1-score: {best_valid_f1:.4f}"
                 )
-                self.save_model(output_dir=self.output_dir / run_id)
-                self.save_tokenizer(self.output_dir / run_id)
-                if self.config.push_to_hub:
-                    self.push_to_hub(
-                        repo_id=f"{self.config.hub_model_id}-{run_id}",
-                        folder_path=self.output_dir / run_id,
-                        commit_message=f"Epoch {epoch} Best valid f1-score: {best_valid_f1:.4f}",
-                        blocking=True,
-                    )
+
+            self.save_model(output_dir=self.output_dir / self.run_id)
+            self.save_tokenizer(self.output_dir / self.run_id)
+            if self.config.push_to_hub:
+                self.push_to_hub(
+                    repo_id=f"{self.config.hub_model_id}-{self.run_id}",
+                    folder_path=self.output_dir / self.run_id,
+                    commit_message=f"Epoch {epoch} valid f1-score: {valid_metrics['f1-score']:.4f}",
+                    blocking=True,
+                )
 
             self.early_stopping(valid_metrics["f1-score"])
             if self.early_stopping.early_stop:
@@ -267,13 +273,13 @@ class Trainer:
 
         if self.config.load_best_model_at_end:
             logger.info("Loading best model")
-            self.load_model(self.output_dir / run_id)
+            self.load_model(self.output_dir / self.run_id)
 
         if self.config.push_to_hub:
-            self.save_tokenizer(self.output_dir / run_id)
+            self.save_tokenizer(self.output_dir / self.run_id)
             self.push_to_hub(
-                repo_id=f"{self.config.hub_model_id}-{run_id}",
-                folder_path=self.output_dir / run_id,
+                repo_id=f"{self.config.hub_model_id}-{self.run_id}",
+                folder_path=self.output_dir / self.run_id,
                 commit_message="End of training",
                 blocking=True,
             )
@@ -288,7 +294,7 @@ class Trainer:
         total_examples = 0
         total_loss = 0
         y_preds, y_trues = [], []
-        epoch_frac = 1 / len(train_loader)
+
         for batch in train_loader:
             self.optimizer.zero_grad()
             logits = self.model.forward(**batch).logits
@@ -320,19 +326,66 @@ class Trainer:
                     {
                         "train": metrics,
                         "lr": lr,
-                        "epoch": epoch_frac * self.global_step,
+                        "epoch": self.epoch_frac * self.global_step,
                     },
                     step=self.global_step,
                 )
+
             else:
                 self.run.log(
                     {
                         "train": {"loss": loss.item()},
                         "lr": lr,
-                        "epoch": epoch_frac * self.global_step,
+                        "epoch": self.epoch_frac * self.global_step,
                     },
                     step=self.global_step,
                 )
+
+            # For runs that have long training epochs, we evaluate the model every 1,500 steps
+            if (
+                self.eval_every is not None
+                and (self.global_step + 1) % self.eval_every == 0
+            ):
+                valid_metrics = self.eval_step(self.valid_loader)
+                test_metrics = self.eval_step(self.test_loader)
+                self.run.log(
+                    {
+                        "valid": valid_metrics,
+                        "test": test_metrics,
+                        "epoch": self.epoch_frac * self.global_step,
+                    },
+                    step=self.global_step,
+                )
+
+                self.save_model(output_dir=self.output_dir / self.run_id)
+                self.save_tokenizer(self.output_dir / self.run_id)
+                if self.config.push_to_hub:
+                    self.push_to_hub(
+                        repo_id=f"{self.config.hub_model_id}-{self.run_id}",
+                        folder_path=self.output_dir / self.run_id,
+                        commit_message=f"Epoch {self.global_step} valid f1-score: {valid_metrics['f1-score']:.4f}",
+                        blocking=True,
+                    )
+
+                if self.config.hp_search:
+                    with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
+                        temp_checkpoint_dir = pathlib.Path(temp_checkpoint_dir)
+
+                        torch.save(
+                            self.model.state_dict(),
+                            temp_checkpoint_dir / "model.pth",
+                        )
+                        checkpoint = ray.train.Checkpoint.from_directory(
+                            temp_checkpoint_dir
+                        )
+                        ray.train.report(
+                            metrics=valid_metrics,
+                            checkpoint=checkpoint,
+                        )
+                        ray.train.report(
+                            metrics={"f1-score": valid_metrics["f1-score"]},
+                            checkpoint=checkpoint,
+                        )
             pb.set_description(
                 f"Loss: {loss.item():.4f} - Acc: {total_correct / total_examples:.4f}"
             )
