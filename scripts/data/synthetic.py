@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import random
+from datetime import datetime, timedelta
 
 import datasets
 import numpy as np
@@ -255,6 +256,41 @@ async def main(n_valid_samples: int = 5_000):
         dataset = dataset.select_columns(["answer", "label"])
         dataset = dataset.rename_column("answer", "text")
 
+        # Add document creation time
+        def add_dct(example):
+            if example["text"].startswith("Documents creation time:"):
+                return example
+            else:
+                # sample a date
+                start_date = datetime(2000, 1, 1)
+                end_date = datetime(2010, 1, 1)
+                time_between_dates = end_date - start_date
+                days_between_dates = time_between_dates.days
+                random_number_of_days = random.randint(0, days_between_dates)
+                dct = start_date + timedelta(days=random_number_of_days)
+                if random.random() < 0.25:
+                    example["text"] = (
+                        f"Documents creation time: {dct.strftime('%Y-%m-%d')} {example['text']}"
+                    )
+                elif random.random() < 0.5:
+                    example["text"] = (
+                        f"Documents creation time: {dct.strftime('%Y/%m/%d')} {example['text']}"
+                    )
+                elif random.random() < 0.75:
+                    example["text"] = (
+                        f"Documents creation time: {dct.strftime('%Y-%m-%d %H:%M')} {example['text']}"
+                    )
+                else:
+                    example["text"] = (
+                        f"Documents creation time: {dct.strftime('%Y/%m/%d %H:%M')} {example['text']}"
+                    )
+                return example
+
+        dataset = dataset.map(add_dct)
+
+        # Drop - labels
+        dataset = dataset.filter(lambda x: x["label"] != "-")
+
         if len(dataset) > n_valid_samples:
             # split into train and valid
             train, valid = train_test_split(
@@ -270,13 +306,13 @@ async def main(n_valid_samples: int = 5_000):
 
             # push data to hub
             train_dataset.push_to_hub(
-                "hugosousa/NewSyntheticTemporalQuestions",
+                "hugosousa/SyntheticTemporalContexts",
                 name,
                 split="train",
                 token=HF_TOKEN,
             )
             valid_dataset.push_to_hub(
-                "hugosousa/NewSyntheticTemporalQuestions",
+                "hugosousa/SyntheticTemporalContexts",
                 name,
                 split="valid",
                 token=HF_TOKEN,

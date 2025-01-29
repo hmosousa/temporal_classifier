@@ -8,7 +8,7 @@ def test_load_synthetic_train():
 
     assert isinstance(trainset, Dataset)
     assert set(trainset.column_names) == {"text", "label"}
-    assert len(trainset) == 441_931
+    assert len(trainset) == 383_839
 
 
 def test_load_synthetic_valid():
@@ -21,7 +21,7 @@ def test_load_synthetic_valid():
 
 def test_load_dataset():
     trainset = load_dataset("synthetic", "train")
-    assert len(trainset) == 441_931
+    assert len(trainset) == 383_839
 
     validset = load_dataset("synthetic", "valid")
     assert len(validset) == 5_000

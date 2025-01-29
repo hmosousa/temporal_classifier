@@ -130,6 +130,10 @@ class DataTrainingArguments:
         default=False,
         metadata={"help": "Whether to compute the temporal closure of the annotation."},
     )
+    synthetic: bool = field(
+        default=False,
+        metadata={"help": "Whether to use the synthetic dataset or not."},
+    )
 
 
 @dataclass
@@ -336,6 +340,13 @@ def main(
         split=data_args.test_split,
         config=data_args.dataset_config_name,
     )
+
+    if data_args.synthetic:
+        logger.info("Loading synthetic dataset")
+        synthetic_trainset = load_dataset("synthetic", "train")
+        synthetic_validset = load_dataset("synthetic", "valid")
+        trainset = datasets.concatenate_datasets([trainset, synthetic_trainset])
+        validset = datasets.concatenate_datasets([validset, synthetic_validset])
 
     raw_datasets = datasets.DatasetDict(
         {
