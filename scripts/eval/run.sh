@@ -12,6 +12,8 @@ python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-synthetic -d point
 python scripts/eval/point.py -m hugosousa/smol-135-tq-augment-synthetic -d point_tempeval
 python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment-synthetic -d point_tempeval
 
+python scripts/eval/point.py -m hugosousa/smol-360-3cb748bd -d point_tempeval
+
 ## Timeset
 python scripts/eval/point.py -m random -d timeset
 python scripts/eval/point.py -m majority -d timeset
@@ -73,6 +75,8 @@ python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-augment -d inte
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-synthetic -d interval_tempeval -s most_likely
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-augment-synthetic -d interval_tempeval -s most_likely
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-augment-synthetic -d interval_tempeval -s most_likely
+
+python scripts/eval/interval.py -m hugosousa/smol-360-3cb748bd -d interval_tempeval -s most_likely
 
 ## Timebank-Dense
 python scripts/eval/interval.py -m random -d interval_timebank_dense -s most_likely
