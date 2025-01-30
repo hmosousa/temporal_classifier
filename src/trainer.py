@@ -227,12 +227,15 @@ class Trainer:
             self.save_model(output_dir=self.output_dir / self.run_id)
             self.save_tokenizer(self.output_dir / self.run_id)
             if self.config.push_to_hub:
-                self.push_to_hub(
-                    repo_id=f"{self.config.hub_model_id}-{self.run_id}",
-                    folder_path=self.output_dir / self.run_id,
-                    commit_message=f"Epoch {epoch} valid f1-score: {valid_metrics['f1-score']:.4f}",
-                    blocking=True,
-                )
+                try:
+                    self.push_to_hub(
+                        repo_id=f"{self.config.hub_model_id}-{self.run_id}",
+                        folder_path=self.output_dir / self.run_id,
+                        commit_message=f"Epoch {epoch} valid f1-score: {valid_metrics['f1-score']:.4f}",
+                        blocking=True,
+                    )
+                except Exception as e:
+                    logger.error(f"Error pushing to hub: {e}")
 
             self.early_stopping(valid_metrics["f1-score"])
             if self.early_stopping.early_stop:
@@ -276,13 +279,15 @@ class Trainer:
             self.load_model(self.output_dir / self.run_id)
 
         if self.config.push_to_hub:
-            self.save_tokenizer(self.output_dir / self.run_id)
-            self.push_to_hub(
-                repo_id=f"{self.config.hub_model_id}-{self.run_id}",
-                folder_path=self.output_dir / self.run_id,
-                commit_message="End of training",
-                blocking=True,
-            )
+            try:
+                self.push_to_hub(
+                    repo_id=f"{self.config.hub_model_id}-{self.run_id}",
+                    folder_path=self.output_dir / self.run_id,
+                    commit_message="End of training",
+                    blocking=True,
+                )
+            except Exception as e:
+                logger.error(f"Error pushing to hub: {e}")
 
     def train_step(self, train_loader: DataLoader):
         self.model.train()
@@ -360,12 +365,15 @@ class Trainer:
                 self.save_model(output_dir=self.output_dir / self.run_id)
                 self.save_tokenizer(self.output_dir / self.run_id)
                 if self.config.push_to_hub:
-                    self.push_to_hub(
-                        repo_id=f"{self.config.hub_model_id}-{self.run_id}",
-                        folder_path=self.output_dir / self.run_id,
-                        commit_message=f"Epoch {self.global_step} valid f1-score: {valid_metrics['f1-score']:.4f}",
-                        blocking=True,
-                    )
+                    try:
+                        self.push_to_hub(
+                            repo_id=f"{self.config.hub_model_id}-{self.run_id}",
+                            folder_path=self.output_dir / self.run_id,
+                            commit_message=f"Epoch {self.global_step} valid f1-score: {valid_metrics['f1-score']:.4f}",
+                            blocking=True,
+                        )
+                    except Exception as e:
+                        logger.error(f"Error pushing to hub: {e}")
 
                 if self.config.hp_search:
                     with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
