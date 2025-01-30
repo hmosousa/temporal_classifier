@@ -559,8 +559,8 @@ def main(
             run_or_experiment=train_func,
             config=search_space,
             resources_per_trial={"cpu": mp.cpu_count() // 4, "gpu": 1},
-            num_samples=8,
-            max_concurrent_trials=1,
+            num_samples=20,
+            max_concurrent_trials=4,
             scheduler=ray.tune.schedulers.AsyncHyperBandScheduler(
                 metric="f1-score",
                 mode="max",

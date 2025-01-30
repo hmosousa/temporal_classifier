@@ -170,8 +170,8 @@ class Trainer:
         )
 
         self.log_every = max(self.steps_per_epoch // 10, 1)
-        if self.steps_per_epoch > 3_000:
-            self.eval_every = 1_500  # eval every 1,500 steps
+        if self.steps_per_epoch > 2_000:
+            self.eval_every = 2_000  # eval every 2,000 steps
         else:
             self.eval_every = None
 
@@ -254,10 +254,6 @@ class Trainer:
                     )
                     checkpoint = ray.train.Checkpoint.from_directory(
                         temp_checkpoint_dir
-                    )
-                    ray.train.report(
-                        metrics=valid_metrics,
-                        checkpoint=checkpoint,
                     )
                     ray.train.report(
                         metrics={"f1-score": valid_metrics["f1-score"]},
@@ -385,10 +381,6 @@ class Trainer:
                         )
                         checkpoint = ray.train.Checkpoint.from_directory(
                             temp_checkpoint_dir
-                        )
-                        ray.train.report(
-                            metrics=valid_metrics,
-                            checkpoint=checkpoint,
                         )
                         ray.train.report(
                             metrics={"f1-score": valid_metrics["f1-score"]},
