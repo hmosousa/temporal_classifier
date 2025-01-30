@@ -333,7 +333,6 @@ def main(
         data_args.dataset_name,
         split=data_args.valid_split,
         config=data_args.dataset_config_name,
-        closure=data_args.closure,
     )
     testset = load_dataset(
         data_args.dataset_name,
@@ -344,9 +343,7 @@ def main(
     if data_args.synthetic:
         logger.info("Loading synthetic dataset")
         synthetic_trainset = load_dataset("synthetic", "train")
-        synthetic_validset = load_dataset("synthetic", "valid")
         trainset = datasets.concatenate_datasets([trainset, synthetic_trainset])
-        validset = datasets.concatenate_datasets([validset, synthetic_validset])
 
     raw_datasets = datasets.DatasetDict(
         {
