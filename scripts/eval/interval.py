@@ -20,12 +20,11 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main(
-    model_name: str = "hugosousa/smol-135-0dd0da37",
+    model_name: str = "majority",
     revision: str = "main",
     dataset_name: Literal[
         "interval_tempeval", "interval_tddiscourse"
-    ] = "interval_timebank_dense",
-    verbose: bool = False,
+    ] = "interval_tempeval",
     strategy: Literal["high_to_low", "most_likely"] = "most_likely",
 ):
     """Evaluate a model with a given configuration.
@@ -83,6 +82,8 @@ def main(
         labels.append(example["label"])
         preds.append(interval_relation if interval_relation is not None else "None")
 
+    dataset = dataset.add_column("pred", preds)
+
     logging.info("Calculating metrics for all text types")
     report = classification_report(
         y_true=labels,
@@ -91,8 +92,22 @@ def main(
         zero_division=0.0,
         labels=list(unique_interval_labels),
     )
-    if verbose:
-        print(classification_report(labels, preds, digits=4))
+
+    # Predictions by entity type
+    unique_types = list(set(dataset["type"]))
+    for type in unique_types:
+        type_dataset = dataset.filter(lambda x: x["type"] == type)
+        type_labels = type_dataset["label"]
+        type_preds = type_dataset["pred"]
+        type_report = classification_report(
+            y_true=type_labels,
+            y_pred=type_preds,
+            output_dict=True,
+            zero_division=0.0,
+            labels=list(unique_interval_labels),
+        )
+        type_report["support"] = len(type_dataset)
+        report[type] = type_report
 
     logging.info("Saving results")
     model_id = model_name.split("/")[-1]

@@ -12,6 +12,22 @@ from src.data.utils import (
     POINT_EXPECTED_TAGS,
 )
 
+INTERVAL_RELATIONS = [
+    "AFTER",
+    "SIMULTANEOUS",
+    "BEFORE",
+    "IBEFORE",
+    "INCLUDES",
+    "IS_INCLUDED",
+    "ENDS",
+    "BEGINS",
+    "BEGUN_BY",
+    "ENDED_BY",
+    "IAFTER",
+    "OVERLAPPED",
+    "OVERLAP",
+]
+
 CLOSURE_DOCS_TO_DROP = [
     "NYT20000424.0319",
     "wsj_1025",
@@ -65,6 +81,9 @@ def load_interval_tempeval(
             if tlink.source.id == tlink.target.id:
                 continue
 
+            if tlink.relation.interval not in INTERVAL_RELATIONS:
+                continue
+
             context = get_tlink_context(doc, tlink)
             srcid = tlink.source.id
             tgtid = tlink.target.id
@@ -80,12 +99,26 @@ def load_interval_tempeval(
                 continue
 
             text = text.replace("\n", " ").strip()
+
+            # Get the relation
+            if tlink.source.is_dct:
+                source_type = "dct"
+            else:
+                source_type = tlink.source.id[0]
+
+            if tlink.target.is_dct:
+                target_type = "dct"
+            else:
+                target_type = tlink.target.id[0]
+            relation_type = "-".join(sorted([source_type, target_type]))
+
             examples.append(
                 {
                     "doc": doc.name,
                     "text": text,
                     "source": tlink.source.id,
                     "target": tlink.target.id,
+                    "type": relation_type,
                     "label": tlink.relation.interval,
                 }
             )

@@ -4,8 +4,8 @@
 python scripts/eval/point.py -m random -d point_tempeval
 python scripts/eval/point.py -m majority -d point_tempeval
 python scripts/eval/point.py -m hugosousa/smol-135 -d point_tempeval
-python scripts/eval/point.py -m hugosousa/smol-135-a -d point_tempeval
-python scripts/eval/point.py -m hugosousa/smol-135-7fd02948 -d point_tempeval
+python scripts/eval/point.py -m hugosousa/smol-135-191329ff -d point_tempeval  # augment
+python scripts/eval/point.py -m hugosousa/smol-135-7fd02948 -d point_tempeval  # closure
 python scripts/eval/point.py -m hugosousa/smol-135-tq-synthetic -d point_tempeval
 python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment -d point_tempeval
 python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-synthetic -d point_tempeval
@@ -68,8 +68,8 @@ python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment-synthetic 
 python scripts/eval/interval.py -m random -d interval_tempeval -s most_likely
 python scripts/eval/interval.py -m majority -d interval_tempeval -s most_likely
 python scripts/eval/interval.py -m hugosousa/smol-135 -d interval_tempeval -s most_likely
-python scripts/eval/interval.py -m hugosousa/smol-135-a -d interval_tempeval -s most_likely
-python scripts/eval/interval.py -m hugosousa/smol-135-7fd02948 -d interval_tempeval -s most_likely
+python scripts/eval/interval.py -m hugosousa/smol-135-191329ff -d interval_tempeval -s most_likely  # augment
+python scripts/eval/interval.py -m hugosousa/smol-135-7fd02948 -d interval_tempeval -s most_likely  # closure
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-synthetic -d interval_tempeval -s most_likely
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-augment -d interval_tempeval -s most_likely
 python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-synthetic -d interval_tempeval -s most_likely
