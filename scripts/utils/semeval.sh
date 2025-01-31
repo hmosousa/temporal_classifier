@@ -14,7 +14,7 @@ python ../scripts/eval/semeval_eval.py -m random
 python ../scripts/eval/semeval_eval.py -m majority
 python ../scripts/eval/semeval_eval.py -m hugosousa/smol-135
 python ../scripts/eval/semeval_eval.py -m hugosousa/smol-135-a
-
+python ../scripts/eval/semeval_eval.py -m hugosousa/smol-135-191329ff
 
 # Create a conda environment with python 2.7
 conda create -p ./.conda python=2.7 -y
@@ -29,3 +29,5 @@ echo "Smol 135"
 python TE3-evaluation.py gold/ results/most_likely/smol-135/
 echo "Smol 135-a"
 python TE3-evaluation.py gold/ results/most_likely/smol-135-a/
+echo "Smol 135-191329ff"  # Best augmented model
+python TE3-evaluation.py gold/ results/most_likely/smol-135-191329ff/
