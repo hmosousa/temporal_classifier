@@ -553,7 +553,7 @@ def main(
         }
 
         if not ray.is_initialized():
-            ray.init()
+            ray.init(include_dashboard=True)
 
         ray.tune.run(
             run_or_experiment=train_func,
