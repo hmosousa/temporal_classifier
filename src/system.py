@@ -1,9 +1,12 @@
 from typing import Dict, List, Literal
 
 import numpy as np
+import torch
 from tieval.temporal_relation import _INTERVAL_TO_POINT_RELATION, PointRelation
+from transformers import AutoTokenizer, pipeline
 
 from src.base import MODEL_ID2RELATIONS, MODEL_RELATIONS2ID
+from src.model.classifier import ContextClassifier
 
 PAIRS = [
     ("start_source", "start_target"),
@@ -18,6 +21,61 @@ PAIRS_TO_IDX = {
     ("end_source", "start_target"): 2,
     ("end_source", "end_target"): 3,
 }
+
+
+class System:
+    def __init__(
+        self,
+        model_name: str,
+        revision: str = "main",
+        strategy: str = "most_likely",
+        interval_labels: List[str] = ["BEFORE", "AFTER", "SIMULTANEOUS"],
+    ):
+        tokenizer = AutoTokenizer.from_pretrained(model_name, revision=revision)
+        model = ContextClassifier.from_pretrained(model_name, revision=revision)
+        self.pipe = pipeline(
+            "text-classification",
+            model=model,
+            tokenizer=tokenizer,
+            torch_dtype=torch.bfloat16,
+            device_map="auto",
+            revision=revision,
+        )
+        self.label2id = self.pipe.model.config.label2id
+        self.strategy = strategy
+        self.interval_labels = interval_labels
+
+    def inference(self, text: str) -> str:
+        """Infer the interval relation for a given text.
+
+        Args:
+            text (str): The text with the entities tagged with <source></source> and <target></target>.
+
+        Returns:
+            str: The inferred interval relation.
+        """
+        texts = [
+            text.replace("<source>", f"<{pair[0]}>")
+            .replace("</source>", f"</{pair[0]}>")
+            .replace("<target>", f"<{pair[1]}>")
+            .replace("</target>", f"</{pair[1]}>")
+            for pair in PAIRS
+        ]
+
+        # Get the model's prediction
+        point_preds = self.pipe(texts, batch_size=len(texts), top_k=len(self.label2id))
+
+        y_prob = np.zeros((len(texts), len(self.label2id)))
+        for idx, pred in enumerate(point_preds):
+            for label_pred in pred:
+                y_prob[idx, self.label2id[label_pred["label"]]] = label_pred["score"]
+        interval_relation = get_interval_relation(
+            y_prob, self.interval_labels, self.strategy
+        )
+        return interval_relation
+
+    def __call__(self, texts: List[str]) -> List[str]:
+        return [self.inference(text) for text in texts]
 
 
 def get_interval_relation(
