@@ -82,10 +82,10 @@ def main(
         type_report["support"] = len(type_dataset)
         report[type] = type_report
 
-    logging.info("Saving results")
     model_id = model_name.split("/")[-1]
     outpath = RESULTS_DIR / "interval" / dataset_name / strategy / f"{model_id}.json"
     outpath.parent.mkdir(parents=True, exist_ok=True)
+    logging.info(f"Saving results to {outpath}")
     with open(outpath, "w") as f:
         json.dump(report, f, indent=4)
 

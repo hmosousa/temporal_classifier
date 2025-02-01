@@ -62,13 +62,26 @@ class System:
             for pair in PAIRS
         ]
 
-        # Get the model's prediction
-        point_preds = self.pipe(texts, batch_size=len(texts), top_k=len(self.label2id))
+        inv_texts = [
+            text.replace("<source>", f"<{pair[1]}>")
+            .replace("</source>", f"</{pair[1]}>")
+            .replace("<target>", f"<{pair[0]}>")
+            .replace("</target>", f"</{pair[0]}>")
+            for pair in PAIRS
+        ]
 
-        y_prob = np.zeros((len(texts), len(self.label2id)))
+        # Get the model's prediction
+        point_preds = self.pipe(
+            texts + inv_texts, batch_size=2 * len(texts), top_k=len(self.label2id)
+        )
+
+        y_prob = np.zeros((2 * len(texts), len(self.label2id)))
         for idx, pred in enumerate(point_preds):
             for label_pred in pred:
                 y_prob[idx, self.label2id[label_pred["label"]]] = label_pred["score"]
+
+        y_prob = y_prob[: len(texts)] * y_prob[len(texts) :, [1, 0, 2]]
+
         interval_relation = get_interval_relation(
             y_prob, self.interval_labels, self.strategy
         )
