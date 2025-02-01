@@ -10,15 +10,13 @@ import logging
 import xml.etree.ElementTree as ET
 from typing import Literal
 
-import numpy as np
 from fire import Fire
 
 from src.constants import ROOT_DIR
 from src.data import load_dataset
-from src.interval import get_interval_relation, PAIRS
-from src.model import load_model
 from src.model.majority import MajorityClassifier
 from src.model.random import RandomClassifier
+from src.system import System
 from tieval.temporal_relation import TemporalRelation
 from tqdm import tqdm
 
@@ -103,8 +101,7 @@ def main(
     elif model_name == "majority":
         classifier = MajorityClassifier(all_labels)
     else:
-        classifier = load_model("classifier", model_name, revision)
-        label2id = classifier.model.config.label2id
+        classifier = System(model_name, revision, strategy, unique_interval_labels)
 
     logging.info("Getting predictions")
     labels, preds = [], []
@@ -113,29 +110,7 @@ def main(
         if model_name in ["random", "majority"]:
             interval_relation = classifier([example["text"]])[0]["label"]
         else:
-            # Generate the text for each point the model has to classify
-            texts = []
-            for pair in PAIRS:
-                text = (
-                    example["text"]
-                    .replace("<source>", f"<{pair[0]}>")
-                    .replace("</source>", f"</{pair[0]}>")
-                    .replace("<target>", f"<{pair[1]}>")
-                    .replace("</target>", f"</{pair[1]}>")
-                )
-                texts.append(text)
-
-            # Get the model's prediction
-            point_preds = classifier(texts, batch_size=len(texts), top_k=len(label2id))
-
-            y_prob = np.zeros((len(texts), len(label2id)))
-            for idx, pred in enumerate(point_preds):
-                for label_pred in pred:
-                    y_prob[idx, label2id[label_pred["label"]]] = label_pred["score"]
-
-            interval_relation = get_interval_relation(
-                y_prob, unique_interval_labels, strategy
-            )
+            interval_relation = classifier([example["text"]])[0]
 
         labels.append(example["label"])
         preds.append(interval_relation if interval_relation is not None else "None")

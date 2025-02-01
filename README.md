@@ -117,6 +117,15 @@ This script will print the results presented in the table below.
 |                                                                                  | ✓    | ✓    |      |       |       |       |
 |                                                                                  | ✓    |      | ✓    |       |       |       |
 |                                                                                  |      | ✓    | ✓    |       |       |       |
+|                                                                                  | ✓    | ✓    | ✓    |       |       |       |
+| SmolLM2-360M                                                                     |      |      |      | 66.24 | 66.18 | 66.30 |
+|                                                                                  | ✓    |      |      |       |       |       |
+|                                                                                  |      | ✓    |      |       |       |       |
+|                                                                                  |      |      | ✓    |       |       |       |
+|                                                                                  | ✓    | ✓    |      |       |       |       |
+|                                                                                  | ✓    |      | ✓    |       |       |       |
+|                                                                                  |      | ✓    | ✓    |       |       |       |
+|                                                                                  | ✓    | ✓    | ✓    |       |       |       |
 
 
 ## Load Models from Hugging Face
