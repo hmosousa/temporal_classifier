@@ -102,6 +102,8 @@ python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-synthetic -d matre
 python scripts/eval/point.py -m hugosousa/smol-135-tq-augment-synthetic -d matres
 python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment-synthetic -d matres
 
+python scripts/eval/point.py -d matres -m -m hugosousa/smol-360-a-4a820490 -r aee726c847b87a0fe8123f66a6f374fee5bbece5 
+
 ## Point TDDiscourse
 python scripts/eval/point.py -m random -d point_tddiscourse
 python scripts/eval/point.py -m majority -d point_tddiscourse
