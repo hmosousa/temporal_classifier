@@ -2,7 +2,6 @@ import collections
 import logging
 import multiprocessing as mp
 import pathlib
-import tempfile
 from typing import Optional
 
 import datasets
@@ -245,20 +244,9 @@ class Trainer:
                 break
 
             if self.config.hp_search:
-                with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
-                    temp_checkpoint_dir = pathlib.Path(temp_checkpoint_dir)
-
-                    torch.save(
-                        self.model.state_dict(),
-                        temp_checkpoint_dir / "model.pth",
-                    )
-                    checkpoint = ray.train.Checkpoint.from_directory(
-                        temp_checkpoint_dir
-                    )
-                    ray.train.report(
-                        metrics={"f1-score": valid_metrics["f1-score"]},
-                        checkpoint=checkpoint,
-                    )
+                ray.train.report(
+                    metrics={"f1-score": valid_metrics["f1-score"]},
+                )
 
             logger.info(
                 f"Epoch {epoch}\n"
@@ -372,20 +360,10 @@ class Trainer:
                         logger.error(f"Error pushing to hub: {e}")
 
                 if self.config.hp_search:
-                    with tempfile.TemporaryDirectory() as temp_checkpoint_dir:
-                        temp_checkpoint_dir = pathlib.Path(temp_checkpoint_dir)
+                    ray.train.report(
+                        metrics={"f1-score": valid_metrics["f1-score"]},
+                    )
 
-                        torch.save(
-                            self.model.state_dict(),
-                            temp_checkpoint_dir / "model.pth",
-                        )
-                        checkpoint = ray.train.Checkpoint.from_directory(
-                            temp_checkpoint_dir
-                        )
-                        ray.train.report(
-                            metrics={"f1-score": valid_metrics["f1-score"]},
-                            checkpoint=checkpoint,
-                        )
             pb.set_description(
                 f"Loss: {loss.item():.4f} - Acc: {total_correct / total_examples:.4f}"
             )
