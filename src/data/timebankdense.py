@@ -97,9 +97,28 @@ def load_interval_timebank_dense(
             if tag_count != 4:
                 continue
 
+            # Get the relation
+            if tlink.source.is_dct:
+                source_type = "dct"
+            else:
+                source_type = tlink.source.id[0]
+
+            if tlink.target.is_dct:
+                target_type = "dct"
+            else:
+                target_type = tlink.target.id[0]
+            relation_type = "-".join(sorted([source_type, target_type]))
+
             text = text.replace("\n", " ").strip()
             examples.append(
-                {"doc": doc.name, "text": text, "label": tlink.relation.interval}
+                {
+                    "doc": doc.name,
+                    "text": text,
+                    "source": srcid,
+                    "target": tgtid,
+                    "type": relation_type,
+                    "label": tlink.relation.interval,
+                }
             )
     return datasets.Dataset.from_list(examples)
 

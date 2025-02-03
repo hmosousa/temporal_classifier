@@ -11,7 +11,14 @@ def test_load_interval_timebank_dense_train():
     trainset = load_interval_timebank_dense("train")
 
     assert isinstance(trainset, Dataset)
-    assert set(trainset.column_names) == {"doc", "text", "label"}
+    assert set(trainset.column_names) == {
+        "doc",
+        "text",
+        "label",
+        "source",
+        "target",
+        "type",
+    }
     assert len(trainset) == 4_616
 
 
@@ -19,7 +26,14 @@ def test_load_interval_timebank_dense_valid():
     validset = load_interval_timebank_dense("valid")
 
     assert isinstance(validset, Dataset)
-    assert set(validset.column_names) == {"doc", "text", "label"}
+    assert set(validset.column_names) == {
+        "doc",
+        "text",
+        "label",
+        "source",
+        "target",
+        "type",
+    }
     assert len(validset) == 637
 
 
@@ -27,7 +41,14 @@ def test_load_interval_timebank_dense_test():
     testset = load_interval_timebank_dense("test")
 
     assert isinstance(testset, Dataset)
-    assert set(testset.column_names) == {"doc", "text", "label"}
+    assert set(testset.column_names) == {
+        "doc",
+        "text",
+        "label",
+        "source",
+        "target",
+        "type",
+    }
     assert len(testset) == 1552
 
 
@@ -40,9 +61,30 @@ def test_load_dataset_interval_timebank_dense():
     assert isinstance(validset, Dataset)
     assert isinstance(testset, Dataset)
 
-    assert set(trainset.column_names) == {"doc", "text", "label"}
-    assert set(validset.column_names) == {"doc", "text", "label"}
-    assert set(testset.column_names) == {"doc", "text", "label"}
+    assert set(trainset.column_names) == {
+        "doc",
+        "text",
+        "label",
+        "source",
+        "target",
+        "type",
+    }
+    assert set(validset.column_names) == {
+        "doc",
+        "text",
+        "label",
+        "source",
+        "target",
+        "type",
+    }
+    assert set(testset.column_names) == {
+        "doc",
+        "text",
+        "label",
+        "source",
+        "target",
+        "type",
+    }
 
     assert len(trainset) == 4_616
     assert len(validset) == 637

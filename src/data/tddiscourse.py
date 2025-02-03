@@ -97,8 +97,28 @@ def load_interval_tddiscourse(
             if "(PROFILE" in text:
                 text, _ = text.split("(PROFILE")
                 text = text.strip()
+
+            # Get the relation
+            if tlink.source.is_dct:
+                source_type = "dct"
+            else:
+                source_type = tlink.source.id[0]
+
+            if tlink.target.is_dct:
+                target_type = "dct"
+            else:
+                target_type = tlink.target.id[0]
+            relation_type = "-".join(sorted([source_type, target_type]))
+
             examples.append(
-                {"doc": doc.name, "text": text, "label": tlink.relation.interval}
+                {
+                    "doc": doc.name,
+                    "text": text,
+                    "source": srcid,
+                    "target": tgtid,
+                    "type": relation_type,
+                    "label": tlink.relation.interval,
+                }
             )
 
     return datasets.Dataset.from_list(examples)
