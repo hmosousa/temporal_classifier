@@ -6,7 +6,7 @@ RELATIONS = ["<", ">", "=", "-"]
 
 N_RELATIONS = len(RELATIONS)
 
-INVERT_RELATION = {
+INVERT_POINT_RELATION = {
     "<": ">",
     ">": "<",
     "=": "=",
@@ -62,7 +62,7 @@ class PointRelation:
         elif (
             self.source == other.target
             and self.target == other.source
-            and self.type == INVERT_RELATION[other.type]
+            and self.type == INVERT_POINT_RELATION[other.type]
         ):
             return True
         return False
@@ -72,7 +72,9 @@ class PointRelation:
 
     def __invert__(self) -> "PointRelation":
         return PointRelation(
-            source=self.target, target=self.source, type=INVERT_RELATION[self.type]
+            source=self.target,
+            target=self.source,
+            type=INVERT_POINT_RELATION[self.type],
         )
 
     def __hash__(self) -> int:
@@ -80,7 +82,9 @@ class PointRelation:
         if tmp[0] == self.source:
             return hash(tuple([self.source, self.target, self.type]))
         else:
-            return hash(tuple([self.target, self.source, INVERT_RELATION[self.type]]))
+            return hash(
+                tuple([self.target, self.source, INVERT_POINT_RELATION[self.type]])
+            )
 
     def to_dict(self) -> Dict:
         return {

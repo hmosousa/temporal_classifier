@@ -1,6 +1,6 @@
 import pytest
 
-from src.base import INVERT_RELATION, PointRelation
+from src.base import INVERT_POINT_RELATION, PointRelation
 
 
 class TestRelation:
@@ -42,7 +42,7 @@ class TestRelation:
             assert inverted.type == expected.type
 
     def test_relation_invert_relation_consistency(self):
-        for rel_type, inverted_type in INVERT_RELATION.items():
+        for rel_type, inverted_type in INVERT_POINT_RELATION.items():
             r = PointRelation(source="start A", target="start B", type=rel_type)
             inverted = ~r
             assert inverted.type == inverted_type

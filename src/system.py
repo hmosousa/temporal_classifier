@@ -5,7 +5,7 @@ import torch
 from tieval.temporal_relation import _INTERVAL_TO_POINT_RELATION, PointRelation
 from transformers import AutoTokenizer, pipeline
 
-from src.base import MODEL_ID2RELATIONS, MODEL_RELATIONS2ID
+from src.base import INVERT_POINT_RELATION, MODEL_ID2RELATIONS, MODEL_RELATIONS2ID
 from src.model.classifier import ContextClassifier
 
 PAIRS = [
@@ -30,6 +30,7 @@ class System:
         revision: str = "main",
         strategy: str = "most_likely",
         interval_labels: List[str] = ["BEFORE", "AFTER", "SIMULTANEOUS"],
+        double_inference: bool = True,
     ):
         tokenizer = AutoTokenizer.from_pretrained(model_name, revision=revision)
         model = ContextClassifier.from_pretrained(model_name, revision=revision)
@@ -42,8 +43,10 @@ class System:
             revision=revision,
         )
         self.label2id = self.pipe.model.config.label2id
+        self.id2label = self.pipe.model.config.id2label
         self.strategy = strategy
         self.interval_labels = interval_labels
+        self.double_inference = double_inference
 
     def inference(self, text: str) -> str:
         """Infer the interval relation for a given text.
@@ -62,25 +65,45 @@ class System:
             for pair in PAIRS
         ]
 
-        inv_texts = [
-            text.replace("<source>", f"<{pair[1]}>")
-            .replace("</source>", f"</{pair[1]}>")
-            .replace("<target>", f"<{pair[0]}>")
-            .replace("</target>", f"</{pair[0]}>")
-            for pair in PAIRS
-        ]
+        if self.double_inference:
+            inv_texts = [
+                text.replace("<source>", f"<{pair[1]}>")
+                .replace("</source>", f"</{pair[1]}>")
+                .replace("<target>", f"<{pair[0]}>")
+                .replace("</target>", f"</{pair[0]}>")
+                for pair in PAIRS
+            ]
+            texts += inv_texts
 
         # Get the model's prediction
         point_preds = self.pipe(
-            texts + inv_texts, batch_size=2 * len(texts), top_k=len(self.label2id)
+            texts,
+            batch_size=2 * len(texts) if self.double_inference else len(texts),
+            top_k=len(self.label2id),
         )
 
-        y_prob = np.zeros((2 * len(texts), len(self.label2id)))
-        for idx, pred in enumerate(point_preds):
-            for label_pred in pred:
-                y_prob[idx, self.label2id[label_pred["label"]]] = label_pred["score"]
+        if self.double_inference:
+            y_prob = np.zeros((len(texts), len(self.label2id)))
+            for idx, pred in enumerate(point_preds):
+                for label_pred in pred:
+                    y_prob[idx, self.label2id[label_pred["label"]]] = label_pred[
+                        "score"
+                    ]
 
-        y_prob = y_prob[: len(texts)] * y_prob[len(texts) :, [1, 0, 2]]
+            inverse_columns = [
+                self.label2id[INVERT_POINT_RELATION[self.id2label[col]]]
+                for col in range(y_prob.shape[1])
+            ]
+            y_prob = (
+                y_prob[: len(texts) // 2] * y_prob[len(texts) // 2 :, inverse_columns]
+            )
+        else:
+            y_prob = np.zeros((len(texts), len(self.label2id)))
+            for idx, pred in enumerate(point_preds):
+                for label_pred in pred:
+                    y_prob[idx, self.label2id[label_pred["label"]]] = label_pred[
+                        "score"
+                    ]
 
         interval_relation = get_interval_relation(
             y_prob, self.interval_labels, self.strategy
