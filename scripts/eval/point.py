@@ -85,9 +85,7 @@ def main(
             preds = json.load(f)
     else:
         logging.info("Getting predictions")
-        preds = classifier(
-            dataset["text"], batch_size=batch_size, top_k=len(MODEL_RELATIONS)
-        )
+        preds = classifier(dataset["text"], batch_size=batch_size, top_k=None)
 
         logging.info(f"Saving predictions to {cachepath}")
         cachepath.parent.mkdir(parents=True, exist_ok=True)

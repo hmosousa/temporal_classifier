@@ -3,7 +3,7 @@ from typing import Dict, List, Literal
 import numpy as np
 import torch
 from tieval.temporal_relation import _INTERVAL_TO_POINT_RELATION, PointRelation
-from transformers import AutoTokenizer, pipeline
+from transformers import AutoTokenizer, TextClassificationPipeline
 
 from src.base import INVERT_POINT_RELATION, MODEL_ID2RELATIONS, MODEL_RELATIONS2ID
 from src.model.classifier import ContextClassifier
@@ -23,6 +23,25 @@ PAIRS_TO_IDX = {
 }
 
 
+class PipelineWithLogits(TextClassificationPipeline):
+    def postprocess(self, model_outputs):
+        outputs = model_outputs["logits"][0]
+
+        if self.framework == "pt":
+            # To enable using fp16 and bf16
+            outputs = outputs.float().numpy()
+        else:
+            outputs = outputs.numpy()
+
+        scores = outputs
+        dict_scores = [
+            {"label": self.model.config.id2label[i], "score": score.item()}
+            for i, score in enumerate(scores)
+        ]
+        dict_scores.sort(key=lambda x: x["score"], reverse=True)
+        return dict_scores
+
+
 class System:
     def __init__(
         self,
@@ -33,14 +52,14 @@ class System:
         double_inference: bool = True,
     ):
         tokenizer = AutoTokenizer.from_pretrained(model_name, revision=revision)
-        model = ContextClassifier.from_pretrained(model_name, revision=revision)
-        self.pipe = pipeline(
-            "text-classification",
+        model = ContextClassifier.from_pretrained(
+            model_name,
+            revision=revision,
+        )
+        self.pipe = PipelineWithLogits(
             model=model,
             tokenizer=tokenizer,
             torch_dtype=torch.bfloat16,
-            device_map="auto",
-            revision=revision,
         )
         self.label2id = self.pipe.model.config.label2id
         self.id2label = self.pipe.model.config.id2label
@@ -79,7 +98,6 @@ class System:
         point_preds = self.pipe(
             texts,
             batch_size=2 * len(texts) if self.double_inference else len(texts),
-            top_k=len(self.label2id),
         )
 
         if self.double_inference:
@@ -95,7 +113,7 @@ class System:
                 for col in range(y_prob.shape[1])
             ]
             y_prob = (
-                y_prob[: len(texts) // 2] * y_prob[len(texts) // 2 :, inverse_columns]
+                y_prob[: len(texts) // 2] + y_prob[len(texts) // 2 :, inverse_columns]
             )
         else:
             y_prob = np.zeros((len(texts), len(self.label2id)))
@@ -105,10 +123,10 @@ class System:
                         "score"
                     ]
 
-        interval_relation = get_interval_relation(
+        interval_preds = get_interval_relation(
             y_prob, self.interval_labels, self.strategy
         )
-        return interval_relation
+        return interval_preds
 
     def __call__(self, texts: List[str]) -> List[str]:
         return [self.inference(text) for text in texts]
@@ -118,7 +136,7 @@ def get_interval_relation(
     y_prob: np.ndarray,
     unique_labels: List[str],
     strategy: Literal["high_to_low", "most_likely"],
-) -> str:
+) -> list:
     """Get the interval relation from a list of predictions.
 
     y_prob: The probability predicted for each point relation and class.
@@ -146,8 +164,9 @@ def get_interval_relation(
 def _high_to_low(
     y_prob: np.ndarray,
     point_to_interval_relation: Dict[PointRelation, str],
-) -> str:
+) -> list:
     """Try to form an interval relation with the highest confidence point relation."""
+    # Todo: Make it output the probability of the interval relation
 
     point_relations = [
         {"label": MODEL_ID2RELATIONS[y_pred], "score": y_prob[i, y_pred].item()}
@@ -183,18 +202,22 @@ def _high_to_low(
 def _most_likely(
     y_prob: np.ndarray,
     point_to_interval_relation: Dict[PointRelation, str],
-) -> str:
+) -> list:
     """Try to form an interval relation with the highest confidence point relation."""
-
-    highest_prob, interval_relation = 0.0, None
+    probs, relations = [], []
     for relation, relation_name in point_to_interval_relation.items():
         relation_probs = [
-            y_prob[row_idx, MODEL_RELATIONS2ID[point_relation]]
+            y_prob[row_idx, MODEL_RELATIONS2ID[point_relation]].item()
             for row_idx, point_relation in enumerate(relation.relation)
             if point_relation is not None
         ]
-        relation_prob = np.prod(relation_probs) if relation_probs else 0.0
-        if relation_prob > highest_prob:
-            highest_prob = relation_prob
-            interval_relation = relation_name
-    return interval_relation
+        relation_prob = np.sum(relation_probs) if relation_probs else 0.0
+        probs.append(relation_prob.item())
+        relations.append(relation_name)
+    probs = np.exp((probs)) / np.sum(np.exp(probs))
+    predictions = [
+        {"score": prob.item(), "label": relation}
+        for prob, relation in zip(probs, relations)
+    ]
+    predictions.sort(key=lambda x: x["score"], reverse=True)
+    return predictions

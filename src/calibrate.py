@@ -11,7 +11,7 @@ class CalibratedClassifier:
         self.label_regressors = {}
 
     def fit(self, texts, labels):
-        preds = self.model(texts, top_k=len(self.label2id))
+        preds = self.model(texts, top_k=None)
         y_prob = self._pred_to_prob(preds)
 
         # Convert dataset labels to label idxs

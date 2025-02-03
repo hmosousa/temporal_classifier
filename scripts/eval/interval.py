@@ -50,7 +50,7 @@ def main(
         if model_name in ["random", "majority"]:
             interval_relation = classifier([example["text"]])[0]["label"]
         else:
-            interval_relation = classifier([example["text"]])[0]
+            interval_relation = classifier([example["text"]])[0][0]["label"]
 
         labels.append(example["label"])
         preds.append(interval_relation if interval_relation is not None else "None")
