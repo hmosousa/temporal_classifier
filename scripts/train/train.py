@@ -549,7 +549,7 @@ def main(
         search_space = {
             "learning_rate": ray.tune.loguniform(1e-5, 1e-3),
             "max_grad_norm": ray.tune.uniform(0.3, 1.0),
-            "num_train_epochs": ray.tune.randint(3, 15),
+            "num_train_epochs": ray.tune.randint(1, 10),
             "label_smoothing_factor": ray.tune.uniform(0.01, 0.1),
             "per_device_train_batch_size": ray.tune.choice([4, 8]),
         }
