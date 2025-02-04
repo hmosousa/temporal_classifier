@@ -2,7 +2,7 @@
 
 # Best models
 # smol-135
-#   - raw: 
+#   - raw: hugosousa/smol-135-0dd0da37 -r aadb93fe6ee0272e40eac187511de316afa94b5b
 #   - augment: hugosousa/smol-135-a-191329ff -r bc857f718f69adb90ea7baf674d297c35867f6c6
 #   - closure: hugosousa/smol-135-c-3ed00d05 -r 73a6cca7b0b814e774987594820de75a6aab2f33
 #   - synthetic: 
