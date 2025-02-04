@@ -72,6 +72,7 @@ python scripts/eval/semeval_eval.py -m hugosousa/smol-135
 python scripts/eval/semeval_eval.py -m hugosousa/smol-135-a
 
 python scripts/eval/semeval_eval.py -m hugosousa/smol-360-89128df1 -r edd5ea745fa2d4aebfaf9a4e576ec594dcd840ba
+python scripts/eval/semeval_eval.py -m hugosousa/smol-360-a-4a820490 -r aee726c847b87a0fe8123f66a6f374fee5bbece5
 
 
 

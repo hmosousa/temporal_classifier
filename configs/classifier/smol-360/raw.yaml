@@ -10,14 +10,16 @@ data:
     max_seq_length: 4096
     augment: False
     closure: False
+    synthetic: False
     pad_to_max_length: False # To pad each batch at runtime
     shuffle_train_dataset: True
     shuffle_seed: 42
 
 trainer:
     output_dir: models/smol-360
-    per_device_train_batch_size: 8
-    per_device_eval_batch_size: 8
+    per_device_train_batch_size: 16
+    per_device_eval_batch_size: 16
+    max_batch_size_per_device: 8
     num_train_epochs: 10
     learning_rate: 3e-4
     max_grad_norm: 0.5
@@ -28,7 +30,7 @@ trainer:
     hub_model_id: hugosousa/smol-360
     label_smoothing_factor: 0.03
     torch_compile: False
-    early_stopping_patience: 10
+    early_stopping_patience: 5
     init_bias: True
     lr_scheduler:
         warmup_factor: 0.001

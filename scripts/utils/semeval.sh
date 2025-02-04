@@ -29,7 +29,9 @@ echo "Smol 135"
 python TE3-evaluation.py gold/ results/most_likely/smol-135/
 echo "Smol 135-a"
 python TE3-evaluation.py gold/ results/most_likely/smol-135-a/
-echo "Smol 135-191329ff"  # Best augmented model
+echo "Smol 135-191329ff"  # Best model
 python TE3-evaluation.py gold/ results/most_likely/smol-135-191329ff/
-echo "hugosousa/smol-360-89128df1"  # Best augmented model
+echo "hugosousa/smol-360-89128df1"  # Best model
 python TE3-evaluation.py gold/ results/most_likely/smol-360-89128df1/
+echo "hugosousa/smol-360-a-4a820490"  # Best model
+python TE3-evaluation.py gold/ results/most_likely/smol-360-a-4a820490/

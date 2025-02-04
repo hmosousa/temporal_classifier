@@ -18,6 +18,7 @@ data:
 trainer:
     output_dir: models/debug
     per_device_train_batch_size: 8
+    max_batch_size_per_device: 4
     per_device_eval_batch_size: 8
     num_train_epochs: 10
     learning_rate: 1e-3
@@ -37,4 +38,4 @@ trainer:
         factor: 0.1
         patience: 2
     freeze_backbone: True
-    hp_search: True
+    hp_search: False

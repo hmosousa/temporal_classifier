@@ -219,6 +219,12 @@ class TrainingArguments:
         default=8,
         metadata={"help": "The batch size for evaluation."},
     )
+    max_batch_size_per_device: int = field(
+        default=4,
+        metadata={
+            "help": "The maximum batch size per device. Used to compute the gradient accumulation steps."
+        },
+    )
     num_train_epochs: int = field(
         default=30,
         metadata={"help": "The number of epochs to train the model."},

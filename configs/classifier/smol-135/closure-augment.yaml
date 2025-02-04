@@ -10,6 +10,7 @@ data:
     max_seq_length: 4096
     augment: True
     closure: True
+    synthetic: False
     pad_to_max_length: False # To pad each batch at runtime
     shuffle_train_dataset: True
     shuffle_seed: 42
@@ -18,6 +19,7 @@ trainer:
     output_dir: models/smol-135-ac
     per_device_train_batch_size: 16
     per_device_eval_batch_size: 16
+    max_batch_size_per_device: 16
     num_train_epochs: 5
     learning_rate: 3e-4
     max_grad_norm: 0.5
@@ -34,4 +36,4 @@ trainer:
         warmup_factor: 0.001
         warmup_steps_pct: 0.02
     freeze_backbone: False
-    hp_search: False
+    hp_search: True

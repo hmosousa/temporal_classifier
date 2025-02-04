@@ -1,49 +1,39 @@
 model:
     model_name_or_path: HuggingFaceTB/SmolLM2-135M
     trust_remote_code: True
+    n_score_hidden_layers: 2
 
 data:
-    dataset_name: all_temporal_questions
-    dataset_config_name: closure
-    max_seq_length: 512
+    dataset_name: point_tempeval
+    train_split: train
+    valid_split: valid
+    max_seq_length: 4096
     augment: True
+    closure: True
+    synthetic: True
     pad_to_max_length: False # To pad each batch at runtime
     shuffle_train_dataset: True
     shuffle_seed: 42
 
 trainer:
-    output_dir: models/smol-135-tq-closure-augment-synthetic
-    overwrite_output_dir: True
-    eval_strategy: epoch
-    per_device_train_batch_size: 64
-    per_device_eval_batch_size: 64
-    num_train_epochs: 30
-    learning_rate: 1e-3
-    gradient_accumulation_steps: 2
-    max_grad_norm: 1.0
-    lr_scheduler_type: reduce_lr_on_plateau
-    lr_scheduler_kwargs:
-        factor: 0.5
-        patience: 1
-        mode: max
-    logging_dir: logs
-    logging_steps: 1
-    save_total_limit: 2
-    save_strategy: epoch
+    output_dir: models/smol-135-cas
+    per_device_train_batch_size: 16
+    per_device_eval_batch_size: 16
+    max_batch_size_per_device: 16
+    num_train_epochs: 10
+    learning_rate: 3e-4
+    max_grad_norm: 0.5
     load_best_model_at_end: True
-    metric_for_best_model: eval_weighted_avg_f1-score
-    greater_is_better: True
     seed: 42
     bf16: True
     push_to_hub: True
-    hub_model_id: hugosousa/smol-135-tq-closure-augment-synthetic
-    hub_strategy: every_save
-    do_train: True
-    do_eval: True
-    skip_memory_metrics: False
-    use_liger_kernel: True
-    torch_compile: True
-
-other:
-    early_stopping_patience: 3
-    label_smoothing_factor: 0.1
+    hub_model_id: hugosousa/smol-135-cas
+    label_smoothing_factor: 0.03
+    torch_compile: False
+    early_stopping_patience: 5
+    init_bias: True
+    lr_scheduler:
+        warmup_factor: 0.001
+        warmup_steps_pct: 0.02
+    freeze_backbone: False
+    hp_search: True

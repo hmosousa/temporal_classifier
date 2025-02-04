@@ -71,6 +71,12 @@ class Trainer:
     ):
         self.config = config
         self.output_dir = pathlib.Path(config.output_dir)
+        self.gradient_accumulation_steps = max(
+            1, config.per_device_train_batch_size // config.max_batch_size_per_device
+        )
+        self.per_device_train_batch_size = (
+            config.per_device_train_batch_size // self.gradient_accumulation_steps
+        )
 
         self.accelerator = Accelerator()
 
@@ -113,8 +119,8 @@ class Trainer:
 
         self.optimizer = optim.AdamW(model.parameters(), lr=config.learning_rate)
 
-        self.steps_per_epoch = (
-            len(train_dataset) // self.config.per_device_train_batch_size
+        self.steps_per_epoch = len(train_dataset) // (
+            self.per_device_train_batch_size * self.gradient_accumulation_steps
         )
         self.total_train_steps = self.config.num_train_epochs * self.steps_per_epoch
         self.warmup_steps = int(
@@ -152,7 +158,7 @@ class Trainer:
         self.data_collator = data_collator
         self.features = ["input_ids", "attention_mask", "label"]
         self.train_loader = self.get_dataloaders(
-            train_dataset, self.config.per_device_train_batch_size
+            train_dataset, self.per_device_train_batch_size
         )
         self.valid_loader = self.get_dataloaders(
             valid_dataset, self.config.per_device_eval_batch_size
@@ -284,19 +290,11 @@ class Trainer:
         total_loss = 0
         y_preds, y_trues = [], []
 
-        for batch in train_loader:
-            self.optimizer.zero_grad()
+        for bid, batch in enumerate(train_loader):
             logits = self.model.forward(**batch).logits
             loss = self.criterion(logits, batch["labels"])
-
+            loss = loss / self.gradient_accumulation_steps
             self.accelerator.backward(loss)
-
-            if self.config.max_grad_norm is not None:
-                self.accelerator.clip_grad_norm_(
-                    self.model.parameters(), self.config.max_grad_norm
-                )
-            self.optimizer.step()
-            self.scheduler.step()
 
             # metrics
             total_loss += loss.item()
@@ -305,70 +303,78 @@ class Trainer:
             y_preds += logits.argmax(dim=1).tolist()
             y_trues += batch["labels"].tolist()
 
-            lr = self.optimizer.param_groups[0]["lr"]
-            if (self.global_step + 1) % self.log_every == 0:
-                metrics = self.compute_metrics(y_preds, y_trues)
-                metrics["loss"] = loss.item()
+            if (bid + 1) % self.gradient_accumulation_steps == 0:
+                if self.config.max_grad_norm is not None:
+                    self.accelerator.clip_grad_norm_(
+                        self.model.parameters(), self.config.max_grad_norm
+                    )
+                self.optimizer.step()
+                self.scheduler.step()
+                self.optimizer.zero_grad()
 
-                # logging
-                self.run.log(
-                    {
-                        "train": metrics,
-                        "lr": lr,
-                        "epoch": self.epoch_frac * self.global_step,
-                    },
-                    step=self.global_step,
-                )
+                lr = self.optimizer.param_groups[0]["lr"]
+                if (self.global_step + 1) % self.log_every == 0:
+                    metrics = self.compute_metrics(y_preds, y_trues)
+                    metrics["loss"] = loss.item()
 
-            else:
-                self.run.log(
-                    {
-                        "train": {"loss": loss.item()},
-                        "lr": lr,
-                        "epoch": self.epoch_frac * self.global_step,
-                    },
-                    step=self.global_step,
-                )
-
-            # For runs that have long training epochs, we evaluate the model every 1,500 steps
-            if (
-                self.eval_every is not None
-                and (self.global_step + 1) % self.eval_every == 0
-            ):
-                valid_metrics = self.eval_step(self.valid_loader)
-                test_metrics = self.eval_step(self.test_loader)
-                self.run.log(
-                    {
-                        "valid": valid_metrics,
-                        "test": test_metrics,
-                        "epoch": self.epoch_frac * self.global_step,
-                    },
-                    step=self.global_step,
-                )
-
-                self.save_model(output_dir=self.output_dir / self.run_id)
-                self.save_tokenizer(self.output_dir / self.run_id)
-                if self.config.push_to_hub:
-                    try:
-                        self.push_to_hub(
-                            repo_id=f"{self.config.hub_model_id}-{self.run_id}",
-                            folder_path=self.output_dir / self.run_id,
-                            commit_message=f"Epoch {self.global_step} valid f1-score: {valid_metrics['f1-score']:.4f}",
-                            blocking=True,
-                        )
-                    except Exception as e:
-                        logger.error(f"Error pushing to hub: {e}")
-
-                if self.config.hp_search:
-                    ray.train.report(
-                        metrics={"f1-score": valid_metrics["f1-score"]},
+                    # logging
+                    self.run.log(
+                        {
+                            "train": metrics,
+                            "lr": lr,
+                            "epoch": self.epoch_frac * self.global_step,
+                        },
+                        step=self.global_step,
                     )
 
-            pb.set_description(
-                f"Loss: {loss.item():.4f} - Acc: {total_correct / total_examples:.4f}"
-            )
-            pb.update(1)
-            self.global_step += 1
+                else:
+                    self.run.log(
+                        {
+                            "train": {"loss": loss.item()},
+                            "lr": lr,
+                            "epoch": self.epoch_frac * self.global_step,
+                        },
+                        step=self.global_step,
+                    )
+
+                if (
+                    self.eval_every is not None
+                    and (self.global_step + 1) % self.eval_every == 0
+                ):
+                    valid_metrics = self.eval_step(self.valid_loader)
+                    test_metrics = self.eval_step(self.test_loader)
+                    self.run.log(
+                        {
+                            "valid": valid_metrics,
+                            "test": test_metrics,
+                            "epoch": self.epoch_frac * self.global_step,
+                        },
+                        step=self.global_step,
+                    )
+
+                    self.save_model(output_dir=self.output_dir / self.run_id)
+                    self.save_tokenizer(self.output_dir / self.run_id)
+                    if self.config.push_to_hub:
+                        try:
+                            self.push_to_hub(
+                                repo_id=f"{self.config.hub_model_id}-{self.run_id}",
+                                folder_path=self.output_dir / self.run_id,
+                                commit_message=f"Epoch {self.global_step} valid f1-score: {valid_metrics['f1-score']:.4f}",
+                                blocking=True,
+                            )
+                        except Exception as e:
+                            logger.error(f"Error pushing to hub: {e}")
+
+                    if self.config.hp_search:
+                        ray.train.report(
+                            metrics={"f1-score": valid_metrics["f1-score"]},
+                        )
+
+                pb.set_description(
+                    f"Loss: {loss.item():.4f} - Acc: {total_correct / total_examples:.4f}"
+                )
+                pb.update(1)
+                self.global_step += 1
 
         metrics = self.compute_metrics(y_preds, y_trues)
         metrics["loss"] = total_loss / len(train_loader)

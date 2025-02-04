@@ -19,6 +19,7 @@ trainer:
     output_dir: models/smol-135-s
     per_device_train_batch_size: 16
     per_device_eval_batch_size: 16
+    max_batch_size_per_device: 16
     num_train_epochs: 10
     learning_rate: 3e-4
     max_grad_norm: 0.5
@@ -35,4 +36,4 @@ trainer:
         warmup_factor: 0.001
         warmup_steps_pct: 0.02
     freeze_backbone: False
-    hp_search: False
+    hp_search: True
