@@ -14,7 +14,7 @@
 # smol-360
 #   - raw: hugosousa/smol-360-89128df1 -r edd5ea745fa2d4aebfaf9a4e576ec594dcd840ba
 #   - augment: hugosousa/smol-360-a-4a820490 -r aee726c847b87a0fe8123f66a6f374fee5bbece5
-#   - closure: hugosousa/smol-360-c-6af17138 -r e5924e499d8076c6117e5cd38edc21c75f95b7ac
+#   - closure: hugosousa/smol-360-c-e82ebef2 -r 9a78bbf916620cba266c9c718061a6ff370bad05
 #   - synthetic: 
 #   - closure-augment: 
 #   - closure-synthetic: 
@@ -57,7 +57,7 @@ python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa
 
 python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa/smol-360-89128df1 -r edd5ea745fa2d4aebfaf9a4e576ec594dcd840ba
 python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa/smol-360-a-4a820490 -r aee726c847b87a0fe8123f66a6f374fee5bbece5 
- python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa/smol-360-c-6af17138 -r e5924e499d8076c6117e5cd38edc21c75f95b7ac
+python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa/smol-360-c-e82ebef2 -r 9a78bbf916620cba266c9c718061a6ff370bad05
 
 
 python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa/smol-360-a-4a820490 -r aee726c847b87a0fe8123f66a6f374fee5bbece5 
