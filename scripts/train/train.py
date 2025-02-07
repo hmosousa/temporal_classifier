@@ -301,7 +301,8 @@ def main(
     config.model["token"] = HF_TOKEN
     model_args = ModelArguments(**config.model)
 
-    config.data["preprocessing_num_workers"] = mp.cpu_count()
+    debug = config.get("debug", False)
+    config.data["preprocessing_num_workers"] = mp.cpu_count() if not debug else 1
     data_args = DataTrainingArguments(**config.data)
 
     training_args = TrainingArguments(**config.trainer)
@@ -362,6 +363,21 @@ def main(
     # Print some info about the dataset
     logger.info(f"Dataset loaded: {raw_datasets}")
 
+    unique_labels = list(set(raw_datasets["train"]["label"]))
+    unique_labels.sort()
+
+    if set(unique_labels) != set(MODEL_RELATIONS):
+        logger.warning(
+            f"The unique labels in the dataset are not the same as the model relations: {unique_labels} != {MODEL_RELATIONS}"
+        )
+        label2id = {label: i for i, label in enumerate(unique_labels)}
+        id2label = {i: label for i, label in enumerate(unique_labels)}
+    else:
+        label2id = MODEL_RELATIONS2ID
+        id2label = MODEL_ID2RELATIONS
+
+    logger.info(f"Unique labels: {unique_labels}")
+
     # Load pretrained model and tokenizer
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
@@ -383,13 +399,13 @@ def main(
 
     model_config = LlamaConfig.from_pretrained(
         model_args.model_name_or_path,
-        num_labels=len(MODEL_RELATIONS),
+        num_labels=len(unique_labels),
         finetuning_task="text-classification",
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         token=model_args.token,
-        label2id=MODEL_RELATIONS2ID,
-        id2label=MODEL_ID2RELATIONS,
+        label2id=label2id,
+        id2label=id2label,
     )
 
     logger.info(f"Adding new tokens to the model: {new_token_ids}")
@@ -404,7 +420,7 @@ def main(
         revision=model_args.model_revision,
         token=model_args.token,
         ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
-        torch_dtype=torch.bfloat16,
+        torch_dtype=torch.bfloat16 if training_args.bf16 else torch.float32,
     )
 
     model.config.pad_token_id = model.config.eos_token_id
@@ -430,8 +446,8 @@ def main(
 
     def preprocess_function(examples):
         result = tokenizer(examples["text"], padding=padding)
-        if MODEL_RELATIONS2ID is not None and "label" in examples:
-            result["label"] = [MODEL_RELATIONS2ID[label] for label in examples["label"]]
+        if label2id is not None and "label" in examples:
+            result["label"] = [label2id[label] for label in examples["label"]]
         return result
 
     # Train data
@@ -493,12 +509,10 @@ def main(
     # we already did the padding.
     if data_args.pad_to_max_length:
         data_collator = transformers.default_data_collator
-    elif training_args.bf16:
+    else:
         data_collator = transformers.DataCollatorWithPadding(
             tokenizer, pad_to_multiple_of=8
         )
-    else:
-        data_collator = None
 
     if training_args.hp_search:
         # Put large objects in Ray's object store
@@ -532,7 +546,7 @@ def main(
                 revision=model_args.model_revision,
                 token=model_args.token,
                 ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
-                torch_dtype=torch.bfloat16,
+                torch_dtype=torch.bfloat16 if trial_config.bf16 else torch.float32,
             )
             trial_model.config.pad_token_id = trial_model.config.eos_token_id
             trial_model.resize_token_embeddings(
