@@ -12,6 +12,7 @@ tar -xvf TempEval-3/DATA-PUBLISHED/TimeML-Platinum-ADCR2013T001.tar.gz
 # Run the annotation
 python ../scripts/eval/semeval_eval.py -m random
 python ../scripts/eval/semeval_eval.py -m majority
+
 python ../scripts/eval/semeval_eval.py -m hugosousa/smol-135-0dd0da37 -r aadb93fe6ee0272e40eac187511de316afa94b5b
 python ../scripts/eval/semeval_eval.py -m hugosousa/smol-135-a-191329ff -r bc857f718f69adb90ea7baf674d297c35867f6c6
 python ../scripts/eval/semeval_eval.py -m hugosousa/smol-135-c-3ed00d05 -r 73a6cca7b0b814e774987594820de75a6aab2f33
@@ -19,6 +20,10 @@ python ../scripts/eval/semeval_eval.py -m hugosousa/smol-135-ac-a4eaad65 -r 3430
 
 python ../scripts/eval/semeval_eval.py -m hugosousa/smol-360-89128df1 -r edd5ea745fa2d4aebfaf9a4e576ec594dcd840ba
 python ../scripts/eval/semeval_eval.py -m hugosousa/smol-360-a-4a820490 -r aee726c847b87a0fe8123f66a6f374fee5bbece5
+python ../scripts/eval/semeval_eval.py -m hugosousa/smol-360-c-e82ebef2 -r 9a78bbf916620cba266c9c718061a6ff370bad05
+python ../scripts/eval/semeval_eval.py -m hugosousa/smol-360-ac-b19ae776 -r 5c44cd7d5950f2c24a19a59144e15a4be1817f91
+
+python ../scripts/eval/semeval_eval.py -m hugosousa/smol-1.7-e5b6f412 -r 9b30e122950ff8cbbc4dfec3afe6819aab2a6e0f
 
 # Create a conda environment with python 2.7
 conda create -p ./.conda python=2.7 -y
@@ -35,3 +40,7 @@ echo "Smol 135-ac" && python TE3-evaluation.py gold/ results/most_likely/smol-13
 
 echo "Smol 360-89128df1"   && python TE3-evaluation.py gold/ results/most_likely/smol-360-89128df1
 echo "Smol-360-a-4a820490" && python TE3-evaluation.py gold/ results/most_likely/smol-360-a-4a820490
+echo "Smol-360-c-e82ebef2" && python TE3-evaluation.py gold/ results/most_likely/smol-360-c-e82ebef2
+echo "Smol-360-ac-b19ae776" && python TE3-evaluation.py gold/ results/most_likely/smol-360-ac-b19ae776
+
+echo "Smol 1.7-e5b6f412" && python TE3-evaluation.py gold/ results/most_likely/smol-1.7-e5b6f412
