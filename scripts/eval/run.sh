@@ -38,20 +38,20 @@ python scripts/eval/point.py -d point_tempeval -m hugosousa/smol-1.7-e5b6f412 -r
 # Interval eval
 
 ## TempEval-3
-python scripts/eval/interval.py -d interval_tempeval -s most_likely -m random
-python scripts/eval/interval.py -d interval_tempeval -s most_likely -m majority 
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m random
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m majority 
 
-python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa/smol-135-0dd0da37 -r aadb93fe6ee0272e40eac187511de316afa94b5b
-python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa/smol-135-a-191329ff -r bc857f718f69adb90ea7baf674d297c35867f6c6
-python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa/smol-135-c-3ed00d05 -r 73a6cca7b0b814e774987594820de75a6aab2f33
-python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa/smol-135-ac-a4eaad65 -r 34302bb3e114e8650b3ab60ad35d0befad00c04c
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-0dd0da37 -r aadb93fe6ee0272e40eac187511de316afa94b5b
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-a-191329ff -r bc857f718f69adb90ea7baf674d297c35867f6c6
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-c-3ed00d05 -r 73a6cca7b0b814e774987594820de75a6aab2f33
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-ac-a4eaad65 -r 34302bb3e114e8650b3ab60ad35d0befad00c04c
 
-python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa/smol-360-89128df1 -r edd5ea745fa2d4aebfaf9a4e576ec594dcd840ba
-python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa/smol-360-a-4a820490 -r aee726c847b87a0fe8123f66a6f374fee5bbece5 
-python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa/smol-360-c-e82ebef2 -r 9a78bbf916620cba266c9c718061a6ff370bad05
-python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa/smol-360-ac-b19ae776 -r 5c44cd7d5950f2c24a19a59144e15a4be1817f91
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-89128df1 -r edd5ea745fa2d4aebfaf9a4e576ec594dcd840ba
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-a-4a820490 -r aee726c847b87a0fe8123f66a6f374fee5bbece5 
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-c-e82ebef2 -r 9a78bbf916620cba266c9c718061a6ff370bad05
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-ac-b19ae776 -r 5c44cd7d5950f2c24a19a59144e15a4be1817f91
 
-python scripts/eval/interval.py -d interval_tempeval -s most_likely -m hugosousa/smol-1.7-e5b6f412 -r 9b30e122950ff8cbbc4dfec3afe6819aab2a6e0f
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-1.7-e5b6f412 -r 9b30e122950ff8cbbc4dfec3afe6819aab2a6e0f
 
 # With the original semeval script
 python scripts/eval/semeval_eval.py -m random

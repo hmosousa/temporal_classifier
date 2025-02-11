@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Literal
 
+import numpy as np
 from fire import Fire
 from sklearn.metrics import classification_report
 
@@ -16,12 +17,13 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main(
-    model_name: str = "hugosousa/smol-135-191329ff",
+    model_name: str = "random",
     revision: str = "main",
     dataset_name: Literal[
         "interval_tempeval", "interval_tddiscourse"
     ] = "interval_tempeval",
     strategy: Literal["high_to_low", "most_likely"] = "most_likely",
+    sample: bool = False,
 ):
     """Evaluate a model with a given configuration.
 
@@ -34,7 +36,7 @@ def main(
     dataset = load_dataset(dataset_name, split="test")
 
     all_labels = dataset["label"]
-    unique_interval_labels = list(set(all_labels))
+    unique_interval_labels = sorted(list(set(all_labels)))
 
     logging.info(f"Loading model {model_name}")
     if model_name == "random":
@@ -50,7 +52,15 @@ def main(
         if model_name in ["random", "majority"]:
             interval_relation = classifier([example["text"]])[0]["label"]
         else:
-            interval_relation = classifier([example["text"]])[0][0]["label"]
+            if not sample:
+                interval_relation = classifier([example["text"]])[0][0]["label"]
+            else:
+                interval_relations = classifier([example["text"]])[0]
+                # sample from
+                probs = np.array([relation["score"] for relation in interval_relations])
+                interval_relation = np.random.choice(
+                    interval_relations, size=1, p=probs
+                )[0]["label"]
 
         labels.append(example["label"])
         preds.append(interval_relation if interval_relation is not None else "None")
@@ -63,7 +73,7 @@ def main(
         y_pred=preds,
         output_dict=True,
         zero_division=0.0,
-        labels=list(unique_interval_labels),
+        labels=unique_interval_labels,
     )
 
     # Predictions by entity type
@@ -77,7 +87,7 @@ def main(
             y_pred=type_preds,
             output_dict=True,
             zero_division=0.0,
-            labels=list(unique_interval_labels),
+            labels=unique_interval_labels,
         )
         type_report["support"] = len(type_dataset)
         report[type] = type_report
