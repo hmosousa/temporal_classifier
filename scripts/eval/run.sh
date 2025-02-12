@@ -10,26 +10,21 @@
 
 # smol-360
 #   - raw: hugosousa/smol-360-89128df1 -r edd5ea745fa2d4aebfaf9a4e576ec594dcd840ba
-#   - augment: hugosousa/smol-360-a-4a820490 -r aee726c847b87a0fe8123f66a6f374fee5bbece5
+#   - augment: hugosousa/smol-360-a-4a820490 -r ccfb712dc239a3ae22513808fd6863a7a135b044
 #   - closure: hugosousa/smol-360-c-e82ebef2 -r 9a78bbf916620cba266c9c718061a6ff370bad05
 #   - closure-augment: hugosousa/smol-360-ac-b19ae776 -r 04ad7dc726ee0bc5f067cbf659033dda36de34da
 
-# smol-1.7
-#   - raw: hugosousa/smol-1.7-e5b6f412 -r 9b30e122950ff8cbbc4dfec3afe6819aab2a6e0f
-#   - augment: 
-#   - closure: hugosousa/smol-135-interval-c-eda01c25 -r 3253ea08a35a0c0ef18ad12c3706418950dfc469
-#   - closure-augment: 
 
 ### Interval
 
 # smol-135
 #   - raw: hugosousa/smol-135-interval-1b7d11c1 -r 4ae68e8121803a5a32f6883cb55bd8d5ef777cc5
-#   - augment: 
-#   - closure: 
-#   - closure-augment:
+#   - augment: hugosousa/smol-135-interval-a-4fad7bc3 -r 7524277107dd45d94c0807ab9a9187c7864f7929
+#   - closure: hugosousa/smol-135-interval-c-eda01c25 -r 08e76d57cc9fa52e74002424d48fbdcf58bee010
+#   - closure-augment: hugosousa/smol-135-interval-ca-87e1b0c9 -r 
 
 # smol-360
-#   - raw: 
+#   - raw: smol-360-interval-df83a28e -r 4db6d51a2010ef53e92189e7f8058c497d80a850
 #   - augment: 
 #   - closure: 
 #   - closure-augment:
@@ -46,7 +41,7 @@ python scripts/eval/point.py -d point_tempeval -m hugosousa/smol-135-c-3ed00d05 
 python scripts/eval/point.py -d point_tempeval -m hugosousa/smol-135-ac-a4eaad65 -r 34302bb3e114e8650b3ab60ad35d0befad00c04c
 
 python scripts/eval/point.py -d point_tempeval -m hugosousa/smol-360-89128df1 -r edd5ea745fa2d4aebfaf9a4e576ec594dcd840ba
-python scripts/eval/point.py -d point_tempeval -m hugosousa/smol-360-a-4a820490 -r aee726c847b87a0fe8123f66a6f374fee5bbece5
+python scripts/eval/point.py -d point_tempeval -m hugosousa/smol-360-a-4a820490 -r ccfb712dc239a3ae22513808fd6863a7a135b044
 python scripts/eval/point.py -d point_tempeval -m hugosousa/smol-360-c-6af17138 -r e5924e499d8076c6117e5cd38edc21c75f95b7ac
 python scripts/eval/point.py -d point_tempeval -m hugosousa/smol-360-ac-b19ae776 -r 5c44cd7d5950f2c24a19a59144e15a4be1817f91
 
@@ -65,13 +60,13 @@ python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hu
 python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-ac-a4eaad65 -r 34302bb3e114e8650b3ab60ad35d0befad00c04c
 
 python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-89128df1 -r edd5ea745fa2d4aebfaf9a4e576ec594dcd840ba
-python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-a-4a820490 -r aee726c847b87a0fe8123f66a6f374fee5bbece5 
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-a-4a820490 -r ccfb712dc239a3ae22513808fd6863a7a135b044 
 python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-c-e82ebef2 -r 9a78bbf916620cba266c9c718061a6ff370bad05
 python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-ac-b19ae776 -r 5c44cd7d5950f2c24a19a59144e15a4be1817f91
 
 # interval model
 python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-interval-1b7d11c1 -r 4ae68e8121803a5a32f6883cb55bd8d5ef777cc5
-
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-interval-a-4fad7bc3 -r 7524277107dd45d94c0807ab9a9187c7864f7929
 
 ########### Other
 
