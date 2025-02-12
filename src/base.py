@@ -34,8 +34,8 @@ INVERT_INTERVAL_RELATION = {
     "SIMULTANEOUS": "SIMULTANEOUS",
     "INCLUDES": "IS_INCLUDED",
     "IS_INCLUDED": "INCLUDES",
-    "OVERLAPS": "OVERLAPPED_BY",
-    "OVERLAPPED_BY": "OVERLAPS",
+    "OVERLAP": "OVERLAPPED",
+    "OVERLAPPED": "OVERLAP",
     "IBEFORE": "IAFTER",
     "IAFTER": "IBEFORE",
     "ENDS": "ENDED_BY",
@@ -43,6 +43,7 @@ INVERT_INTERVAL_RELATION = {
     "BEGINS": "BEGUN_BY",
     "BEGUN_BY": "BEGINS",
 }
+
 
 class PointRelation:
     def __init__(self, source: str, target: str, type: Literal["<", ">", "=", "-"]):

@@ -9,11 +9,11 @@ from tieval.entities import Timex
 
 from tieval.links import TLink
 
-from src.base import INVERT_POINT_RELATION, INVERT_INTERVAL_RELATION
-from src.constants import NEW_TOKENS
+from src.base import INVERT_INTERVAL_RELATION, INVERT_POINT_RELATION
+from src.constants import NEW_POINT_TOKENS
 
 INTERVAL_EXPECTED_TAGS = ["<source>", "</source>", "<target>", "</target>"]
-POINT_EXPECTED_TAGS = NEW_TOKENS
+POINT_EXPECTED_TAGS = NEW_POINT_TOKENS
 
 
 def balance_dataset_classes(dataset: datasets.Dataset, column: str) -> datasets.Dataset:

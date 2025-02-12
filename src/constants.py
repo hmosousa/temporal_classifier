@@ -22,7 +22,7 @@ IMGS_DIR = ROOT_DIR / "imgs"
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-NEW_TOKENS = [
+NEW_POINT_TOKENS = [
     "<start_source>",
     "</start_source>",
     "<end_source>",
@@ -31,4 +31,11 @@ NEW_TOKENS = [
     "</start_target>",
     "<end_target>",
     "</end_target>",
+]
+
+NEW_INTERVAL_TOKENS = [
+    "<source>",
+    "</source>",
+    "<target>",
+    "</target>",
 ]

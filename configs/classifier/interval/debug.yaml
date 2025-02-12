@@ -1,0 +1,44 @@
+debug: True
+
+model:
+    model_name_or_path: HuggingFaceTB/SmolLM2-135M
+    interval_model: True
+    trust_remote_code: True
+    n_score_hidden_layers: 2
+    
+data:
+    dataset_name: interval_tempeval
+    train_split: train
+    valid_split: valid
+    max_seq_length: 1024
+    augment: False
+    pad_to_max_length: False # To pad each batch at runtime
+    shuffle_train_dataset: True
+    shuffle_seed: 42
+    max_train_samples: 16
+    max_eval_samples: 16
+
+trainer:
+    output_dir: models/debug
+    per_device_train_batch_size: 8
+    max_batch_size_per_device: 4
+    per_device_eval_batch_size: 8
+    num_train_epochs: 10
+    learning_rate: 1e-3
+    max_grad_norm: 1.0
+    load_best_model_at_end: True
+    seed: 42
+    bf16: True
+    push_to_hub: False
+    torch_compile: False
+    hub_model_id: hugosousa/debug
+    label_smoothing_factor: 0.01
+    early_stopping_patience: 3
+    init_bias: False
+    lr_scheduler:
+        warmup_factor: 0.001
+        warmup_steps_pct: 0.05
+        factor: 0.1
+        patience: 2
+    freeze_backbone: True
+    hp_search: False

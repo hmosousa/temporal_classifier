@@ -16,7 +16,7 @@ from omegaconf import OmegaConf
 from ray.tune.search.optuna import OptunaSearch
 
 from src.base import MODEL_ID2RELATIONS, MODEL_RELATIONS, MODEL_RELATIONS2ID
-from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_TOKENS
+from src.constants import CONFIGS_DIR, HF_TOKEN, NEW_INTERVAL_TOKENS, NEW_POINT_TOKENS
 from src.data import augment_dataset, load_dataset
 from src.model.classifier import ContextClassifier
 from src.trainer import Trainer
@@ -201,6 +201,10 @@ class ModelArguments:
         default=1,
         metadata={"help": "The number of hidden layers to use in the score function."},
     )
+    interval_model: bool = field(
+        default=False,
+        metadata={"help": "Whether to use the interval model or not."},
+    )
 
 
 @dataclass
@@ -294,7 +298,7 @@ class TrainingArguments:
 
 
 def main(
-    config_file: str = CONFIGS_DIR / "classifier" / "debug.yaml",
+    config_file: str = CONFIGS_DIR / "classifier" / "interval" / "debug.yaml",
 ):
     config = OmegaConf.load(config_file)
 
@@ -394,8 +398,12 @@ def main(
         tokenizer.pad_token = tokenizer.eos_token
 
     # Add new tokens to the tokenizer
-    tokenizer.add_tokens(NEW_TOKENS)
-    new_token_ids = tokenizer.convert_tokens_to_ids(NEW_TOKENS)
+    if model_args.interval_model:
+        tokenizer.add_tokens(NEW_INTERVAL_TOKENS)
+        new_token_ids = tokenizer.convert_tokens_to_ids(NEW_INTERVAL_TOKENS)
+    else:
+        tokenizer.add_tokens(NEW_POINT_TOKENS)
+        new_token_ids = tokenizer.convert_tokens_to_ids(NEW_POINT_TOKENS)
 
     model_config = LlamaConfig.from_pretrained(
         model_args.model_name_or_path,
