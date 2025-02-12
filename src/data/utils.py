@@ -9,7 +9,7 @@ from tieval.entities import Timex
 
 from tieval.links import TLink
 
-from src.base import INVERT_POINT_RELATION
+from src.base import INVERT_POINT_RELATION, INVERT_INTERVAL_RELATION
 from src.constants import NEW_TOKENS
 
 INTERVAL_EXPECTED_TAGS = ["<source>", "</source>", "<target>", "</target>"]
@@ -77,7 +77,12 @@ def augment_dataset(dataset: datasets.Dataset) -> datasets.Dataset:
             lambda m: "_target>" if m.group() == "_source>" else "_source>",
             example["text"],
         )
-        example["label"] = INVERT_POINT_RELATION[example["label"]]
+        if example["label"] in INVERT_POINT_RELATION:
+            example["label"] = INVERT_POINT_RELATION[example["label"]]
+        elif example["label"] in INVERT_INTERVAL_RELATION:
+            example["label"] = INVERT_INTERVAL_RELATION[example["label"]]
+        else:
+            raise ValueError(f"Invalid label: {example['label']}")
         return example
 
     mirror_dataset = dataset.map(augment_row)

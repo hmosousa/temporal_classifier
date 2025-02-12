@@ -28,6 +28,22 @@ MODEL_ID2RELATIONS = {v: k for k, v in MODEL_RELATIONS2ID.items()}
 ENDPOINT_TYPES = ["start", "end"]
 
 
+INVERT_INTERVAL_RELATION = {
+    "BEFORE": "AFTER",
+    "AFTER": "BEFORE",
+    "SIMULTANEOUS": "SIMULTANEOUS",
+    "INCLUDES": "IS_INCLUDED",
+    "IS_INCLUDED": "INCLUDES",
+    "OVERLAPS": "OVERLAPPED_BY",
+    "OVERLAPPED_BY": "OVERLAPS",
+    "IBEFORE": "IAFTER",
+    "IAFTER": "IBEFORE",
+    "ENDS": "ENDED_BY",
+    "ENDED_BY": "ENDS",
+    "BEGINS": "BEGUN_BY",
+    "BEGUN_BY": "BEGINS",
+}
+
 class PointRelation:
     def __init__(self, source: str, target: str, type: Literal["<", ">", "=", "-"]):
         if not (source.startswith("start") or source.startswith("end")):
