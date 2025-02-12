@@ -1,6 +1,7 @@
 # Point eval
 
 # Best models
+### Point
 # smol-135
 #   - raw: hugosousa/smol-135-0dd0da37 -r aadb93fe6ee0272e40eac187511de316afa94b5b
 #   - augment: hugosousa/smol-135-a-191329ff -r bc857f718f69adb90ea7baf674d297c35867f6c6
@@ -16,8 +17,24 @@
 # smol-1.7
 #   - raw: hugosousa/smol-1.7-e5b6f412 -r 9b30e122950ff8cbbc4dfec3afe6819aab2a6e0f
 #   - augment: 
-#   - closure: 
+#   - closure: hugosousa/smol-135-interval-c-eda01c25 -r 3253ea08a35a0c0ef18ad12c3706418950dfc469
 #   - closure-augment: 
+
+### Interval
+
+# smol-135
+#   - raw: hugosousa/smol-135-interval-1b7d11c1 -r 4ae68e8121803a5a32f6883cb55bd8d5ef777cc5
+#   - augment: 
+#   - closure: 
+#   - closure-augment:
+
+# smol-360
+#   - raw: 
+#   - augment: 
+#   - closure: 
+#   - closure-augment:
+
+
 
 ## Point Tempeval
 python scripts/eval/point.py -d point_tempeval -m random 
@@ -41,6 +58,7 @@ python scripts/eval/point.py -d point_tempeval -m hugosousa/smol-1.7-e5b6f412 -r
 python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m random
 python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m majority 
 
+# point system
 python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-0dd0da37 -r aadb93fe6ee0272e40eac187511de316afa94b5b
 python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-a-191329ff -r bc857f718f69adb90ea7baf674d297c35867f6c6
 python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-c-3ed00d05 -r 73a6cca7b0b814e774987594820de75a6aab2f33
@@ -51,23 +69,9 @@ python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hu
 python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-c-e82ebef2 -r 9a78bbf916620cba266c9c718061a6ff370bad05
 python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-ac-b19ae776 -r 5c44cd7d5950f2c24a19a59144e15a4be1817f91
 
-python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-1.7-e5b6f412 -r 9b30e122950ff8cbbc4dfec3afe6819aab2a6e0f
+# interval model
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-interval-1b7d11c1 -r 4ae68e8121803a5a32f6883cb55bd8d5ef777cc5
 
-# With the original semeval script
-python scripts/eval/semeval_eval.py -m random
-python scripts/eval/semeval_eval.py -m majority
-
-python scripts/eval/semeval_eval.py -m hugosousa/smol-135 -r aadb93fe6ee0272e40eac187511de316afa94b5b
-python scripts/eval/semeval_eval.py -m hugosousa/smol-135-a -r bc857f718f69adb90ea7baf674d297c35867f6c6
-python scripts/eval/semeval_eval.py -m hugosousa/smol-135-c -r 73a6cca7b0b814e774987594820de75a6aab2f33
-python scripts/eval/semeval_eval.py -m hugosousa/smol-135-ac -r 34302bb3e114e8650b3ab60ad35d0befad00c04c
-
-python scripts/eval/semeval_eval.py -m hugosousa/smol-360-89128df1 -r edd5ea745fa2d4aebfaf9a4e576ec594dcd840ba
-python scripts/eval/semeval_eval.py -m hugosousa/smol-360-a-4a820490 -r aee726c847b87a0fe8123f66a6f374fee5bbece5
-python scripts/eval/semeval_eval.py -m hugosousa/smol-360-c-e82ebef2 -r 9a78bbf916620cba266c9c718061a6ff370bad05
-python scripts/eval/semeval_eval.py -m hugosousa/smol-360-ac-b19ae776 -r 5c44cd7d5950f2c24a19a59144e15a4be1817f91
-
-python scripts/eval/semeval_eval.py -m hugosousa/smol-1.7-e5b6f412 -r 9b30e122950ff8cbbc4dfec3afe6819aab2a6e0f
 
 ########### Other
 

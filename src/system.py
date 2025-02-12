@@ -168,6 +168,9 @@ def _high_to_low(
     """Try to form an interval relation with the highest confidence point relation."""
     # Todo: Make it output the probability of the interval relation
 
+    # apply softmax to the y_prob
+    y_prob = np.exp(y_prob) / np.sum(np.exp(y_prob), axis=1, keepdims=True)
+
     point_relations = [
         {"label": MODEL_ID2RELATIONS[y_pred], "score": y_prob[i, y_pred].item()}
         for i, y_pred in enumerate(y_prob.argmax(axis=1))
@@ -194,7 +197,7 @@ def _high_to_low(
 
             if point_relation in point_to_interval_relation:
                 interval_relation = point_to_interval_relation[point_relation]
-                return interval_relation
+                return [{"score": pred["score"], "label": interval_relation}]
         point_relations.pop(0)
     return None
 

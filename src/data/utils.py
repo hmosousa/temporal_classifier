@@ -73,8 +73,8 @@ def augment_dataset(dataset: datasets.Dataset) -> datasets.Dataset:
     def augment_row(example: dict) -> dict:
         # Use regex to swap _source and _target in a single operation
         example["text"] = re.sub(
-            r"(_source>|_target>)",
-            lambda m: "_target>" if m.group() == "_source>" else "_source>",
+            r"(source>|target>)",
+            lambda m: "target>" if m.group() == "source>" else "source>",
             example["text"],
         )
         if example["label"] in INVERT_POINT_RELATION:

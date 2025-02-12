@@ -14,6 +14,7 @@ from fire import Fire
 
 from src.constants import ROOT_DIR
 from src.data import load_dataset
+from src.model import load_model
 from src.model.majority import MajorityClassifier
 from src.model.random import RandomClassifier
 from src.system import System
@@ -95,11 +96,17 @@ def main(
     all_labels = dataset["label"]
     unique_interval_labels = list(set(all_labels))
 
+    is_interval_model = "interval" in model_name
+
     logging.info(f"Loading model {model_name}")
     if model_name == "random":
         classifier = RandomClassifier(unique_interval_labels)
     elif model_name == "majority":
         classifier = MajorityClassifier(all_labels)
+    elif is_interval_model:
+        classifier = load_model(
+            model_name="classifier", model_path=model_name, revision=revision
+        )
     else:
         classifier = System(model_name, revision, strategy, unique_interval_labels)
 
@@ -109,6 +116,8 @@ def main(
     for example in tqdm(dataset):
         if model_name in ["random", "majority"]:
             interval_relation = classifier([example["text"]])[0]["label"]
+        elif is_interval_model:
+            interval_relation = classifier([example["text"]], top_k=None)[0][0]["label"]
         else:
             interval_relation = classifier([example["text"]])[0][0]["label"]
 
