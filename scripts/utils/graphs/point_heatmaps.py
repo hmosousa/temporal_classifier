@@ -70,7 +70,7 @@ def create_point_heatmaps():
                 data[type_][label][dataset_idx, model_idx] = f1_score
 
     # Create plot
-    fig, axes = plt.subplots(4, 3, figsize=(12, 16))
+    fig, axes = plt.subplots(4, 3, figsize=(6, 16))
 
     # Plot heatmaps
     for i, type_ in enumerate(TYPES):
@@ -90,6 +90,9 @@ def create_point_heatmaps():
                 yticklabels=DATASETS if j == len(LABELS) - 1 else False,
                 ax=ax,
                 cbar=False,
+                annot_kws={"weight": "bold"},
+                linewidths=0.5,
+                linecolor="white",
             )
 
             # Move y-axis ticks to the right for rightmost column
@@ -114,5 +117,5 @@ def create_point_heatmaps():
 
 if __name__ == "__main__":
     fig = create_point_heatmaps()
-    plt.savefig(IMGS_DIR / "point_heatmaps.png")
+    plt.savefig(IMGS_DIR / "point_heatmaps.png", dpi=300)
     plt.close()
