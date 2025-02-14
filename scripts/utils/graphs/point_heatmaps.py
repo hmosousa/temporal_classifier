@@ -152,5 +152,5 @@ def create_point_heatmaps():
 
 if __name__ == "__main__":
     fig = create_point_heatmaps()
-    plt.savefig(IMGS_DIR / "point_heatmaps.png", dpi=300)
+    plt.savefig(IMGS_DIR / "point_heatmaps.pdf", format="pdf", dpi=600)
     plt.close()
