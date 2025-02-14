@@ -12,166 +12,75 @@ from src.constants import IMGS_DIR, RESULTS_DIR
 MODEL_ORDER = [
     "random",
     "majority",
-    "smol-135-tq",
-    "smol-135-tq-closure",
-    "smol-135-tq-augment",
-    "smol-135-tq-synthetic",
-    "smol-135-tq-closure-augment",
-    "smol-135-tq-closure-synthetic",
-    "smol-135-tq-augment-synthetic",
-    "smol-135-tq-closure-augment-synthetic",
+    "smol-135-0dd0da37",
+    "smol-135-a-191329ff",
+    "smol-135-c-3ed00d05",
+    "smol-135-ac-a4eaad65",
+    "smol-360-89128df1",
+    "smol-360-a-4a820490",
+    "smol-360-c-6af17138",
+    "smol-360-ac-b19ae776",
 ]
 
 MODEL_TO_LEGEND = {
     "random": "Random",
     "majority": "Majority",
-    "smol-135-tq": "Raw",
-    "smol-135-tq-closure": "Closure",
-    "smol-135-tq-augment": "Augment",
-    "smol-135-tq-synthetic": "Synthetic",
-    "smol-135-tq-closure-augment": "Closure + Augment",
-    "smol-135-tq-closure-synthetic": "Closure + Synthetic",
-    "smol-135-tq-augment-synthetic": "Augment + Synthetic",
-    "smol-135-tq-closure-augment-synthetic": "Closure + Augment + Synthetic",
+    "smol-135-0dd0da37": "R",
+    "smol-135-a-191329ff": "I",
+    "smol-135-c-3ed00d05": "C",
+    "smol-135-ac-a4eaad65": "IC",
+    "smol-360-89128df1": "R",
+    "smol-360-a-4a820490": "I",
+    "smol-360-c-6af17138": "C",
+    "smol-360-ac-b19ae776": "IC",
 }
 
-
-BENCHMAKS_NAME_MAP = {
-    "timeset": "TimeSet",
-    "matres": "MATRES",
-    "temporal_questions_closure": r"Temporal Questions$_{closure}$",
-    "temporal_questions_raw": r"Temporal Questions$_{raw}$",
-}
+MODELS = ["135M", "360M"]
 
 
 def main(metric: Literal["f1-score", "accuracy", "precision", "recall"] = "f1-score"):
     results = json.load(open(RESULTS_DIR / "point" / "results.json"))
+    model_results = results["point_tempeval"]
 
-    benchmarks = []
-    model_results = {}
-    model_confidence = {}  # New dictionary to store confidence intervals
-    for benchmark, content in results.items():
-        benchmarks.append(benchmark)
-        for model in content:
-            model_name = model["model"]
-            if model_name not in model_results:
-                model_results[model_name] = []
-                model_confidence[model_name] = []
-            model_results[model_name].append(model[metric])
-            # Store confidence intervals as (lower_error, upper_error)
-            confidence = model["confidence"][metric]
-            model_confidence[model_name].append(
-                (
-                    model[metric] - confidence["lower"],  # lower error
-                    confidence["upper"] - model[metric],  # upper error
-                )
-            )
+    # Reorganize data by model size and configuration
+    model_135 = {
+        "R": model_results["smol-135-0dd0da37"],
+        "I": model_results["smol-135-a-191329ff"],
+        "C": model_results["smol-135-c-3ed00d05"],
+        "IC": model_results["smol-135-ac-a4eaad65"],
+    }
 
-    n_models = len(model_results) - 2  # exclude random and majority
-    xs = np.arange(len(benchmarks))  # the label locations
-    full_width = 0.8
-    width = full_width / n_models
-    multiplier = 0
+    model_360 = {
+        "R": model_results["smol-360-89128df1"],
+        "I": model_results["smol-360-a-4a820490"],
+        "C": model_results["smol-360-c-6af17138"],
+        "IC": model_results["smol-360-ac-b19ae776"],
+    }
 
-    fig, ax = plt.subplots(figsize=(10, 10))
+    configs = ["R", "I", "C", "IC"]
+    x = np.arange(len(MODELS))  # [0, 1] for 135M and 360M
+    width = 0.15  # Width of the bars
 
-    # Plot bars
-    for attribute in MODEL_ORDER:
-        measurement = model_results[attribute]
-        confidence = model_confidence[attribute]
-        offset = width * multiplier
+    fig, ax = plt.subplots(figsize=(10, 6))
 
-        if attribute in ["random", "majority"]:
-            continue
+    # Plot bars for each configuration
+    for idx, config in enumerate(configs):
+        values = [
+            model_135[config][0],
+            model_360[config][0],
+        ]  # Using first benchmark for example
+        offset = width * (idx - len(configs) / 2 + 0.5)
+        ax.bar(x + offset, values, width, label=config)
 
-        ax.barh(
-            xs - offset,
-            measurement,
-            width,
-            label=MODEL_TO_LEGEND[attribute],
-        )
+    # Customize the plot
+    ax.set_ylabel(metric.capitalize())
+    ax.set_title(f"{metric.capitalize()} by Model Size and Configuration")
+    ax.set_xticks(x)
+    ax.set_xticklabels(MODELS)
+    ax.legend()
 
-        # Add error bars
-        error_positions = xs - offset
-        lower_errors = [conf[0] for conf in confidence]
-        upper_errors = [conf[1] for conf in confidence]
-        ax.errorbar(
-            measurement,
-            error_positions,
-            xerr=[lower_errors, upper_errors],
-            fmt="none",
-            color="black",
-            capsize=3,
-            capthick=1,
-            elinewidth=1,
-        )
-
-        multiplier += 1
-
-    # Plot lines
-    for attribute in MODEL_ORDER:
-        measurement = model_results[attribute]
-        offset = width * multiplier
-
-        if attribute == "random":
-            for idx, (m, x) in enumerate(zip(measurement, xs)):
-                if idx == 0:
-                    label = "Random"
-                else:
-                    label = None
-                ymin = x - full_width + width / 2
-                ymax = x + width / 2
-
-                ax.plot(
-                    [m, m],
-                    [ymin, ymax],
-                    color="black",
-                    linestyle="dotted",
-                    linewidth=1,
-                    label=label,
-                )
-        elif attribute == "majority":
-            for idx, (m, x) in enumerate(zip(measurement, xs)):
-                if idx == 0:
-                    label = "Majority"
-                else:
-                    label = None
-                ymin = x - full_width + width / 2
-                ymax = x + width / 2
-                ax.plot(
-                    [m, m],
-                    [ymin, ymax],
-                    color="black",
-                    linestyle="--",
-                    linewidth=1,
-                    label=label,
-                )
-        else:
-            continue
-
-    # Add some text for labels, title and custom x-axis tick labels, etc.
-    if metric == "f1-score":
-        ax.set_xlabel("F$_1$-Score")
-        ax.set_title("F$_1$-Score by model")
-    elif metric == "accuracy":
-        ax.set_xlabel("Accuracy")
-        ax.set_title("Accuracy by model")
-    elif metric == "precision":
-        ax.set_xlabel("Precision")
-        ax.set_title("Precision by model")
-    elif metric == "recall":
-        ax.set_xlabel("Recall")
-        ax.set_title("Recall by model")
-    else:
-        raise ValueError(f"Metric {metric} not supported")
-
-    ax.set_yticks(
-        ticks=xs - (full_width - width) / 2,
-        labels=[BENCHMAKS_NAME_MAP[bench] for bench in benchmarks],
-        rotation=90,
-        va="center",
-    )
-    ax.legend(loc="best")
+    # Add grid for better readability
+    ax.grid(True, axis="y", linestyle="--", alpha=0.7)
 
     plt.tight_layout()
     plt.savefig(IMGS_DIR / f"results_bars_{metric}.png", bbox_inches="tight", dpi=300)
