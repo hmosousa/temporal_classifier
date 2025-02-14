@@ -76,6 +76,9 @@ def create_point_heatmaps():
     for i, type_ in enumerate(TYPES):
         for j, label in enumerate(LABELS):
             ax = axes[i, j]
+
+            # Show x-labels (models) only for bottom row
+            # Show y-labels (datasets) only for rightmost column
             sns.heatmap(
                 data[type_][label],
                 annot=True,
@@ -83,12 +86,27 @@ def create_point_heatmaps():
                 cmap="RdYlBu",
                 vmin=0,
                 vmax=1,
-                xticklabels=MODELS,
-                yticklabels=DATASETS,
+                xticklabels=MODELS if i == len(TYPES) - 1 else False,
+                yticklabels=DATASETS if j == len(LABELS) - 1 else False,
                 ax=ax,
+                cbar=False,
             )
 
-            ax.set_title(f"Type: {type_}, Label: {label}")
+            # Move y-axis ticks to the right for rightmost column
+            if j == len(LABELS) - 1:
+                ax.yaxis.tick_right()
+
+            # Only show label in the top row
+            if i == 0:
+                ax.set_title(label.upper(), fontsize=18)
+            else:
+                ax.set_title("")
+
+            # Only show type on the left side
+            if j == 0:
+                ax.set_ylabel(type_.upper(), fontsize=18)
+            else:
+                ax.set_ylabel("")
 
     plt.tight_layout()
     return fig
