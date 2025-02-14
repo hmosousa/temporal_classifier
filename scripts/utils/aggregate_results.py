@@ -25,20 +25,19 @@ def main(relation_type: Literal["point", "interval"] = "point"):
 
         result["model"] = model
 
-        if "closure" in file.stem:
+        if "-c-" in file.stem:
             result["closure"] = True
-        else:
-            result["closure"] = False
-
-        if "augment" in file.stem:
-            result["augmented"] = True
-        else:
             result["augmented"] = False
 
-        if "synthetic" in file.stem:
-            result["synthetic"] = True
+        elif "-a-" in file.stem:
+            result["augmented"] = True
+            result["closure"] = False
+        elif "-ca-" in file.stem or "-ac-" in file.stem:
+            result["augmented"] = True
+            result["closure"] = True
         else:
-            result["synthetic"] = False
+            result["augmented"] = False
+            result["closure"] = False
 
         if "accuracy" in content:
             result["accuracy"] = round(content["accuracy"] * 100, 2)
@@ -48,16 +47,12 @@ def main(relation_type: Literal["point", "interval"] = "point"):
                 content["micro avg"]["f1-score"] * 100, 2
             )
 
-        result["precision"] = round(content["weighted avg"]["precision"] * 100, 2)
-        result["recall"] = round(content["weighted avg"]["recall"] * 100, 2)
-        result["f1-score"] = round(content["weighted avg"]["f1-score"] * 100, 2)
+        result["precision"] = round(content["precision"] * 100, 2)
+        result["recall"] = round(content["recall"] * 100, 2)
+        result["f1-score"] = round(content["f1-score"] * 100, 2)
 
         if "confidence" in content:
             confidence = content["confidence"]
-            confidence.pop("macro avg")
-            wa = confidence.pop("weighted avg")
-            for key, value in wa.items():
-                confidence[key] = value
             for key, value in confidence.items():
                 for k, v in value.items():
                     confidence[key][k] = round(v * 100, 2)

@@ -21,13 +21,20 @@ python ../scripts/eval/semeval_eval.py -m hugosousa/smol-135-ac-a4eaad65 -r 3430
 
 python ../scripts/eval/semeval_eval.py -m hugosousa/smol-360-89128df1 -r edd5ea745fa2d4aebfaf9a4e576ec594dcd840ba
 python ../scripts/eval/semeval_eval.py -m hugosousa/smol-360-a-4a820490 -r ccfb712dc239a3ae22513808fd6863a7a135b044
-python ../scripts/eval/semeval_eval.py -m hugosousa/smol-360-c-e82ebef2 -r 9a78bbf916620cba266c9c718061a6ff370bad05
+python ../scripts/eval/semeval_eval.py -m hugosousa/smol-360-c-e82ebef2 -r e5924e499d8076c6117e5cd38edc21c75f95b7ac
 python ../scripts/eval/semeval_eval.py -m hugosousa/smol-360-ac-b19ae776 -r 5c44cd7d5950f2c24a19a59144e15a4be1817f91
 
 # interval model
 python ../scripts/eval/semeval_eval.py -m hugosousa/smol-135-interval-1b7d11c1 -r 4ae68e8121803a5a32f6883cb55bd8d5ef777cc5
+python ../scripts/eval/semeval_eval.py -m hugosousa/smol-135-interval-a-4fad7bc3 -r 8da557a8fe7776cf89e704fb287a00c7ad5400c1
+python ../scripts/eval/semeval_eval.py -m hugosousa/smol-135-interval-c-eda01c25 -r bf8fcba0f7401596549083bd04c1b79ae1517031
+python ../scripts/eval/semeval_eval.py -m hugosousa/smol-135-interval-ca-87e1b0c9 -r e90271b51a444e12b196097b858765431d7f37dc
 
-python ../scripts/eval/semeval_eval.py -m hugosousa/smol-135-interval-c-eda01c25 -r 08e76d57cc9fa52e74002424d48fbdcf58bee010
+python ../scripts/eval/semeval_eval.py -m hugosousa/smol-360-interval-df83a28e -r 4db6d51a2010ef53e92189e7f8058c497d80a850
+python ../scripts/eval/semeval_eval.py -m hugosousa/smol-360-interval-a-5f554f47 -r ec9ee1dd470e9ecbe66dd4b2c45b6ad6713c3d30
+python ../scripts/eval/semeval_eval.py -m hugosousa/smol-360-interval-c-74c05ab6 -r 9ee5c9afb819f8ca2402a9c35d0b31dc9441427e
+python ../scripts/eval/semeval_eval.py -m hugosousa/smol-360-interval-ca-737f2a4a -r 64b6e96c7ab83a5a415b53afb9968d4ab0151543
+
 
 # Create a conda environment with python 2.7
 conda create -p ./.conda python=2.7 -y
@@ -49,6 +56,12 @@ echo "Smol-360-c-e82ebef2" && python TE3-evaluation.py gold/ results/most_likely
 echo "Smol-360-ac-b19ae776" && python TE3-evaluation.py gold/ results/most_likely/smol-360-ac-b19ae776
 
 # interval model
-echo "Interval 1b7d11c1" && python TE3-evaluation.py gold/ results/most_likely/smol-135-interval-1b7d11c1
+echo "Smol-135-interval-1b7d11c1" && python TE3-evaluation.py gold/ results/most_likely/smol-135-interval-1b7d11c1
+echo "Smol-135-interval-a-4fad7bc3" && python TE3-evaluation.py gold/ results/most_likely/smol-135-interval-a-4fad7bc3
+echo "Smol-135-interval-c-eda01c25" && python TE3-evaluation.py gold/ results/most_likely/smol-135-interval-c-eda01c25
+echo "Smol-135-interval-ca-87e1b0c9" && python TE3-evaluation.py gold/ results/most_likely/smol-135-interval-ca-87e1b0c9
 
-echo "Interval c-eda01c25" && python TE3-evaluation.py gold/ results/most_likely/smol-135-interval-c-eda01c25 
+echo "Smol-360-interval-df83a28e" && python TE3-evaluation.py gold/ results/most_likely/smol-360-interval-df83a28e
+echo "Smol-360-interval-a-5f554f47" && python TE3-evaluation.py gold/ results/most_likely/smol-360-interval-a-5f554f47
+echo "Smol-360-interval-c-74c05ab6" && python TE3-evaluation.py gold/ results/most_likely/smol-360-interval-c-74c05ab6
+echo "Smol-360-interval-ca-737f2a4a" && python TE3-evaluation.py gold/ results/most_likely/smol-360-interval-ca-737f2a4a

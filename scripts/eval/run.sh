@@ -19,15 +19,15 @@
 
 # smol-135
 #   - raw: hugosousa/smol-135-interval-1b7d11c1 -r 4ae68e8121803a5a32f6883cb55bd8d5ef777cc5
-#   - augment: hugosousa/smol-135-interval-a-4fad7bc3 -r 7524277107dd45d94c0807ab9a9187c7864f7929
-#   - closure: hugosousa/smol-135-interval-c-eda01c25 -r 08e76d57cc9fa52e74002424d48fbdcf58bee010
-#   - closure-augment: hugosousa/smol-135-interval-ca-87e1b0c9 -r 
+#   - augment: hugosousa/smol-135-interval-a-4fad7bc3 -r 8da557a8fe7776cf89e704fb287a00c7ad5400c1
+#   - closure: hugosousa/smol-135-interval-c-eda01c25 -r bf8fcba0f7401596549083bd04c1b79ae1517031
+#   - closure-augment: hugosousa/smol-135-interval-ca-87e1b0c9 -r e90271b51a444e12b196097b858765431d7f37dc
 
 # smol-360
-#   - raw: smol-360-interval-df83a28e -r 4db6d51a2010ef53e92189e7f8058c497d80a850
-#   - augment: 
-#   - closure: 
-#   - closure-augment:
+#   - raw: hugosousa/smol-360-interval-df83a28e -r 4db6d51a2010ef53e92189e7f8058c497d80a850
+#   - augment: hugosousa/smol-360-interval-a-5f554f47 -r ec9ee1dd470e9ecbe66dd4b2c45b6ad6713c3d30
+#   - closure: hugosousa/smol-360-interval-c-74c05ab6 -r 9ee5c9afb819f8ca2402a9c35d0b31dc9441427e
+#   - closure-augment: hugosousa/smol-360-interval-ca-737f2a4a -r 64b6e96c7ab83a5a415b53afb9968d4ab0151543
 
 
 
@@ -44,8 +44,6 @@ python scripts/eval/point.py -d point_tempeval -m hugosousa/smol-360-89128df1 -r
 python scripts/eval/point.py -d point_tempeval -m hugosousa/smol-360-a-4a820490 -r ccfb712dc239a3ae22513808fd6863a7a135b044
 python scripts/eval/point.py -d point_tempeval -m hugosousa/smol-360-c-6af17138 -r e5924e499d8076c6117e5cd38edc21c75f95b7ac
 python scripts/eval/point.py -d point_tempeval -m hugosousa/smol-360-ac-b19ae776 -r 5c44cd7d5950f2c24a19a59144e15a4be1817f91
-
-python scripts/eval/point.py -d point_tempeval -m hugosousa/smol-1.7-e5b6f412 -r 9b30e122950ff8cbbc4dfec3afe6819aab2a6e0f
 
 # Interval eval
 
@@ -66,81 +64,11 @@ python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hu
 
 # interval model
 python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-interval-1b7d11c1 -r 4ae68e8121803a5a32f6883cb55bd8d5ef777cc5
-python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-interval-a-4fad7bc3 -r 7524277107dd45d94c0807ab9a9187c7864f7929
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-interval-a-4fad7bc3 -r 8da557a8fe7776cf89e704fb287a00c7ad5400c1
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-interval-c-eda01c25 -r bf8fcba0f7401596549083bd04c1b79ae1517031
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-135-interval-ca-87e1b0c9 -r e90271b51a444e12b196097b858765431d7f37dc
 
-########### Other
-
-## Timeset
-python scripts/eval/point.py -m random -d timeset
-python scripts/eval/point.py -m majority -d timeset
-python scripts/eval/point.py -m hugosousa/smol-135 -d timeset
-python scripts/eval/point.py -m hugosousa/smol-135-a -d timeset
-python scripts/eval/point.py -m hugosousa/smol-135-7fd02948 -d timeset
-python scripts/eval/point.py -m hugosousa/smol-135-tq-synthetic -d timeset
-python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment -d timeset
-python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-synthetic -d timeset
-python scripts/eval/point.py -m hugosousa/smol-135-tq-augment-synthetic -d timeset
-python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment-synthetic -d timeset
-
-## MATRES
-python scripts/eval/point.py -m random -d matres
-python scripts/eval/point.py -m majority -d matres
-python scripts/eval/point.py -m hugosousa/smol-135 -d matres
-python scripts/eval/point.py -m hugosousa/smol-135-a -d matres
-python scripts/eval/point.py -m hugosousa/smol-135-7fd02948 -d matres
-python scripts/eval/point.py -m hugosousa/smol-135-tq-synthetic -d matres
-python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment -d matres
-python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-synthetic -d matres
-python scripts/eval/point.py -m hugosousa/smol-135-tq-augment-synthetic -d matres
-python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment-synthetic -d matres
-
-python scripts/eval/point.py -d matres -m -m hugosousa/smol-360-a-4a820490 -r aee726c847b87a0fe8123f66a6f374fee5bbece5 
-
-## Point TDDiscourse
-python scripts/eval/point.py -m random -d point_tddiscourse
-python scripts/eval/point.py -m majority -d point_tddiscourse
-python scripts/eval/point.py -m hugosousa/smol-135 -d point_tddiscourse
-python scripts/eval/point.py -m hugosousa/smol-135-a -d point_tddiscourse
-python scripts/eval/point.py -m hugosousa/smol-135-7fd02948 -d point_tddiscourse
-python scripts/eval/point.py -m hugosousa/smol-135-tq-synthetic -d point_tddiscourse
-python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment -d point_tddiscourse
-python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-synthetic -d point_tddiscourse
-python scripts/eval/point.py -m hugosousa/smol-135-tq-augment-synthetic -d point_tddiscourse
-python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment-synthetic -d point_tddiscourse
-
-## Point TimeBank-Dense
-python scripts/eval/point.py -m random -d point_timebank_dense
-python scripts/eval/point.py -m majority -d point_timebank_dense
-python scripts/eval/point.py -m hugosousa/smol-135 -d point_timebank_dense
-python scripts/eval/point.py -m hugosousa/smol-135-a -d point_timebank_dense
-python scripts/eval/point.py -m hugosousa/smol-135-7fd02948 -d point_timebank_dense
-python scripts/eval/point.py -m hugosousa/smol-135-tq-synthetic -d point_timebank_dense
-python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment -d point_timebank_dense
-python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-synthetic -d point_timebank_dense
-python scripts/eval/point.py -m hugosousa/smol-135-tq-augment-synthetic -d point_timebank_dense
-python scripts/eval/point.py -m hugosousa/smol-135-tq-closure-augment-synthetic -d point_timebank_dense
-
-
-## TDDiscourse
-python scripts/eval/interval.py -m random -d tddiscourse
-python scripts/eval/interval.py -m majority -d tddiscourse
-python scripts/eval/interval.py -m hugosousa/smol-135 -d tddiscourse
-python scripts/eval/interval.py -m hugosousa/smol-135-a -d tddiscourse
-python scripts/eval/interval.py -m hugosousa/smol-135-7fd02948 -d tddiscourse
-python scripts/eval/interval.py -m hugosousa/smol-135-tq-synthetic -d tddiscourse
-python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-augment -d tddiscourse
-python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-synthetic -d tddiscourse
-python scripts/eval/interval.py -m hugosousa/smol-135-tq-augment-synthetic -d tddiscourse
-python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-augment-synthetic -d tddiscourse
-
-## Timebank-Dense
-python scripts/eval/interval.py -m random -d interval_timebank_dense -s most_likely
-python scripts/eval/interval.py -m majority -d interval_timebank_dense -s most_likely
-python scripts/eval/interval.py -m hugosousa/smol-135 -d interval_timebank_dense -s most_likely
-python scripts/eval/interval.py -m hugosousa/smol-135-a -d interval_timebank_dense -s most_likely
-python scripts/eval/interval.py -m hugosousa/smol-135-7fd02948 -d interval_timebank_dense -s most_likely
-python scripts/eval/interval.py -m hugosousa/smol-135-tq-synthetic -d interval_timebank_dense -s most_likely
-python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-augment -d interval_timebank_dense -s most_likely
-python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-synthetic -d interval_timebank_dense -s most_likely
-python scripts/eval/interval.py -m hugosousa/smol-135-tq-augment-synthetic -d interval_timebank_dense -s most_likely
-python scripts/eval/interval.py -m hugosousa/smol-135-tq-closure-augment-synthetic -d interval_timebank_dense -s most_likely
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-interval-df83a28e -r 4db6d51a2010ef53e92189e7f8058c497d80a850
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-interval-a-5f554f47 -r ec9ee1dd470e9ecbe66dd4b2c45b6ad6713c3d30
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-interval-c-74c05ab6 -r 9ee5c9afb819f8ca2402a9c35d0b31dc9441427e
+python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-interval-ca-737f2a4a -r 64b6e96c7ab83a5a415b53afb9968d4ab0151543
