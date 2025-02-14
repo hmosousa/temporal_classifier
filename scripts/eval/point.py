@@ -132,10 +132,23 @@ def main(
     dataset_text_types.sort()
     for text_type in dataset_text_types:
         dataset_type = dataset.filter(lambda x: x["type"] == text_type)
+
         type_metrics[text_type] = compute_metrics(
             dataset_type["label"], dataset_type["pred"], labels=MODEL_RELATIONS
         )
         type_metrics[text_type]["support"] = len(dataset_type)
+        per_label = classification_report(
+            y_true=dataset_type["label"],
+            y_pred=dataset_type["pred"],
+            output_dict=True,
+            zero_division=0.0,
+            labels=MODEL_RELATIONS,
+        )
+        per_label.pop("accuracy", None)
+        per_label.pop("micro avg", None)
+        per_label.pop("macro avg", None)
+        per_label.pop("weighted avg", None)
+        type_metrics[text_type]["per_label"] = per_label
         if confidence:
             type_metrics[text_type]["confidence"] = compute_confidence_intervals(
                 dataset_type["label"], dataset_type["pred"], labels=MODEL_RELATIONS
