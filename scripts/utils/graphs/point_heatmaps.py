@@ -42,6 +42,13 @@ MODEL_NAME_TO_MODEL = {
 }
 
 TYPES = ["ss", "se", "es", "ee"]
+TYPE_LABELS = {
+    "ss": "Start-Start",
+    "se": "Start-End",
+    "es": "End-Start",
+    "ee": "End-End",
+}
+
 LABELS = ["<", ">", "="]
 
 
@@ -76,12 +83,12 @@ def create_point_heatmaps():
                 data[type_][label]["f1"][dataset_idx, model_idx] = f1_score
                 data[type_][label]["support"] = support
 
-    # Create plot
-    fig, axes = plt.subplots(4, 3, figsize=(6, 16))
+    # Create plot with transposed layout: 3 rows (labels) x 4 columns (types)
+    fig, axes = plt.subplots(len(LABELS), len(TYPES), figsize=(8, 12))
 
     # Plot heatmaps
-    for i, type_ in enumerate(TYPES):
-        for j, label in enumerate(LABELS):
+    for i, label in enumerate(LABELS):
+        for j, type_ in enumerate(TYPES):
             ax = axes[i, j]
 
             # Create annotation text with F1 scores
@@ -97,11 +104,11 @@ def create_point_heatmaps():
                 cmap="RdYlBu",
                 vmin=0,
                 vmax=100,
-                xticklabels=MODELS if i == len(TYPES) - 1 else False,
-                yticklabels=DATASETS if j == len(LABELS) - 1 else False,
+                xticklabels=MODELS if i == len(LABELS) - 1 else False,
+                yticklabels=DATASETS if j == len(TYPES) - 1 else False,
                 ax=ax,
                 cbar=False,
-                annot_kws={"weight": "bold", "size": 8},
+                annot_kws={"weight": "bold", "size": 10},
                 linewidths=0.5,
                 linecolor="white",
             )
@@ -120,20 +127,23 @@ def create_point_heatmaps():
                 bbox=dict(facecolor="white", alpha=0.7, edgecolor="none", pad=2),
             )
 
-            # Move y-axis ticks to the right for rightmost column
-            if j == len(LABELS) - 1:
-                ax.yaxis.tick_right()
-
-            # Only show label in the top row
+            # Only show type in the top row
             if i == 0:
-                ax.set_title(label.upper(), fontsize=18)
+                ax.set_title(TYPE_LABELS[type_], fontsize=18)
             else:
                 ax.set_title("")
 
-            # Only show type on the left side
+            # Only show label on the left side
             if j == 0:
-                ax.set_ylabel(type_.upper(), fontsize=18)
+                ax.set_ylabel(
+                    label.upper(), fontsize=18, rotation=0, ha="right", va="center"
+                )
             else:
+                ax.set_ylabel("")
+
+            # Set x and y label text only for the rightmost and bottom plots
+            if j == len(TYPES) - 1:
+                ax.yaxis.set_ticks_position("right")
                 ax.set_ylabel("")
 
     plt.tight_layout()
