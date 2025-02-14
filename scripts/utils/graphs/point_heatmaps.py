@@ -48,7 +48,12 @@ LABELS = ["<", ">", "="]
 def create_point_heatmaps():
     # Initialize data storage
     data = {
-        type_: {label: np.zeros((len(DATASETS), len(MODELS))) for label in LABELS}
+        type_: {
+            label: {
+                "f1": np.zeros((len(DATASETS), len(MODELS))),
+            }
+            for label in LABELS
+        }
         for type_ in TYPES
     }
 
@@ -67,7 +72,9 @@ def create_point_heatmaps():
             per_label = model_results["pre_type"][type_]["per_label"]
             for label in LABELS:
                 f1_score = per_label[label]["f1-score"]
-                data[type_][label][dataset_idx, model_idx] = f1_score
+                support = per_label[label]["support"]
+                data[type_][label]["f1"][dataset_idx, model_idx] = f1_score
+                data[type_][label]["support"] = support
 
     # Create plot
     fig, axes = plt.subplots(4, 3, figsize=(6, 16))
@@ -77,22 +84,40 @@ def create_point_heatmaps():
         for j, label in enumerate(LABELS):
             ax = axes[i, j]
 
-            # Show x-labels (models) only for bottom row
-            # Show y-labels (datasets) only for rightmost column
+            # Create annotation text with F1 scores
+            f1_values = data[type_][label]["f1"]
+            annotations = np.array(
+                [f"{f1*100:.1f}" for f1 in f1_values.flatten()]
+            ).reshape(f1_values.shape)
+
             sns.heatmap(
-                data[type_][label],
-                annot=True,
-                fmt=".2f",
+                data[type_][label]["f1"] * 100,
+                annot=annotations,
+                fmt="",
                 cmap="RdYlBu",
                 vmin=0,
-                vmax=1,
+                vmax=100,
                 xticklabels=MODELS if i == len(TYPES) - 1 else False,
                 yticklabels=DATASETS if j == len(LABELS) - 1 else False,
                 ax=ax,
                 cbar=False,
-                annot_kws={"weight": "bold"},
+                annot_kws={"weight": "bold", "size": 8},
                 linewidths=0.5,
                 linecolor="white",
+            )
+
+            # Add total support in the middle of the heatmap
+            total_support = int(data[type_][label]["support"])
+            ax.text(
+                0.5,
+                0.5,
+                f"n={total_support}",
+                horizontalalignment="center",
+                verticalalignment="center",
+                transform=ax.transAxes,
+                fontsize=10,
+                fontweight="bold",
+                bbox=dict(facecolor="white", alpha=0.7, edgecolor="none", pad=2),
             )
 
             # Move y-axis ticks to the right for rightmost column
