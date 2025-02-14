@@ -43,10 +43,10 @@ MODEL_NAME_TO_MODEL = {
 
 TYPES = ["ss", "se", "es", "ee"]
 TYPE_LABELS = {
-    "ss": "Start-Start",
-    "se": "Start-End",
-    "es": "End-Start",
-    "ee": "End-End",
+    "ss": "$x_s$-$y_s$",
+    "se": "$x_s$-$y_e$",
+    "es": "$x_e$-$y_s$",
+    "ee": "$x_e$-$y_e$",
 }
 
 LABELS = ["<", ">", "="]
