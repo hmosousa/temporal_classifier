@@ -178,8 +178,20 @@ def load_point_tempeval(
                     target=target_entity,
                     relation="None",
                 )
+                # Get the relation
+                if tlink.source.is_dct:
+                    source_type = "dct"
+                else:
+                    source_type = tlink.source.id[0]
+
+                if tlink.target.is_dct:
+                    target_type = "dct"
+                else:
+                    target_type = tlink.target.id[0]
+                relation_type = "-".join(sorted([source_type, target_type]))
+
                 context = get_tlink_context(doc, tlink)
-                point_relations.append((context, relation))
+                point_relations.append((context, relation, relation_type))
         else:
             for tlink in doc.tlinks:
                 context = get_tlink_context(doc, tlink)
@@ -187,11 +199,23 @@ def load_point_tempeval(
                 for relation in relations:
                     if relation.source_id == relation.target_id:
                         continue
-                    point_relations.append((context, relation))
+                    # Get the relation
+                    if tlink.source.is_dct:
+                        source_type = "dct"
+                    else:
+                        source_type = tlink.source.id[0]
+
+                    if tlink.target.is_dct:
+                        target_type = "dct"
+                    else:
+                        target_type = tlink.target.id[0]
+                    relation_type = "-".join(sorted([source_type, target_type]))
+
+                    point_relations.append((context, relation, relation_type))
 
     # Change the context tags according to the point relation
     examples = []
-    for context, relation in point_relations:
+    for context, relation, relation_type in point_relations:
         if relation.source_endpoint == "start":
             new_src_tags = "<start_source>", "</start_source>"
         else:
@@ -214,6 +238,13 @@ def load_point_tempeval(
             continue
 
         text = text.replace("\n", " ").strip()
-        examples.append({"doc": doc.name, "text": text, "label": relation.type})
+        examples.append(
+            {
+                "doc": doc.name,
+                "text": text,
+                "type": relation_type,
+                "label": relation.type,
+            }
+        )
 
     return datasets.Dataset.from_list(examples)
