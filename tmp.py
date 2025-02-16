@@ -1,24 +1,39 @@
+import json
+
+from sklearn.metrics import confusion_matrix
+from src.constants import CACHE_DIR
 from src.data import load_dataset
-from src.data.utils import augment_dataset
 
+trainset = load_dataset("interval_tempeval", "test")
 
-trainset = load_dataset("point_tempeval", "train")
-inverse = augment_dataset(trainset)
-closure = augment_dataset(inverse)
-inverse_closure = augment_dataset(closure)
+interval_model_path = (
+    CACHE_DIR
+    / "results"
+    / "interval"
+    / "interval_tempeval"
+    / "hugosousa"
+    / "smol-360-interval-a-5f554f47.json"
+)
+interval_model_preds = json.load(open(interval_model_path, "r"))
 
-trainset = trainset.to_pandas()
-inverse = inverse.to_pandas()
-closure = closure.to_pandas()
-inverse_closure = inverse_closure.to_pandas()
+point_model_path = (
+    CACHE_DIR
+    / "results"
+    / "interval"
+    / "interval_tempeval"
+    / "hugosousa"
+    / "smol-360-a-4a820490.json"
+)
+point_model_preds = json.load(open(point_model_path, "r"))
 
-trainset_count = trainset[["label", "type"]].value_counts().unstack()
-inverse_count = inverse[["label", "type"]].value_counts().unstack()
-closure_count = closure[["label", "type"]].value_counts().unstack()
-inverse_closure_count = inverse_closure[["label", "type"]].value_counts().unstack()
+true = trainset["label"]
 
+labels = list(set(true))
 
-print(trainset_count[["e-e", "e-t", "dct-e", "t-t", "dct-t"]])
-print(inverse_count[["e-e", "e-t", "dct-e", "t-t", "dct-t"]])
-print(closure_count[["e-e", "e-t", "dct-e", "t-t", "dct-t"]])
-print(inverse_closure_count[["e-e", "e-t", "dct-e", "t-t", "dct-t"]])
+cm_interval = confusion_matrix(true, interval_model_preds, labels=labels)
+print(cm_interval)
+
+cm_point = confusion_matrix(true, point_model_preds, labels=labels)
+print(cm_point)
+
+print(cm_interval - cm_point)

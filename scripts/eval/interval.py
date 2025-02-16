@@ -6,7 +6,7 @@ import numpy as np
 from fire import Fire
 from sklearn.metrics import classification_report
 
-from src.constants import RESULTS_DIR
+from src.constants import CACHE_DIR, RESULTS_DIR
 from src.data import load_dataset
 from src.model import load_model
 from src.model.majority import MajorityClassifier
@@ -53,30 +53,46 @@ def main(
     else:
         classifier = System(model_name, revision, strategy, unique_interval_labels)
 
-    logging.info("Getting predictions")
-    labels, preds = [], []
-    for example in tqdm(dataset):
-        if model_name in ["random", "majority"]:
-            interval_relation = classifier([example["text"]])[0]["label"]
-        elif is_interval_model:
-            interval_relation = classifier([example["text"]], top_k=None)[0][0]["label"]
-        else:
-            if not sample:
-                pred = classifier([example["text"]])[0]
-                if pred is not None:
-                    interval_relation = pred[0]["label"]
-                else:
-                    interval_relation = None
-            else:
-                interval_relations = classifier([example["text"]])[0]
-                # sample from
-                probs = np.array([relation["score"] for relation in interval_relations])
-                interval_relation = np.random.choice(
-                    interval_relations, size=1, p=probs
-                )[0]["label"]
+    cachepath = CACHE_DIR / "results" / "interval" / dataset_name / f"{model_name}.json"
 
-        labels.append(example["label"])
-        preds.append(interval_relation if interval_relation is not None else "None")
+    if cachepath.exists():
+        logging.info(f"Loading predictions from {cachepath}")
+        with open(cachepath, "r") as f:
+            cached_preds = json.load(f)
+        preds = cached_preds
+    else:
+        logging.info("Getting predictions")
+        labels, preds = [], []
+        for example in tqdm(dataset):
+            if model_name in ["random", "majority"]:
+                interval_relation = classifier([example["text"]])[0]["label"]
+            elif is_interval_model:
+                interval_relation = classifier([example["text"]], top_k=None)[0][0][
+                    "label"
+                ]
+            else:
+                if not sample:
+                    pred = classifier([example["text"]])[0]
+                    if pred is not None:
+                        interval_relation = pred[0]["label"]
+                    else:
+                        interval_relation = None
+                else:
+                    interval_relations = classifier([example["text"]])[0]
+                    probs = np.array(
+                        [relation["score"] for relation in interval_relations]
+                    )
+                    interval_relation = np.random.choice(
+                        interval_relations, size=1, p=probs
+                    )[0]["label"]
+
+            labels.append(example["label"])
+            preds.append(interval_relation if interval_relation is not None else "None")
+
+        logging.info(f"Saving predictions to {cachepath}")
+        cachepath.parent.mkdir(parents=True, exist_ok=True)
+        with open(cachepath, "w") as f:
+            json.dump(preds, f)
 
     dataset = dataset.add_column("pred", preds)
 

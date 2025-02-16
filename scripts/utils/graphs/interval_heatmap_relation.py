@@ -21,7 +21,7 @@ MODEL_ORDER = [
     "smol-360-interval-df83a28e",
     "smol-360-interval-a-5f554f47",
     "smol-360-interval-c-74c05ab6",
-    "smol-360-interval-ca-737f2a4a",
+    "smol-360-interval-ca-8bd7cf03",
 ]
 
 MODEL_NAME_TO_DATASET = {
@@ -40,7 +40,7 @@ MODEL_NAME_TO_DATASET = {
     "smol-360-interval-df83a28e": "R",
     "smol-360-interval-a-5f554f47": "I",
     "smol-360-interval-c-74c05ab6": "C",
-    "smol-360-interval-ca-737f2a4a": "IC",
+    "smol-360-interval-ca-8bd7cf03": "IC",
 }
 
 MODELS = ["135M", "360M"]
@@ -77,7 +77,7 @@ MODEL_NAME_TO_MODEL = {
     "smol-360-interval-df83a28e": "I-360M",
     "smol-360-interval-a-5f554f47": "I-360M",
     "smol-360-interval-c-74c05ab6": "I-360M",
-    "smol-360-interval-ca-737f2a4a": "I-360M",
+    "smol-360-interval-ca-8bd7cf03": "I-360M",
 }
 
 
