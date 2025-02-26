@@ -89,9 +89,9 @@ def main():
     validset = datasets.Dataset.from_pandas(valid_df, preserve_index=False)
     testset = datasets.Dataset.from_pandas(test_df, preserve_index=False)
 
-    trainset.push_to_hub("hugosousa/TemporalContexts", split="train", token=HF_TOKEN)
-    validset.push_to_hub("hugosousa/TemporalContexts", split="valid", token=HF_TOKEN)
-    testset.push_to_hub("hugosousa/TemporalContexts", split="test", token=HF_TOKEN)
+    trainset.push_to_hub("<hf_user>/TemporalContexts", split="train", token=HF_TOKEN)
+    validset.push_to_hub("<hf_user>/TemporalContexts", split="valid", token=HF_TOKEN)
+    testset.push_to_hub("<hf_user>/TemporalContexts", split="test", token=HF_TOKEN)
 
 
 if __name__ == "__main__":

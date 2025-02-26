@@ -120,37 +120,3 @@ This script will print the results presented in the table below.
 |                                                                                  | ✅    | ❌    | 70.12 | 70.19 | 70.06 |
 |                                                                                  | ❌    | ✅    | 67.91 | 68.08 | 67.73 |
 |                                                                                  | ✅    | ✅    | 69.28 | 69.39 | 69.17 |
-
-
-## Load Models from Hugging Face
-
-```python
-import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
-
-model = AutoModelForSequenceClassification.from_pretrained(
-    "hugosousa/classifier_llama_1b", 
-    torch_dtype=torch.bfloat16, 
-    device_map="auto"
-)
-tokenizer = AutoTokenizer.from_pretrained("hugosousa/classifier_llama_1b")
-
-inputs = tokenizer(["Hello, world!"], return_tensors="pt")
-outputs = model(**inputs)
-```
-
-or using the pipeline
-
-```python
-import torch
-from transformers import pipeline
-
-classifier = pipeline(
-    "text-classification",
-    model="hugosousa/classifier_llama_1b",
-    device_map="auto",
-    torch_dtype=torch.bfloat16,
-)
-print(classifier(["Hello, world!"]))
-
-```

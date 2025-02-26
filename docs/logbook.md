@@ -13,7 +13,7 @@ Regarding 2., after doing some profiling one can conclude that most of the time 
 
 ## 2024-11-07
 
-To simplify the task, a new dataset, [Temporal Games](https://huggingface.co/datasets/hugosousa/TemporalGames), was build. This dataset has some partitions, "two", "three", ..., that represent the number of entities per entry in the corpus. That is, all the documents in the "two" partition have two entities. Important to note that all the entries have at least one temporal link that was manually annotated. This data should be better to identify what are the relation types that the classification models struggle more to label.
+To simplify the task, a new dataset, [Temporal Games](https://huggingface.co/datasets/<hf_user>/TemporalGames), was build. This dataset has some partitions, "two", "three", ..., that represent the number of entities per entry in the corpus. That is, all the documents in the "two" partition have two entities. Important to note that all the entries have at least one temporal link that was manually annotated. This data should be better to identify what are the relation types that the classification models struggle more to label.
 
 ## 2024-11-08
 

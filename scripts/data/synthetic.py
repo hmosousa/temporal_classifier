@@ -198,10 +198,10 @@ async def make_data():
         dataset = datasets.concatenate_datasets(
             [
                 datasets.load_dataset(
-                    "hugosousa/TemporalQuestions", "closure", split="train"
+                    "<hf_user>/TemporalQuestions", "closure", split="train"
                 ),
                 datasets.load_dataset(
-                    "hugosousa/TemporalQuestions", "closure", split="valid"
+                    "<hf_user>/TemporalQuestions", "closure", split="valid"
                 ),
             ]
         )
@@ -306,13 +306,13 @@ async def main(n_valid_samples: int = 5_000):
 
             # push data to hub
             train_dataset.push_to_hub(
-                "hugosousa/SyntheticTemporalContexts",
+                "<hf_user>/SyntheticTemporalContexts",
                 name,
                 split="train",
                 token=HF_TOKEN,
             )
             valid_dataset.push_to_hub(
-                "hugosousa/SyntheticTemporalContexts",
+                "<hf_user>/SyntheticTemporalContexts",
                 name,
                 split="valid",
                 token=HF_TOKEN,

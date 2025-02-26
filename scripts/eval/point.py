@@ -36,7 +36,7 @@ def add_text_type(example: dict):
 
 
 def main(
-    model_name: str = "hugosousa/smol-135-0dd0da37",
+    model_name: str = "<hf_user>/smol-135-0dd0da37",
     revision: str = "main",
     dataset_name: Literal[
         "point_tempeval",

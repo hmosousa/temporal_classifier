@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main(
-    model_name: str = "hugosousa/smol-135-0dd0da37",
+    model_name: str = "<hf_user>/smol-135-0dd0da37",
     revision: str = "aadb93fe6ee0272e40eac187511de316afa94b5b",
     dataset_name: Literal[
         "interval_tempeval", "interval_tddiscourse"

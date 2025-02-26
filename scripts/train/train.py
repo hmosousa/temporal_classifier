@@ -258,7 +258,7 @@ class TrainingArguments:
         metadata={"help": "Whether to push the model to the hub."},
     )
     hub_model_id: str = field(
-        default="hugosousa/debug",
+        default="<hf_user>/debug",
         metadata={"help": "The model id to use for the hub."},
     )
     label_smoothing_factor: float = field(

@@ -28,7 +28,7 @@ trainer:
     bf16: True
     push_to_hub: False
     torch_compile: False
-    hub_model_id: hugosousa/debug
+    hub_model_id: <hf_user>/debug
     label_smoothing_factor: 0.01
     early_stopping_patience: 3
     init_bias: True

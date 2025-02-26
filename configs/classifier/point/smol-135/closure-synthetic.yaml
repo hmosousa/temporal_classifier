@@ -27,7 +27,7 @@ trainer:
     seed: 42
     bf16: True
     push_to_hub: True
-    hub_model_id: hugosousa/smol-135-cs
+    hub_model_id: <hf_user>/smol-135-cs
     label_smoothing_factor: 0.03
     torch_compile: False
     early_stopping_patience: 5

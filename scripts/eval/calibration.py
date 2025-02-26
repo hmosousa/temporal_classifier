@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main(
-    model_name: str = "hugosousa/smol-360-a-4a820490",
+    model_name: str = "<hf_user>/smol-360-a-4a820490",
     revision: str = "main",
     dataset_name: str = "point_tempeval",
     batch_size: int = 64,

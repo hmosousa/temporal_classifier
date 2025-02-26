@@ -7,7 +7,7 @@ import huggingface_hub
 
 api = huggingface_hub.HfApi()
 
-models = api.list_models(author="hugosousa")
+models = api.list_models(author="<hf_user>")
 for model in models:
-    if model.id.startswith("hugosousa/debug"):
+    if model.id.startswith("<hf_user>/debug"):
         huggingface_hub.delete_repo(model.id)

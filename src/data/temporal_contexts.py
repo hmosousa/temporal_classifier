@@ -8,5 +8,5 @@ def load_temporal_contexts(
     **kwargs,
 ) -> datasets.Dataset:
     """Used to train classification models."""
-    dataset = datasets.load_dataset("hugosousa/TemporalContexts", split=split)
+    dataset = datasets.load_dataset("<hf_user>/TemporalContexts", split=split)
     return dataset
