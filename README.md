@@ -1,6 +1,8 @@
 # Temporal Classifier
 
-Train an agent to classify temporal relations.
+Train a model to classify temporal relations between temporal entities.
+
+> Note: The codebase has been anonymized for the ACL 2025 submission. As a result, the HuggingFace model links are not publicly available, and the code examples below cannot be run as shown.
 
 ## Setup
 
@@ -54,38 +56,27 @@ snakeviz profile.prof
 To get the tables below run:
 
 ```sh
-python scripts/utils/aggregate_results.py
-python scripts/utils/print_results.py
+sh scripts/eval/run.sh  # to run eval for each model
+python scripts/utils/aggregate_results.py --relation_type point  # to aggregate the results
+python scripts/utils/print_results.py --relation_type point  # to print the results
 ```
 
-This table presents the macro average over the four label types for the temporal questions (TQ) and the timeset (TS) datasets. 
+This table presents the macro average over the three label types for the TempEval-3 point-wise dataset.
 
-R: raw
-A: augmented
-S: synthetic
-
-
-| model        | R    | A    | S    | TQ   |       Acc |     $F_1$ | TS   |       Acc |     $F_1$ |
-| :----------- | :--- | :--- | :--- | :--- | --------: | --------: | :--- | --------: | --------: |
-| random       | ✓    |      |      |      |     33.07 |     29.38 |      |      33.7 |     32.41 |
-| majority     | ✓    |      |      |      |     53.71 |      23.3 |      |     41.32 |     19.49 |
-|              |      |      |      |      |           |           |      |           |           |
-| SmolLM2-135M | ✓    |      |      |      |     66.33 | **53.66** |      |     41.32 |     34.63 |
-|              | ✓    | ✓    |      |      |     61.41 |     38.33 |      |     34.05 |     31.46 |
-|              | ✓    |      | ✓    |      | **67.71** |      42.2 |      |     41.94 | **37.61** |
-|              | ✓    | ✓    | ✓    |      | **67.71** |     40.34 |      |     41.77 |     37.21 |
-|              |      |      | ✓    |      |     43.22 |     27.29 |      |     39.64 |     23.59 |
-|              |      | ✓    | ✓    |      |     34.58 |     23.54 |      | **46.32** |      25.5 |
-|              |      |      |      |      |           |           |      |           |           |
-| SmolLM2-360M | ✓    |      |      |      | **72.28** |     45.43 |      | **48.57** | **42.26** |
-|              |      |      |      |      |           |           |      |           |           |
-| SmolLM2-1.7B | ✓    |      |      |      |     71.96 | **60.37** |      |     46.88 |     41.38 |
-
+| model    | inverse | closure | accuracy | precision | recall | f1-score |
+| :------- | :------ | :------ | -------: | --------: | -----: | -------: |
+| majority | ❌       | ❌       |    53.71 |      17.9 |  33.33 |     23.3 |
+| random   | ❌       | ❌       |    33.96 |     33.47 |  34.25 |       30 |
+| SmoLM2-135M | ❌       | ❌       |    77.21 |     69.12 |  65.91 |    67.18 |
+|          | ✅       | ❌       |    78.39 |     70.23 |  69.49 |    69.82 |
+|          | ❌       | ✅       |    79.49 |     69.41 |  70.18 |    69.78 |
+|          | ✅       | ✅       |    80.22 |     74.23 |  63.75 |    66.14 |
+| SmoLM2-360M | ❌       | ❌       |    80.65 |     71.38 |  70.51 |    70.92 |
+|          | ✅       | ❌       |    81.32 |     73.46 |     71 |     72.1 |
+|          | ❌       | ✅       |    82.13 |     75.71 |  68.27 |    70.65 |
+|          | ✅       | ✅       |     82.1 |     74.96 |  71.48 |    72.86 |
 
 ### Interval Evaluation
-
-#### Our Evaluation
-
 
 #### SemEval Evaluation
 
@@ -99,7 +90,7 @@ This script will print the results presented in the table below.
 
 
 
-| model                                                                            | A    | C    | $F_1$ |     P |     R |
+| model                                                                            | I    | C    | $F_1$ |     P |     R |
 | :------------------------------------------------------------------------------- | :--- | :--- | ----: | ----: | ----: |
 | random                                                                           |      |      | 11.57 | 10.94 | 12.27 |
 | majority                                                                         |      |      | 35.71 | 35.52 | 35.91 |
@@ -110,25 +101,25 @@ This script will print the results presented in the table below.
 | CATENA [link](https://aclanthology.org/C16-1007/)                                |      |      |  61.9 |  62.6 |  61.3 |
 | SP+ILP [link](https://aclanthology.org/D17-1108.pdf)                             |      |      |  67.2 |  69.1 |  65.5 |
 |                                                                                  |      |      |       |       |       |
-| SmolLM2-135M                                                                     |      |      | 62.85 | 62.82 | 62.87 |
-|                                                                                  | ✓    |      | 64.93 | 64.89 | 64.97 |
-|                                                                                  |      | ✓    | 66.98 | 67.22 | 66.74 |
-|                                                                                  | ✓    | ✓    | 66.22 | 66.48 | 65.97 |
+| Interval-135M                                                                     | ❌    | ❌    | 62.85 | 62.82 | 62.87 |
+|                                                                                  | ✅    | ❌    | 64.93 | 64.89 | 64.97 |
+|                                                                                  | ❌    | ✅    | 66.98 | 67.22 | 66.74 |
+|                                                                                  | ✅    | ✅    | 66.22 | 66.48 | 65.97 |
 |                                                                                  |      |      |       |       |       |
-| SmolLM2-360M                                                                     |      |      | 65.69 | 65.74 | 65.64 |
-|                                                                                  | ✓    |      | 68.98 | 69.01 | 68.95 |
-|                                                                                  |      | ✓    | 65.54 | 65.67 | 65.41 |
-|                                                                                  | ✓    | ✓    | 35.42 | 35.06 | 35.80 |
+| Interval-360M                                                                     | ❌    | ❌    | 65.69 | 65.74 | 65.64 |
+|                                                                                  | ✅    | ❌    | 68.98 | 69.01 | 68.95 |
+|                                                                                  | ❌    | ✅    | 65.54 | 65.67 | 65.41 |
+|                                                                                  | ✅    | ✅    | 35.42 | 35.06 | 35.80 |
 |                                                                                  |      |      |       |       |       |
-| IfP-135M                                                                         |      |      | 64.78 | 65.03 | 64.53 |
-|                                                                                  | ✓    |      | 63.88 | 63.68 | 64.09 |
-|                                                                                  |      | ✓    | 63.97 | 64.07 | 63.87 |
-|                                                                                  | ✓    | ✓    | 64.01 | 64.37 | 63.65 |
+| IfP-135M                                                                         | ❌    | ❌    | 64.78 | 65.03 | 64.53 |
+|                                                                                  | ✅    | ❌    | 63.88 | 63.68 | 64.09 |
+|                                                                                  | ❌    | ✅    | 63.97 | 64.07 | 63.87 |
+|                                                                                  | ✅    | ✅    | 64.01 | 64.37 | 63.65 |
 |                                                                                  |      |      |       |       |       |
-| IfP-360M                                                                         |      |      | 66.24 | 66.18 | 66.30 |
-|                                                                                  | ✓    |      | 70.12 | 70.19 | 70.06 |
-|                                                                                  |      | ✓    | 67.91 | 68.08 | 67.73 |
-|                                                                                  | ✓    | ✓    | 69.28 | 69.39 | 69.17 |
+| IfP-360M                                                                         | ❌    | ❌    | 66.24 | 66.18 | 66.30 |
+|                                                                                  | ✅    | ❌    | 70.12 | 70.19 | 70.06 |
+|                                                                                  | ❌    | ✅    | 67.91 | 68.08 | 67.73 |
+|                                                                                  | ✅    | ✅    | 69.28 | 69.39 | 69.17 |
 
 
 ## Load Models from Hugging Face

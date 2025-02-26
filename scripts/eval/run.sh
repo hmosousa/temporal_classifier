@@ -74,7 +74,6 @@ python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hu
 python scripts/eval/interval.py -d interval_tempeval -strategy most_likely -m hugosousa/smol-360-interval-ca-8bd7cf03 -r 7efb562fa7d8015b2624052c7c818b12624e23ca
 
 
-
 # Calibration
 
 python scripts/eval/calibration.py -m hugosousa/smol-135-0dd0da37 -r aadb93fe6ee0272e40eac187511de316afa94b5b
@@ -86,5 +85,3 @@ python scripts/eval/calibration.py -m hugosousa/smol-360-89128df1 -r edd5ea745fa
 python scripts/eval/calibration.py -m hugosousa/smol-360-a-4a820490 -r ccfb712dc239a3ae22513808fd6863a7a135b044
 python scripts/eval/calibration.py -m hugosousa/smol-360-c-6af17138 -r e5924e499d8076c6117e5cd38edc21c75f95b7ac
 python scripts/eval/calibration.py -m hugosousa/smol-360-ac-b19ae776 -r 5c44cd7d5950f2c24a19a59144e15a4be1817f91
-
-
