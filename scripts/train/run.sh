@@ -18,14 +18,14 @@ accelerate launch scripts/train/train.py --config_file configs/classifier/smol-3
 accelerate launch scripts/train/train.py --config_file configs/classifier/interval/debug.yaml 
 
 # 135 model
-CUDA_VISIBLE_DEVICES=0 accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-135/raw.yaml 
-CUDA_VISIBLE_DEVICES=1 accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-135/closure.yaml
-CUDA_VISIBLE_DEVICES=2 accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-135/augment.yaml
-CUDA_VISIBLE_DEVICES=3 accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-135/closure-augment.yaml
+accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-135/raw.yaml 
+accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-135/closure.yaml
+accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-135/augment.yaml
+accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-135/closure-augment.yaml
 
 
 # 360M model
 accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-360/raw.yaml
-CUDA_VISIBLE_DEVICES=0 accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-360/augment.yaml
-CUDA_VISIBLE_DEVICES=0 accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-360/closure.yaml
-CUDA_VISIBLE_DEVICES=2 accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-360/closure-augment.yaml
+accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-360/augment.yaml
+accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-360/closure.yaml
+accelerate launch scripts/train/train.py --config_file configs/classifier/interval/smol-360/closure-augment.yaml
