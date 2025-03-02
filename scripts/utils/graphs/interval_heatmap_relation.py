@@ -15,12 +15,12 @@ MODEL_ORDER = [
     "smol-360-c-6af17138",
     "smol-360-ac-b19ae776",
     "smol-135-interval-1b7d11c1",
-    "smol-135-interval-a-4fad7bc3",
-    "smol-135-interval-c-eda01c25",
-    "smol-135-interval-ca-87e1b0c9",
-    "smol-360-interval-df83a28e",
-    "smol-360-interval-a-5f554f47",
-    "smol-360-interval-c-74c05ab6",
+    "smol-135-interval-a-6ba0463e",
+    "smol-135-interval-c-7a430df7",
+    "smol-135-interval-ca-86f6ae17",
+    "smol-360-interval-575aff8f",
+    "smol-360-interval-a-04fbd03a",
+    "smol-360-interval-c-6bd44a78",
     "smol-360-interval-ca-8bd7cf03",
 ]
 
@@ -34,12 +34,12 @@ MODEL_NAME_TO_DATASET = {
     "smol-360-c-6af17138": "C",
     "smol-360-ac-b19ae776": "IC",
     "smol-135-interval-1b7d11c1": "R",
-    "smol-135-interval-a-4fad7bc3": "I",
-    "smol-135-interval-c-eda01c25": "C",
-    "smol-135-interval-ca-87e1b0c9": "IC",
-    "smol-360-interval-df83a28e": "R",
-    "smol-360-interval-a-5f554f47": "I",
-    "smol-360-interval-c-74c05ab6": "C",
+    "smol-135-interval-a-6ba0463e": "I",
+    "smol-135-interval-c-7a430df7": "C",
+    "smol-135-interval-ca-86f6ae17": "IC",
+    "smol-360-interval-575aff8f": "R",
+    "smol-360-interval-a-04fbd03a": "I",
+    "smol-360-interval-c-6bd44a78": "C",
     "smol-360-interval-ca-8bd7cf03": "IC",
 }
 
@@ -71,12 +71,12 @@ MODEL_NAME_TO_MODEL = {
     "smol-360-c-6af17138": "IfP-360M",
     "smol-360-ac-b19ae776": "IfP-360M",
     "smol-135-interval-1b7d11c1": "I-135M",
-    "smol-135-interval-a-4fad7bc3": "I-135M",
-    "smol-135-interval-c-eda01c25": "I-135M",
-    "smol-135-interval-ca-87e1b0c9": "I-135M",
-    "smol-360-interval-df83a28e": "I-360M",
-    "smol-360-interval-a-5f554f47": "I-360M",
-    "smol-360-interval-c-74c05ab6": "I-360M",
+    "smol-135-interval-a-6ba0463e": "I-135M",
+    "smol-135-interval-c-7a430df7": "I-135M",
+    "smol-135-interval-ca-86f6ae17": "I-135M",
+    "smol-360-interval-575aff8f": "I-360M",
+    "smol-360-interval-a-04fbd03a": "I-360M",
+    "smol-360-interval-c-6bd44a78": "I-360M",
     "smol-360-interval-ca-8bd7cf03": "I-360M",
 }
 
@@ -201,3 +201,4 @@ if __name__ == "__main__":
     fig = create_relation_heatmaps()
     plt.savefig(IMGS_DIR / "interval_relation_heatmaps.pdf", format="pdf", dpi=600)
     plt.close()
+    print(f"Saved to {IMGS_DIR / 'interval_relation_heatmaps.pdf'}")

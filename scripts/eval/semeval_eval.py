@@ -27,7 +27,7 @@ TE3TOOLKIT_DIR = ROOT_DIR / "tempeval3_toolkit"
 PLATINUM_DATASET_PATH = TE3TOOLKIT_DIR / "te3-platinum"
 
 
-def write_tlinks(preds_per_doc: dict, dataset_name, strategy, model_id):
+def write_tlinks(preds_per_doc, dataset_name, strategy, model_id):
     for doc, tlinks in preds_per_doc.items():
         # Format the predicted tlinks
         pred_tlink_dict = {}

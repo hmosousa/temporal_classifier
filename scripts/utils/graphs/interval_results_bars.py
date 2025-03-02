@@ -15,16 +15,16 @@ data = {
     "Interval": {
         "SmolLM2-135M": {
             "Raw": {"f1": 62.85, "p": 62.82, "r": 62.87},
-            "Inverse": {"f1": 64.93, "p": 64.89, "r": 64.97},
-            "Closure": {"f1": 66.98, "p": 67.22, "r": 66.74},
-            "Inverse & Closure": {"f1": 66.22, "p": 66.48, "r": 65.97},
+            "Inverse": {"f1": 62.10, "p": 62.10, "r": 62.10},
+            "Closure": {"f1": 61.94, "p": 62.44, "r": 61.44},
+            "Inverse & Closure": {"f1": 64.18, "p": 64.16, "r": 64.20},
         },
         "SmolLM2-360M": {
             "SmolLM2-360M": {
-                "Raw": {"f1": 65.69, "p": 65.74, "r": 65.64},
-                "Inverse": {"f1": 68.98, "p": 69.01, "r": 68.95},
-                "Closure": {"f1": 65.54, "p": 65.67, "r": 65.41},
-                "Inverse & Closure": {"f1": 67.36, "p": 67.22, "r": 67.51},
+                "Raw": {"f1": 65.61, "p": 65.70, "r": 65.52},
+                "Inverse": {"f1": 63.57, "p": 63.82, "r": 63.31},
+                "Closure": {"f1": 65.21, "p": 65.22, "r": 65.19},
+                "Inverse & Closure": {"f1": 67.37, "p": 67.22, "r": 67.51},
             },
         },
     },
@@ -276,3 +276,5 @@ plt.tight_layout()
 plt.savefig(
     IMGS_DIR / "interval_results_bars.pdf", format="pdf", bbox_inches="tight", dpi=600
 )
+
+print(f"Saved to {IMGS_DIR / 'interval_results_bars.pdf'}")
